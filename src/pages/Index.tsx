@@ -77,6 +77,15 @@ const Index = () => {
     });
   };
 
+  const handleClearImportedExpenses = () => {
+    console.log('Clearing all imported expenses');
+    setImportedExpenses([]);
+    toast({
+      title: "Cleared",
+      description: "All imported expenses cleared",
+    });
+  };
+
   const handleSaveImportedExpenses = async () => {
     if (importedExpenses.length === 0) {
       toast({
@@ -202,6 +211,7 @@ const Index = () => {
                   onDeleteImportedExpense={handleDeleteImportedExpense}
                   onBulkDeleteImportedExpenses={handleBulkDeleteImportedExpenses}
                   onSaveImportedExpenses={handleSaveImportedExpenses}
+                  onClearImportedExpenses={handleClearImportedExpenses}
                   isSaving={addExpenses.isPending}
                 />
                 
