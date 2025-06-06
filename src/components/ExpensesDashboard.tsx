@@ -1,8 +1,8 @@
 
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { DollarSign, TrendingUp, FileText, Calendar } from "lucide-react";
+import { ExpensesTable } from "./ExpensesTable";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface ExpensesDashboardProps {
@@ -12,13 +12,7 @@ interface ExpensesDashboardProps {
 
 export const ExpensesDashboard = ({ expenses, accountCodes }: ExpensesDashboardProps) => {
   if (expenses.length === 0) {
-    return (
-      <Card className="p-8 text-center bg-slate-50">
-        <FileText className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-slate-700 mb-2">No expenses to display</h3>
-        <p className="text-slate-500">Expenses will appear here once they are uploaded and classified</p>
-      </Card>
-    );
+    return <ExpensesTable expenses={expenses} accountCodes={accountCodes} />;
   }
 
   const totalAmount = expenses.reduce((sum, expense) => sum + expense.spent, 0);
@@ -178,41 +172,13 @@ export const ExpensesDashboard = ({ expenses, accountCodes }: ExpensesDashboardP
         </Card>
       )}
 
-      {/* Expense List */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4 text-slate-900">Recent Expenses</h3>
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {expenses.slice(0, 10).map((expense) => {
-            const account = accountCodes.find(code => code.id === expense.accountCode);
-            return (
-              <div key={expense.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium text-slate-900">{expense.description}</p>
-                    {expense.classified && (
-                      <Badge variant="secondary" className="text-xs">
-                        Classified
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-slate-600">
-                    <span>{expense.date}</span>
-                    <span>{expense.category}</span>
-                    {account && (
-                      <Badge variant="outline" className="text-xs">
-                        {account.code} - {account.name}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-slate-900">${expense.spent.toFixed(2)}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+      {/* Expenses Table */}
+      <ExpensesTable 
+        expenses={expenses} 
+        accountCodes={accountCodes} 
+        title="All Expenses"
+        showClassificationStatus={true}
+      />
     </div>
   );
 };
