@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,7 +90,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           spent: parsedAmount,
           accountCode: accountName,
           classified: false,
-        };
+        } as Expense;
       })
       .filter((expense): expense is Expense => expense !== null);
 
