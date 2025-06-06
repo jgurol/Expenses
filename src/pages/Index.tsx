@@ -51,6 +51,7 @@ const Index = () => {
   };
 
   const handleDeleteImportedExpense = (expenseId: string) => {
+    console.log('Deleting imported expense:', expenseId);
     setImportedExpenses(prev => prev.filter(expense => expense.id !== expenseId));
     toast({
       title: "Expense Removed",
