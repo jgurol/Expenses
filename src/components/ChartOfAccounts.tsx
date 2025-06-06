@@ -7,15 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, DollarSign } from "lucide-react";
+import { Plus, Edit, Trash2, DollarSign, Loader2 } from "lucide-react";
 import type { AccountCode } from "@/pages/Index";
+import { useAccountCodes, useAddAccountCode, useUpdateAccountCode, useDeleteAccountCode } from "@/hooks/useAccountCodes";
 
-interface ChartOfAccountsProps {
-  accountCodes: AccountCode[];
-  onAccountCodesUpdate: (codes: AccountCode[]) => void;
-}
-
-export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfAccountsProps) => {
+export const ChartOfAccounts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCode, setEditingCode] = useState<AccountCode | null>(null);
   const [formData, setFormData] = useState({
@@ -24,14 +20,17 @@ export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfA
     type: "expense" as AccountCode["type"],
   });
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  const { data: accountCodes = [], isLoading } = useAccountCodes();
+  const addAccountCode = useAddAccountCode();
+  const updateAccountCode = useUpdateAccountCode();
+  const deleteAccountCode = useDeleteAccountCode();
 
   const resetForm = () => {
     setFormData({ code: "", name: "", type: "expense" });
     setEditingCode(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.code || !formData.name) {
@@ -57,31 +56,30 @@ export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfA
       return;
     }
 
-    if (editingCode) {
-      // Update existing
-      const updatedCodes = accountCodes.map(code =>
-        code.id === editingCode.id ? { ...code, ...formData } : code
-      );
-      onAccountCodesUpdate(updatedCodes);
+    try {
+      if (editingCode) {
+        await updateAccountCode.mutateAsync({ id: editingCode.id, ...formData });
+        toast({
+          title: "Success",
+          description: "Account code updated successfully",
+        });
+      } else {
+        await addAccountCode.mutateAsync(formData);
+        toast({
+          title: "Success",
+          description: "Account code added successfully",
+        });
+      }
+
+      resetForm();
+      setIsDialogOpen(false);
+    } catch (error) {
       toast({
-        title: "Success",
-        description: "Account code updated successfully",
-      });
-    } else {
-      // Add new
-      const newCode: AccountCode = {
-        id: generateId(),
-        ...formData,
-      };
-      onAccountCodesUpdate([...accountCodes, newCode]);
-      toast({
-        title: "Success",
-        description: "Account code added successfully",
+        title: "Error",
+        description: "Failed to save account code",
+        variant: "destructive",
       });
     }
-
-    resetForm();
-    setIsDialogOpen(false);
   };
 
   const handleEdit = (code: AccountCode) => {
@@ -94,13 +92,20 @@ export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfA
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (codeId: string) => {
-    const updatedCodes = accountCodes.filter(code => code.id !== codeId);
-    onAccountCodesUpdate(updatedCodes);
-    toast({
-      title: "Success",
-      description: "Account code deleted successfully",
-    });
+  const handleDelete = async (codeId: string) => {
+    try {
+      await deleteAccountCode.mutateAsync(codeId);
+      toast({
+        title: "Success",
+        description: "Account code deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete account code",
+        variant: "destructive",
+      });
+    }
   };
 
   const getTypeColor = (type: AccountCode["type"]) => {
@@ -116,6 +121,14 @@ export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfA
       default: return "bg-gray-100 text-gray-700 border-gray-300";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -188,7 +201,14 @@ export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfA
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1">
+                <Button 
+                  type="submit" 
+                  className="flex-1"
+                  disabled={addAccountCode.isPending || updateAccountCode.isPending}
+                >
+                  {(addAccountCode.isPending || updateAccountCode.isPending) && (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  )}
                   {editingCode ? "Update" : "Add"} Account
                 </Button>
               </div>
@@ -228,8 +248,13 @@ export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfA
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDelete(code.id)}
+                  disabled={deleteAccountCode.isPending}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  {deleteAccountCode.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
