@@ -18,19 +18,82 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  const processFileData = (data: any[], accountName?: string) => {
-    const expenses: Expense[] = data
-      .filter(row => row.date && row.description && (row.spent || row.amount))
-      .map(row => ({
-        id: generateId(),
-        date: row.date || row.Date || "",
-        description: row.description || row.Description || "",
-        category: row.category || row.Category || "Uncategorized",
-        spent: parseFloat(row.spent || row.Spent || row.amount || row.Amount || "0"),
-        accountCode: accountName || "Unknown",
-        classified: false,
-      }));
+  // Helper function to find column name variations
+  const findColumn = (row: any, possibleNames: string[]) => {
+    for (const name of possibleNames) {
+      if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
+        return row[name];
+      }
+    }
+    return null;
+  };
 
+  const processFileData = (data: any[], accountName: string) => {
+    console.log(`Processing sheet: ${accountName}`);
+    console.log(`Raw data length: ${data.length}`);
+    
+    if (data.length > 0) {
+      console.log('First row keys:', Object.keys(data[0]));
+      console.log('First row sample:', data[0]);
+    }
+
+    const expenses: Expense[] = data
+      .map((row, index) => {
+        // More flexible column name matching
+        const date = findColumn(row, ['date', 'Date', 'DATE', 'Transaction Date', 'Post Date', 'Posted Date']);
+        const description = findColumn(row, ['description', 'Description', 'DESCRIPTION', 'Merchant', 'Payee', 'Details', 'Transaction']);
+        const amount = findColumn(row, ['spent', 'Spent', 'SPENT', 'amount', 'Amount', 'AMOUNT', 'Debit', 'Credit', 'Transaction Amount']);
+        const category = findColumn(row, ['category', 'Category', 'CATEGORY', 'Type', 'Expense Type']);
+
+        console.log(`Row ${index}:`, { date, description, amount, category });
+
+        // Check if we have the minimum required data
+        if (!date || !description || (!amount && amount !== 0)) {
+          console.log(`Skipping row ${index} - missing required data`);
+          return null;
+        }
+
+        // Parse amount - handle negative values and currency symbols
+        let parsedAmount = 0;
+        if (typeof amount === 'string') {
+          // Remove currency symbols and commas, handle negative values
+          const cleanAmount = amount.replace(/[$,\s]/g, '').replace(/[()]/g, '-');
+          parsedAmount = Math.abs(parseFloat(cleanAmount)) || 0;
+        } else {
+          parsedAmount = Math.abs(parseFloat(amount)) || 0;
+        }
+
+        // Parse date
+        let parsedDate = '';
+        if (date instanceof Date) {
+          parsedDate = date.toISOString().split('T')[0];
+        } else if (typeof date === 'string') {
+          const dateObj = new Date(date);
+          if (!isNaN(dateObj.getTime())) {
+            parsedDate = dateObj.toISOString().split('T')[0];
+          } else {
+            console.log(`Invalid date format: ${date}`);
+            return null;
+          }
+        } else if (typeof date === 'number') {
+          // Excel date number
+          const excelDate = new Date((date - 25569) * 86400 * 1000);
+          parsedDate = excelDate.toISOString().split('T')[0];
+        }
+
+        return {
+          id: generateId(),
+          date: parsedDate,
+          description: description.toString(),
+          category: category?.toString() || "Uncategorized",
+          spent: parsedAmount,
+          accountCode: accountName,
+          classified: false,
+        };
+      })
+      .filter((expense): expense is Expense => expense !== null);
+
+    console.log(`Processed ${expenses.length} valid expenses from ${accountName}`);
     return expenses;
   };
 
@@ -45,6 +108,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         Papa.parse(file, {
           header: true,
           complete: (results) => {
+            console.log('CSV parsing complete:', results);
             const expenses = processFileData(results.data, "CSV Import");
             onExpensesUploaded(expenses);
             toast({
@@ -53,6 +117,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             });
           },
           error: (error) => {
+            console.error('CSV parsing error:', error);
             toast({
               title: "Error",
               description: "Failed to parse CSV file",
@@ -64,13 +129,18 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer);
         
+        console.log('Available sheets:', workbook.SheetNames);
+        
         let allExpenses: Expense[] = [];
         let totalProcessed = 0;
         
         // Process each sheet/tab as a separate account
         workbook.SheetNames.forEach(sheetName => {
+          console.log(`Processing sheet: ${sheetName}`);
           const worksheet = workbook.Sheets[sheetName];
-          const data = XLSX.utils.sheet_to_json(worksheet);
+          const data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          
+          console.log(`Sheet ${sheetName} raw data:`, data.slice(0, 3)); // Log first 3 rows
           
           if (data.length > 0) {
             const expenses = processFileData(data, sheetName);
@@ -78,6 +148,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             totalProcessed += expenses.length;
             
             console.log(`Processed ${expenses.length} expenses from sheet: ${sheetName}`);
+          } else {
+            console.log(`No data found in sheet: ${sheetName}`);
           }
         });
         
@@ -88,9 +160,10 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             description: `Uploaded ${totalProcessed} expenses from ${workbook.SheetNames.length} accounts`,
           });
         } else {
+          console.log('No valid expenses found. Check console for details.');
           toast({
-            title: "Warning",
-            description: "No valid expense data found in any sheets",
+            title: "No Data Found",
+            description: `No valid expense data found. Expected columns: date, description, amount. Check console for details.`,
             variant: "destructive",
           });
         }
@@ -170,7 +243,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
                 Supports CSV, Excel (.xlsx, .xls) files
               </p>
               <p className="text-sm text-slate-500 mb-4">
-                Expected columns: date, description, category, spent/amount
+                Expected columns: date, description, amount (any variation of these names)
               </p>
               <p className="text-sm text-blue-600 font-medium">
                 Excel files: Each tab represents a different account
