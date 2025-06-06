@@ -163,7 +163,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           console.log('No valid expenses found. Check console for details.');
           toast({
             title: "No Data Found",
-            description: `No valid expense data found. Expected columns: date, description, amount. Check console for details.`,
+            description: `No valid expense data found. Expected columns: date, description, amount/spent. Check console for details.`,
             variant: "destructive",
           });
         }
@@ -243,7 +243,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
                 Supports CSV, Excel (.xlsx, .xls) files
               </p>
               <p className="text-sm text-slate-500 mb-4">
-                Expected columns: date, description, amount (any variation of these names)
+                Expected columns: date, description, amount/spent (any variation of these names)
               </p>
               <p className="text-sm text-blue-600 font-medium">
                 Excel files: Each tab represents a different account
