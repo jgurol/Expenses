@@ -8,6 +8,7 @@ import Papa from "papaparse";
 import { useAccountCodes, useAddAccountCode } from "@/hooks/useAccountCodes";
 import { useAccounts, useAddAccount } from "@/hooks/useAccounts";
 import type { Expense } from "@/pages/Index";
+import { useAIAccountMatching } from "@/hooks/useAIAccountMatching";
 
 interface FileUploadProps {
   onExpensesUploaded: (expenses: Expense[]) => void;
@@ -22,6 +23,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const { data: accounts = [] } = useAccounts();
   const addAccountCode = useAddAccountCode();
   const addAccount = useAddAccount();
+  const aiMatching = useAIAccountMatching();
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -31,6 +33,19 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
         return row[name];
       }
+    }
+    return null;
+  };
+
+  const matchExpenseToAccountCode = async (description: string, accountCodes: AccountCode[]) => {
+    try {
+      const result = await aiMatching.mutateAsync({ description, accountCodes });
+      if (result.suggestedAccountCode && result.confidence === 'high') {
+        console.log(`AI matched "${description}" to account code: ${result.suggestedAccountCode}`);
+        return result.suggestedAccountCode;
+      }
+    } catch (error) {
+      console.error('AI matching failed:', error);
     }
     return null;
   };
@@ -110,61 +125,74 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       await ensureAccountExists(accountName, accountCodeRecord.id);
     }
 
-    const expenses: Expense[] = data
-      .map((row, index) => {
-        // More flexible column name matching
-        const date = findColumn(row, ['date', 'Date', 'DATE', 'Transaction Date', 'Post Date', 'Posted Date']);
-        const description = findColumn(row, ['description', 'Description', 'DESCRIPTION', 'Merchant', 'Payee', 'Details', 'Transaction']);
-        const amount = findColumn(row, ['spent', 'Spent', 'SPENT', 'amount', 'Amount', 'AMOUNT', 'Debit', 'Credit', 'Transaction Amount']);
-        const category = findColumn(row, ['category', 'Category', 'CATEGORY', 'Type', 'Expense Type']);
+    const expenses: Expense[] = [];
+    
+    for (let index = 0; index < data.length; index++) {
+      const row = data[index];
+      
+      // More flexible column name matching
+      const date = findColumn(row, ['date', 'Date', 'DATE', 'Transaction Date', 'Post Date', 'Posted Date']);
+      const description = findColumn(row, ['description', 'Description', 'DESCRIPTION', 'Merchant', 'Payee', 'Details', 'Transaction']);
+      const amount = findColumn(row, ['spent', 'Spent', 'SPENT', 'amount', 'Amount', 'AMOUNT', 'Debit', 'Credit', 'Transaction Amount']);
+      const category = findColumn(row, ['category', 'Category', 'CATEGORY', 'Type', 'Expense Type']);
 
-        console.log(`Row ${index}:`, { date, description, amount, category });
+      console.log(`Row ${index}:`, { date, description, amount, category });
 
-        // Check if we have the minimum required data
-        if (!date || !description || (!amount && amount !== 0)) {
-          console.log(`Skipping row ${index} - missing required data`);
-          return null;
-        }
+      // Check if we have the minimum required data
+      if (!date || !description || (!amount && amount !== 0)) {
+        console.log(`Skipping row ${index} - missing required data`);
+        continue;
+      }
 
-        // Parse amount - handle negative values and currency symbols
-        let parsedAmount = 0;
-        if (typeof amount === 'string') {
-          // Remove currency symbols and commas, handle negative values
-          const cleanAmount = amount.replace(/[$,\s]/g, '').replace(/[()]/g, '-');
-          parsedAmount = Math.abs(parseFloat(cleanAmount)) || 0;
+      // Parse amount - handle negative values and currency symbols
+      let parsedAmount = 0;
+      if (typeof amount === 'string') {
+        // Remove currency symbols and commas, handle negative values
+        const cleanAmount = amount.replace(/[$,\s]/g, '').replace(/[()]/g, '-');
+        parsedAmount = Math.abs(parseFloat(cleanAmount)) || 0;
+      } else {
+        parsedAmount = Math.abs(parseFloat(amount)) || 0;
+      }
+
+      // Parse date
+      let parsedDate = '';
+      if (date instanceof Date) {
+        parsedDate = date.toISOString().split('T')[0];
+      } else if (typeof date === 'string') {
+        const dateObj = new Date(date);
+        if (!isNaN(dateObj.getTime())) {
+          parsedDate = dateObj.toISOString().split('T')[0];
         } else {
-          parsedAmount = Math.abs(parseFloat(amount)) || 0;
+          console.log(`Invalid date format: ${date}`);
+          continue;
         }
+      } else if (typeof date === 'number') {
+        // Excel date number
+        const excelDate = new Date((date - 25569) * 86400 * 1000);
+        parsedDate = excelDate.toISOString().split('T')[0];
+      }
 
-        // Parse date
-        let parsedDate = '';
-        if (date instanceof Date) {
-          parsedDate = date.toISOString().split('T')[0];
-        } else if (typeof date === 'string') {
-          const dateObj = new Date(date);
-          if (!isNaN(dateObj.getTime())) {
-            parsedDate = dateObj.toISOString().split('T')[0];
-          } else {
-            console.log(`Invalid date format: ${date}`);
-            return null;
-          }
-        } else if (typeof date === 'number') {
-          // Excel date number
-          const excelDate = new Date((date - 25569) * 86400 * 1000);
-          parsedDate = excelDate.toISOString().split('T')[0];
+      // Try to match expense description to existing account codes using AI
+      let finalAccountCode = accountCode; // Default to sheet name account code
+      
+      if (accountCodes.length > 0) {
+        const aiMatchedCode = await matchExpenseToAccountCode(description.toString(), accountCodes);
+        if (aiMatchedCode) {
+          finalAccountCode = aiMatchedCode;
+          console.log(`AI matched "${description}" to existing account code: ${aiMatchedCode}`);
         }
+      }
 
-        return {
-          id: generateId(),
-          date: parsedDate,
-          description: description.toString(),
-          category: category?.toString() || "Uncategorized",
-          spent: parsedAmount,
-          accountCode: accountCode,
-          classified: false,
-        } as Expense;
-      })
-      .filter((expense): expense is Expense => expense !== null);
+      expenses.push({
+        id: generateId(),
+        date: parsedDate,
+        description: description.toString(),
+        category: category?.toString() || "Uncategorized",
+        spent: parsedAmount,
+        accountCode: finalAccountCode,
+        classified: false,
+      } as Expense);
+    }
 
     console.log(`Processed ${expenses.length} valid expenses from ${accountName}`);
     return expenses;
