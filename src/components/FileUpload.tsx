@@ -6,6 +6,7 @@ import { Upload, FileSpreadsheet, X } from "lucide-react";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { useAccountCodes, useAddAccountCode } from "@/hooks/useAccountCodes";
+import { useAccounts, useAddAccount } from "@/hooks/useAccounts";
 import type { Expense } from "@/pages/Index";
 
 interface FileUploadProps {
@@ -18,7 +19,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const { data: accountCodes = [] } = useAccountCodes();
+  const { data: accounts = [] } = useAccounts();
   const addAccountCode = useAddAccountCode();
+  const addAccount = useAddAccount();
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -57,6 +60,37 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     }
   };
 
+  const ensureAccountExists = async (sheetName: string, accountCodeId: string) => {
+    // Check if account already exists for this sheet
+    const existingAccount = accounts.find(acc => acc.name === sheetName);
+    if (existingAccount) {
+      return existingAccount.account_number;
+    }
+
+    // Create new account
+    try {
+      // Generate a unique account number
+      const accountNumber = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
+      
+      const newAccount = {
+        account_code_id: accountCodeId,
+        account_number: accountNumber,
+        name: sheetName,
+        description: `Account created from spreadsheet tab: ${sheetName}`,
+        balance: 0,
+        is_active: true
+      };
+      
+      await addAccount.mutateAsync(newAccount);
+      console.log(`Created new account: ${accountNumber} for sheet: ${sheetName}`);
+      return accountNumber;
+    } catch (error) {
+      console.error('Error creating account:', error);
+      // Return sheet name as fallback
+      return sheetName;
+    }
+  };
+
   const processFileData = async (data: any[], accountName: string) => {
     console.log(`Processing sheet: ${accountName}`);
     console.log(`Raw data length: ${data.length}`);
@@ -66,8 +100,15 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       console.log('First row sample:', data[0]);
     }
 
-    // Ensure account code exists
+    // Ensure account code exists and get its ID
     const accountCode = await ensureAccountCodeExists(accountName);
+    
+    // Find the account code ID for creating the account
+    const accountCodeRecord = accountCodes.find(ac => ac.code === accountCode || ac.name === accountName);
+    if (accountCodeRecord) {
+      // Ensure account exists
+      await ensureAccountExists(accountName, accountCodeRecord.id);
+    }
 
     const expenses: Expense[] = data
       .map((row, index) => {
@@ -216,7 +257,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [onExpensesUploaded, accountCodes, addAccountCode]);
+  }, [onExpensesUploaded, accountCodes, accounts, addAccountCode, addAccount]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
