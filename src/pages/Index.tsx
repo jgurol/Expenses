@@ -3,10 +3,10 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, User, Loader2 } from "lucide-react";
+import { Users, User, Loader2, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { FileUpload } from "@/components/FileUpload";
 import { ExpenseClassifier } from "@/components/ExpenseClassifier";
-import { ChartOfAccounts } from "@/components/ChartOfAccounts";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { useExpenses, useAddExpenses, useClassifyExpense } from "@/hooks/useExpenses";
 import { useAccountCodes } from "@/hooks/useAccountCodes";
@@ -33,6 +33,7 @@ export interface AccountCode {
 
 const Index = () => {
   const [currentRole, setCurrentRole] = useState<UserRole>("bookkeeper");
+  const navigate = useNavigate();
   
   const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
   const { data: accountCodes = [], isLoading: accountCodesLoading } = useAccountCodes();
@@ -100,28 +101,40 @@ const Index = () => {
               <p className="text-slate-600">Streamline your business expense classification</p>
             </div>
             
-            {/* Role Switch */}
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">Current Role:</span>
-              <div className="flex bg-slate-100 rounded-lg p-1">
-                <Button
-                  variant={currentRole === "bookkeeper" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setCurrentRole("bookkeeper")}
-                  className="flex items-center gap-2"
-                >
-                  <Users className="h-4 w-4" />
-                  Bookkeeper
-                </Button>
-                <Button
-                  variant={currentRole === "classifier" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setCurrentRole("classifier")}
-                  className="flex items-center gap-2"
-                >
-                  <User className="h-4 w-4" />
-                  Classifier
-                </Button>
+              {/* Chart of Accounts Button */}
+              <Button
+                variant="outline"
+                onClick={() => navigate("/chart-of-accounts")}
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Chart of Accounts
+              </Button>
+
+              {/* Role Switch */}
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-slate-600">Current Role:</span>
+                <div className="flex bg-slate-100 rounded-lg p-1">
+                  <Button
+                    variant={currentRole === "bookkeeper" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setCurrentRole("bookkeeper")}
+                    className="flex items-center gap-2"
+                  >
+                    <Users className="h-4 w-4" />
+                    Bookkeeper
+                  </Button>
+                  <Button
+                    variant={currentRole === "classifier" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setCurrentRole("classifier")}
+                    className="flex items-center gap-2"
+                  >
+                    <User className="h-4 w-4" />
+                    Classifier
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -146,11 +159,6 @@ const Index = () => {
                 <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
                   <h2 className="text-xl font-semibold mb-4 text-slate-900">Upload Expenses</h2>
                   <FileUpload onExpensesUploaded={handleExpensesUploaded} />
-                </Card>
-
-                <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
-                  <h2 className="text-xl font-semibold mb-4 text-slate-900">Chart of Accounts</h2>
-                  <ChartOfAccounts />
                 </Card>
 
                 <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
