@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -117,6 +116,11 @@ const Index = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteUnclassifiedExpense = async (expenseId: string) => {
+    console.log('Deleting unclassified expense:', expenseId);
+    // Add your delete logic here if you want to delete from database
   };
 
   const unclassifiedExpenses = expenses.filter(e => !e.classified);
@@ -246,6 +250,7 @@ const Index = () => {
                     expenses={unclassifiedExpenses}
                     accountCodes={accountCodes}
                     onExpenseClassified={handleExpenseClassified}
+                    onExpenseDeleted={handleDeleteUnclassifiedExpense}
                   />
                 </Card>
 

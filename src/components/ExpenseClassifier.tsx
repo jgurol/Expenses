@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Trash2 } from "lucide-react";
 import { ExpensesTable } from "./ExpensesTable";
 import type { Expense, AccountCode } from "@/pages/Index";
 
@@ -10,9 +11,15 @@ interface ExpenseClassifierProps {
   expenses: Expense[];
   accountCodes: AccountCode[];
   onExpenseClassified: (expenseId: string, accountCode: string) => void;
+  onExpenseDeleted?: (expenseId: string) => void;
 }
 
-export const ExpenseClassifier = ({ expenses, accountCodes, onExpenseClassified }: ExpenseClassifierProps) => {
+export const ExpenseClassifier = ({ 
+  expenses, 
+  accountCodes, 
+  onExpenseClassified,
+  onExpenseDeleted 
+}: ExpenseClassifierProps) => {
   const [selectedAccountCodes, setSelectedAccountCodes] = useState<Record<string, string>>({});
 
   const handleClassifyExpense = (expenseId: string) => {
@@ -20,6 +27,18 @@ export const ExpenseClassifier = ({ expenses, accountCodes, onExpenseClassified 
     if (accountCode) {
       onExpenseClassified(expenseId, accountCode);
       // Remove from selected after classification
+      setSelectedAccountCodes(prev => {
+        const updated = { ...prev };
+        delete updated[expenseId];
+        return updated;
+      });
+    }
+  };
+
+  const handleDeleteExpense = (expenseId: string) => {
+    if (onExpenseDeleted) {
+      onExpenseDeleted(expenseId);
+      // Remove from selected after deletion
       setSelectedAccountCodes(prev => {
         const updated = { ...prev };
         delete updated[expenseId];
@@ -94,6 +113,17 @@ export const ExpenseClassifier = ({ expenses, accountCodes, onExpenseClassified 
             >
               Classify
             </Button>
+
+            {onExpenseDeleted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteExpense(expense.id)}
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       ))}
