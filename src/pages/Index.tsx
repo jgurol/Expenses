@@ -8,7 +8,7 @@ import { FileUpload } from "@/components/FileUpload";
 import { ExpenseClassifier } from "@/components/ExpenseClassifier";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { ExpensesTable } from "@/components/ExpensesTable";
-import { useExpenses, useAddExpenses, useClassifyExpense } from "@/hooks/useExpenses";
+import { useExpenses, useAddExpenses, useClassifyExpense, useDeleteExpense } from "@/hooks/useExpenses";
 import { useAccountCodes } from "@/hooks/useAccountCodes";
 import { toast } from "@/hooks/use-toast";
 
@@ -40,6 +40,7 @@ const Index = () => {
   const { data: accountCodes = [], isLoading: accountCodesLoading } = useAccountCodes();
   const addExpenses = useAddExpenses();
   const classifyExpense = useClassifyExpense();
+  const deleteExpense = useDeleteExpense();
 
   const handleExpensesUploaded = (newExpenses: Expense[]) => {
     console.log('New expenses uploaded:', newExpenses);
@@ -120,7 +121,21 @@ const Index = () => {
 
   const handleDeleteUnclassifiedExpense = async (expenseId: string) => {
     console.log('Deleting unclassified expense:', expenseId);
-    // Add your delete logic here if you want to delete from database
+    
+    try {
+      await deleteExpense.mutateAsync(expenseId);
+      toast({
+        title: "Success",
+        description: "Expense deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete expense",
+        variant: "destructive",
+      });
+    }
   };
 
   const unclassifiedExpenses = expenses.filter(e => !e.classified);
