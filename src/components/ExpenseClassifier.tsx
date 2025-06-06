@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { ExpensesTable } from "./ExpensesTable";
 import type { Expense, AccountCode } from "@/pages/Index";
 
@@ -43,7 +44,13 @@ export const ExpenseClassifier = ({ expenses, accountCodes, onExpenseClassified 
       {expenses.map((expense) => (
         <div key={expense.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
           <div className="flex-1">
-            <div className="grid grid-cols-4 gap-4 items-center">
+            <div className="grid grid-cols-5 gap-4 items-center">
+              <div>
+                <p className="text-sm text-slate-600">Account</p>
+                <Badge variant="outline" className="text-xs font-mono">
+                  {expense.accountCode || "Unassigned"}
+                </Badge>
+              </div>
               <div>
                 <p className="text-sm text-slate-600">Date</p>
                 <p className="font-medium">{new Date(expense.date).toLocaleDateString()}</p>

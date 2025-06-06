@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,15 +18,16 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  const processFileData = (data: any[]) => {
+  const processFileData = (data: any[], accountName?: string) => {
     const expenses: Expense[] = data
-      .filter(row => row.date && row.description && row.spent)
+      .filter(row => row.date && row.description && (row.spent || row.amount))
       .map(row => ({
         id: generateId(),
         date: row.date || row.Date || "",
         description: row.description || row.Description || "",
         category: row.category || row.Category || "Uncategorized",
         spent: parseFloat(row.spent || row.Spent || row.amount || row.Amount || "0"),
+        accountCode: accountName || "Unknown",
         classified: false,
       }));
 
@@ -45,7 +45,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         Papa.parse(file, {
           header: true,
           complete: (results) => {
-            const expenses = processFileData(results.data);
+            const expenses = processFileData(results.data, "CSV Import");
             onExpensesUploaded(expenses);
             toast({
               title: "Success!",
@@ -63,16 +63,37 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       } else if (['xlsx', 'xls'].includes(fileExtension || '')) {
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer);
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json(worksheet);
         
-        const expenses = processFileData(data);
-        onExpensesUploaded(expenses);
-        toast({
-          title: "Success!",
-          description: `Uploaded ${expenses.length} expenses from Excel`,
+        let allExpenses: Expense[] = [];
+        let totalProcessed = 0;
+        
+        // Process each sheet/tab as a separate account
+        workbook.SheetNames.forEach(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const data = XLSX.utils.sheet_to_json(worksheet);
+          
+          if (data.length > 0) {
+            const expenses = processFileData(data, sheetName);
+            allExpenses = [...allExpenses, ...expenses];
+            totalProcessed += expenses.length;
+            
+            console.log(`Processed ${expenses.length} expenses from sheet: ${sheetName}`);
+          }
         });
+        
+        if (allExpenses.length > 0) {
+          onExpensesUploaded(allExpenses);
+          toast({
+            title: "Success!",
+            description: `Uploaded ${totalProcessed} expenses from ${workbook.SheetNames.length} accounts`,
+          });
+        } else {
+          toast({
+            title: "Warning",
+            description: "No valid expense data found in any sheets",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Error",
@@ -81,6 +102,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         });
       }
     } catch (error) {
+      console.error("File processing error:", error);
       toast({
         title: "Error",
         description: "Failed to process file",
@@ -149,6 +171,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               </p>
               <p className="text-sm text-slate-500 mb-4">
                 Expected columns: date, description, category, spent/amount
+              </p>
+              <p className="text-sm text-blue-600 font-medium">
+                Excel files: Each tab represents a different account
               </p>
             </div>
 

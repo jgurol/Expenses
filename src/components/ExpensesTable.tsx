@@ -31,7 +31,7 @@ export const ExpensesTable = ({
   const getAccountName = (accountCodeId?: string) => {
     if (!accountCodeId) return "Unassigned";
     const account = accountCodes.find(code => code.id === accountCodeId);
-    return account ? `${account.code} - ${account.name}` : "Unknown";
+    return account ? `${account.code} - ${account.name}` : accountCodeId;
   };
 
   return (
@@ -41,10 +41,10 @@ export const ExpensesTable = ({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Account</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead>Account</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               {showClassificationStatus && <TableHead className="text-center">Status</TableHead>}
             </TableRow>
@@ -52,6 +52,11 @@ export const ExpensesTable = ({
           <TableBody>
             {expenses.map((expense) => (
               <TableRow key={expense.id} className="hover:bg-slate-50">
+                <TableCell>
+                  <Badge variant="outline" className="text-xs font-mono">
+                    {expense.accountCode || getAccountName(expense.accountCode)}
+                  </Badge>
+                </TableCell>
                 <TableCell className="font-mono text-sm">
                   {new Date(expense.date).toLocaleDateString()}
                 </TableCell>
@@ -62,11 +67,6 @@ export const ExpensesTable = ({
                   <Badge variant="outline" className="text-xs">
                     {expense.category}
                   </Badge>
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm text-slate-600">
-                    {getAccountName(expense.accountCode)}
-                  </span>
                 </TableCell>
                 <TableCell className="text-right font-semibold">
                   ${expense.spent.toFixed(2)}
