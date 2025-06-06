@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ const Index = () => {
   const classifyExpense = useClassifyExpense();
 
   const handleExpensesUploaded = (newExpenses: Expense[]) => {
+    console.log('New expenses uploaded:', newExpenses);
     setImportedExpenses(newExpenses);
     toast({
       title: "File Processed",
@@ -50,8 +52,12 @@ const Index = () => {
   };
 
   const handleDeleteImportedExpense = (expenseId: string) => {
-    console.log('Deleting imported expense:', expenseId);
-    setImportedExpenses(prev => prev.filter(expense => expense.id !== expenseId));
+    console.log('Deleting imported expense with ID:', expenseId);
+    setImportedExpenses(prev => {
+      const filtered = prev.filter(expense => expense.id !== expenseId);
+      console.log('Remaining expenses after deletion:', filtered.length);
+      return filtered;
+    });
     toast({
       title: "Expense Removed",
       description: "Expense removed from import",
@@ -118,6 +124,9 @@ const Index = () => {
 
   const isLoading = expensesLoading || accountCodesLoading;
 
+  console.log('Imported expenses state:', importedExpenses);
+  console.log('Imported expenses count:', importedExpenses.length);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
@@ -130,7 +139,6 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-4">
-              {/* Chart of Accounts Button */}
               <Button
                 variant="outline"
                 onClick={() => navigate("/chart-of-accounts")}
@@ -140,7 +148,6 @@ const Index = () => {
                 Chart of Accounts
               </Button>
 
-              {/* Role Switch */}
               <div className="flex items-center gap-4">
                 <span className="text-sm text-slate-600">Current Role:</span>
                 <div className="flex bg-slate-100 rounded-lg p-1">

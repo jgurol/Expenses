@@ -23,10 +23,11 @@ export const ExpensesTable = ({
   onDeleteExpense,
   showDeleteButton = false
 }: ExpensesTableProps) => {
-  console.log('ExpensesTable props:', { 
+  console.log('ExpensesTable rendered with:', { 
     expensesCount: expenses.length, 
     showDeleteButton, 
-    hasOnDeleteExpense: !!onDeleteExpense 
+    hasOnDeleteExpense: !!onDeleteExpense,
+    title 
   });
 
   if (expenses.length === 0) {
@@ -47,7 +48,7 @@ export const ExpensesTable = ({
 
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4 text-slate-900">{title}</h3>
+      {title && <h3 className="text-lg font-semibold mb-4 text-slate-900">{title}</h3>}
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
@@ -62,59 +63,65 @@ export const ExpensesTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {expenses.map((expense) => (
-              <TableRow key={expense.id} className="hover:bg-slate-50">
-                <TableCell>
-                  <Badge variant="outline" className="text-xs font-mono">
-                    {expense.accountCode ? expense.accountCode : getAccountName(expense.accountCode)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-mono text-sm">
-                  {new Date(expense.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="font-medium">
-                  {expense.description}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {expense.category}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right font-semibold">
-                  ${expense.spent.toFixed(2)}
-                </TableCell>
-                {showClassificationStatus && (
-                  <TableCell className="text-center">
-                    <Badge 
-                      variant={expense.classified ? "default" : "secondary"}
-                      className="text-xs"
-                    >
-                      {expense.classified ? "Classified" : "Pending"}
+            {expenses.map((expense) => {
+              console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton);
+              return (
+                <TableRow key={expense.id} className="hover:bg-slate-50">
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs font-mono">
+                      {expense.accountCode || getAccountName(expense.accountCode)}
                     </Badge>
                   </TableCell>
-                )}
-                {showDeleteButton && (
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        console.log('Delete button clicked for expense:', expense.id);
-                        onDeleteExpense?.(expense.id);
-                      }}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <TableCell className="font-mono text-sm">
+                    {new Date(expense.date).toLocaleDateString()}
                   </TableCell>
-                )}
-              </TableRow>
-            ))}
+                  <TableCell className="font-medium">
+                    {expense.description}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {expense.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    ${expense.spent.toFixed(2)}
+                  </TableCell>
+                  {showClassificationStatus && (
+                    <TableCell className="text-center">
+                      <Badge 
+                        variant={expense.classified ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {expense.classified ? "Classified" : "Pending"}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {showDeleteButton && (
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          console.log('Delete button clicked for expense:', expense.id);
+                          if (onDeleteExpense) {
+                            onDeleteExpense(expense.id);
+                          } else {
+                            console.warn('onDeleteExpense function not provided');
+                          }
+                        }}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
       
-      {/* Summary row */}
       <div className="mt-4 flex justify-between items-center text-sm text-slate-600 border-t pt-4">
         <span>Total: {expenses.length} expenses</span>
         <span className="font-semibold">
