@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { useExpenses, useAddExpenses, useClassifyExpense } from "@/hooks/useExpenses";
 import { useDeleteExpense } from "@/hooks/useDeleteExpense";
+import { useBulkDeleteExpenses } from "@/hooks/useBulkDeleteExpenses";
 import { useAccountCodes } from "@/hooks/useAccountCodes";
 import { toast } from "@/hooks/use-toast";
 
@@ -43,6 +43,7 @@ const Index = () => {
   const addExpenses = useAddExpenses();
   const classifyExpense = useClassifyExpense();
   const deleteExpense = useDeleteExpense();
+  const bulkDeleteExpenses = useBulkDeleteExpenses();
 
   const handleExpensesUploaded = (newExpenses: Expense[]) => {
     console.log('New expenses uploaded:', newExpenses);
@@ -63,6 +64,19 @@ const Index = () => {
     toast({
       title: "Expense Removed",
       description: "Expense removed from import",
+    });
+  };
+
+  const handleBulkDeleteImportedExpenses = (expenseIds: string[]) => {
+    console.log('Bulk deleting imported expenses with IDs:', expenseIds);
+    setImportedExpenses(prev => {
+      const filtered = prev.filter(expense => !expenseIds.includes(expense.id));
+      console.log('Remaining expenses after bulk deletion:', filtered.length);
+      return filtered;
+    });
+    toast({
+      title: "Expenses Removed",
+      description: `${expenseIds.length} expenses removed from import`,
     });
   };
 
@@ -135,6 +149,25 @@ const Index = () => {
       toast({
         title: "Error",
         description: "Failed to delete expense",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkDeleteUnclassifiedExpenses = async (expenseIds: string[]) => {
+    console.log('Bulk deleting unclassified expenses:', expenseIds);
+    
+    try {
+      await bulkDeleteExpenses.mutateAsync(expenseIds);
+      toast({
+        title: "Success",
+        description: `${expenseIds.length} expenses deleted successfully`,
+      });
+    } catch (error) {
+      console.error('Error bulk deleting expenses:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete expenses",
         variant: "destructive",
       });
     }
@@ -241,7 +274,9 @@ const Index = () => {
                       title=""
                       showClassificationStatus={false}
                       showDeleteButton={true}
+                      showMultiSelect={true}
                       onDeleteExpense={handleDeleteImportedExpense}
+                      onBulkDeleteExpenses={handleBulkDeleteImportedExpenses}
                     />
                   </Card>
                 )}
@@ -253,6 +288,27 @@ const Index = () => {
                     accountCodes={accountCodes}
                   />
                 </Card>
+
+                {unclassifiedExpenses.length > 0 && (
+                  <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
+                    <h2 className="text-xl font-semibold mb-4 text-slate-900">
+                      Unclassified Expenses
+                      <Badge variant="secondary" className="ml-2">
+                        {unclassifiedExpenses.length} pending
+                      </Badge>
+                    </h2>
+                    <ExpensesTable 
+                      expenses={unclassifiedExpenses}
+                      accountCodes={accountCodes}
+                      title=""
+                      showClassificationStatus={true}
+                      showDeleteButton={true}
+                      showMultiSelect={true}
+                      onDeleteExpense={handleDeleteUnclassifiedExpense}
+                      onBulkDeleteExpenses={handleBulkDeleteUnclassifiedExpenses}
+                    />
+                  </Card>
+                )}
               </div>
             ) : (
               <div className="space-y-8">

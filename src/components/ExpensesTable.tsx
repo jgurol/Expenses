@@ -1,8 +1,10 @@
 
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Trash2 } from "lucide-react";
 import type { Expense, AccountCode } from "@/pages/Index";
 
@@ -12,7 +14,9 @@ interface ExpensesTableProps {
   title?: string;
   showClassificationStatus?: boolean;
   onDeleteExpense?: (expenseId: string) => void;
+  onBulkDeleteExpenses?: (expenseIds: string[]) => void;
   showDeleteButton?: boolean;
+  showMultiSelect?: boolean;
 }
 
 export const ExpensesTable = ({ 
@@ -21,12 +25,18 @@ export const ExpensesTable = ({
   title = "Expenses",
   showClassificationStatus = true,
   onDeleteExpense,
-  showDeleteButton = false
+  onBulkDeleteExpenses,
+  showDeleteButton = false,
+  showMultiSelect = false
 }: ExpensesTableProps) => {
+  const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
+
   console.log('ExpensesTable rendered with:', { 
     expensesCount: expenses.length, 
     showDeleteButton, 
+    showMultiSelect,
     hasOnDeleteExpense: !!onDeleteExpense,
+    hasOnBulkDeleteExpenses: !!onBulkDeleteExpenses,
     title 
   });
 
@@ -46,13 +56,62 @@ export const ExpensesTable = ({
     return account ? `${account.code} - ${account.name}` : accountCodeId;
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedExpenses(expenses.map(expense => expense.id));
+    } else {
+      setSelectedExpenses([]);
+    }
+  };
+
+  const handleSelectExpense = (expenseId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedExpenses(prev => [...prev, expenseId]);
+    } else {
+      setSelectedExpenses(prev => prev.filter(id => id !== expenseId));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedExpenses.length > 0 && onBulkDeleteExpenses) {
+      onBulkDeleteExpenses(selectedExpenses);
+      setSelectedExpenses([]);
+    }
+  };
+
+  const isAllSelected = selectedExpenses.length === expenses.length;
+  const isSomeSelected = selectedExpenses.length > 0 && selectedExpenses.length < expenses.length;
+
   return (
     <Card className="p-6">
-      {title && <h3 className="text-lg font-semibold mb-4 text-slate-900">{title}</h3>}
+      <div className="flex items-center justify-between mb-4">
+        {title && <h3 className="text-lg font-semibold text-slate-900">{title}</h3>}
+        {showMultiSelect && selectedExpenses.length > 0 && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            className="flex items-center gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete Selected ({selectedExpenses.length})
+          </Button>
+        )}
+      </div>
+      
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
+              {showMultiSelect && (
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={isAllSelected || isSomeSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all expenses"
+                  />
+                </TableHead>
+              )}
               <TableHead>Account</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Description</TableHead>
@@ -64,9 +123,19 @@ export const ExpensesTable = ({
           </TableHeader>
           <TableBody>
             {expenses.map((expense) => {
+              const isSelected = selectedExpenses.includes(expense.id);
               console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton);
               return (
                 <TableRow key={expense.id} className="hover:bg-slate-50">
+                  {showMultiSelect && (
+                    <TableCell>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => handleSelectExpense(expense.id, checked as boolean)}
+                        aria-label={`Select expense ${expense.description}`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Badge variant="outline" className="text-xs font-mono">
                       {expense.accountCode || getAccountName(expense.accountCode)}
