@@ -35,13 +35,26 @@ export const useAddExpenses = () => {
   
   return useMutation({
     mutationFn: async (expenses: Omit<Expense, 'id'>[]) => {
-      const expensesToInsert = expenses.map(expense => ({
-        date: expense.date,
-        description: expense.description,
-        category: expense.category,
-        spent: expense.spent,
-        classified: expense.classified
-      }));
+      // First, get all account codes to map accountCode strings to IDs
+      const { data: accountCodes, error: accountCodesError } = await supabase
+        .from('account_codes')
+        .select('id, code');
+      
+      if (accountCodesError) throw accountCodesError;
+
+      const expensesToInsert = expenses.map(expense => {
+        // Find the account_code_id based on the accountCode string
+        const accountCodeRecord = accountCodes?.find(ac => ac.code === expense.accountCode);
+        
+        return {
+          date: expense.date,
+          description: expense.description,
+          category: expense.category,
+          spent: expense.spent,
+          classified: expense.classified,
+          account_code_id: accountCodeRecord?.id || null
+        };
+      });
 
       const { data, error } = await supabase
         .from('expenses')
