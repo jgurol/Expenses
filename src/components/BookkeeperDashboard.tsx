@@ -27,6 +27,8 @@ export const BookkeeperDashboard = ({
         <ExpensesDashboard 
           expenses={expenses}
           accountCodes={accountCodes}
+          onDeleteExpense={onDeleteUnclassifiedExpense}
+          onBulkDeleteExpenses={onBulkDeleteUnclassifiedExpenses}
         />
       </Card>
 
