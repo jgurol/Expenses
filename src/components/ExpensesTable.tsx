@@ -23,6 +23,12 @@ export const ExpensesTable = ({
   onDeleteExpense,
   showDeleteButton = false
 }: ExpensesTableProps) => {
+  console.log('ExpensesTable props:', { 
+    expensesCount: expenses.length, 
+    showDeleteButton, 
+    hasOnDeleteExpense: !!onDeleteExpense 
+  });
+
   if (expenses.length === 0) {
     return (
       <Card className="p-8 text-center bg-slate-50">
@@ -92,7 +98,10 @@ export const ExpensesTable = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onDeleteExpense?.(expense.id)}
+                      onClick={() => {
+                        console.log('Delete button clicked for expense:', expense.id);
+                        onDeleteExpense?.(expense.id);
+                      }}
                       className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
