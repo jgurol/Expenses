@@ -3,11 +3,12 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, User, Loader2, Settings } from "lucide-react";
+import { Users, User, Loader2, Settings, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FileUpload } from "@/components/FileUpload";
 import { ExpenseClassifier } from "@/components/ExpenseClassifier";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
+import { ExpensesTable } from "@/components/ExpensesTable";
 import { useExpenses, useAddExpenses, useClassifyExpense } from "@/hooks/useExpenses";
 import { useAccountCodes } from "@/hooks/useAccountCodes";
 import { toast } from "@/hooks/use-toast";
@@ -33,6 +34,7 @@ export interface AccountCode {
 
 const Index = () => {
   const [currentRole, setCurrentRole] = useState<UserRole>("bookkeeper");
+  const [importedExpenses, setImportedExpenses] = useState<Expense[]>([]);
   const navigate = useNavigate();
   
   const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
@@ -40,17 +42,43 @@ const Index = () => {
   const addExpenses = useAddExpenses();
   const classifyExpense = useClassifyExpense();
 
-  const handleExpensesUploaded = async (newExpenses: Expense[]) => {
+  const handleExpensesUploaded = (newExpenses: Expense[]) => {
+    setImportedExpenses(newExpenses);
+    toast({
+      title: "File Processed",
+      description: `${newExpenses.length} expenses ready for review`,
+    });
+  };
+
+  const handleDeleteImportedExpense = (expenseId: string) => {
+    setImportedExpenses(prev => prev.filter(expense => expense.id !== expenseId));
+    toast({
+      title: "Expense Removed",
+      description: "Expense removed from import",
+    });
+  };
+
+  const handleSaveImportedExpenses = async () => {
+    if (importedExpenses.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No expenses to save",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      await addExpenses.mutateAsync(newExpenses);
+      await addExpenses.mutateAsync(importedExpenses);
       toast({
         title: "Success",
-        description: `${newExpenses.length} expenses uploaded successfully`,
+        description: `${importedExpenses.length} expenses saved successfully`,
       });
+      setImportedExpenses([]);
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to upload expenses",
+        description: "Failed to save expenses",
         variant: "destructive",
       });
     }
@@ -160,6 +188,35 @@ const Index = () => {
                   <h2 className="text-xl font-semibold mb-4 text-slate-900">Upload Expenses</h2>
                   <FileUpload onExpensesUploaded={handleExpensesUploaded} />
                 </Card>
+
+                {importedExpenses.length > 0 && (
+                  <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-semibold text-slate-900">
+                        Review Imported Expenses
+                        <Badge variant="secondary" className="ml-2">
+                          {importedExpenses.length} expenses
+                        </Badge>
+                      </h2>
+                      <Button
+                        onClick={handleSaveImportedExpenses}
+                        disabled={addExpenses.isPending}
+                        className="flex items-center gap-2"
+                      >
+                        <Upload className="h-4 w-4" />
+                        {addExpenses.isPending ? "Saving..." : "Save to Database"}
+                      </Button>
+                    </div>
+                    <ExpensesTable 
+                      expenses={importedExpenses}
+                      accountCodes={accountCodes}
+                      title=""
+                      showClassificationStatus={false}
+                      showDeleteButton={true}
+                      onDeleteExpense={handleDeleteImportedExpense}
+                    />
+                  </Card>
+                )}
 
                 <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
                   <h2 className="text-xl font-semibold mb-4 text-slate-900">Expenses Overview</h2>

@@ -2,7 +2,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, Trash2 } from "lucide-react";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface ExpensesTableProps {
@@ -10,13 +11,17 @@ interface ExpensesTableProps {
   accountCodes: AccountCode[];
   title?: string;
   showClassificationStatus?: boolean;
+  onDeleteExpense?: (expenseId: string) => void;
+  showDeleteButton?: boolean;
 }
 
 export const ExpensesTable = ({ 
   expenses, 
   accountCodes, 
   title = "Expenses",
-  showClassificationStatus = true 
+  showClassificationStatus = true,
+  onDeleteExpense,
+  showDeleteButton = false
 }: ExpensesTableProps) => {
   if (expenses.length === 0) {
     return (
@@ -47,6 +52,7 @@ export const ExpensesTable = ({
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               {showClassificationStatus && <TableHead className="text-center">Status</TableHead>}
+              {showDeleteButton && <TableHead className="text-center">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -79,6 +85,18 @@ export const ExpensesTable = ({
                     >
                       {expense.classified ? "Classified" : "Pending"}
                     </Badge>
+                  </TableCell>
+                )}
+                {showDeleteButton && (
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDeleteExpense?.(expense.id)}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 )}
               </TableRow>
