@@ -1,11 +1,11 @@
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, DollarSign, Loader2 } from "lucide-react";
 import type { AccountCode } from "@/pages/Index";
@@ -131,11 +131,11 @@ export const ChartOfAccounts = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Account Codes</h3>
-          <p className="text-slate-600">Manage your chart of accounts</p>
+          <p className="text-sm text-slate-600">Manage your chart of accounts</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -217,58 +217,68 @@ export const ChartOfAccounts = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {accountCodes.map((code) => (
-          <Card key={code.id} className="p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-slate-600" />
-                  <Badge variant="outline" className="font-mono">
+      {accountCodes.length === 0 ? (
+        <div className="text-center py-8 bg-slate-50 rounded-lg">
+          <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-700 mb-2">No account codes yet</h3>
+          <p className="text-slate-500">Add your first account code to get started</p>
+        </div>
+      ) : (
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-32">Code</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead className="w-32">Type</TableHead>
+                <TableHead className="w-24 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {accountCodes.map((code) => (
+                <TableRow key={code.id} className="hover:bg-slate-50">
+                  <TableCell className="font-mono text-sm font-medium">
                     {code.code}
-                  </Badge>
-                </div>
-                <div>
-                  <h4 className="font-medium text-slate-900">{code.name}</h4>
-                  <Badge className={`text-xs ${getTypeColor(code.type)}`}>
-                    {code.type.charAt(0).toUpperCase() + code.type.slice(1)}
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEdit(code)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(code.id)}
-                  disabled={deleteAccountCode.isPending}
-                >
-                  {deleteAccountCode.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-        
-        {accountCodes.length === 0 && (
-          <Card className="p-8 text-center bg-slate-50">
-            <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-700 mb-2">No account codes yet</h3>
-            <p className="text-slate-500">Add your first account code to get started</p>
-          </Card>
-        )}
-      </div>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {code.name}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={`text-xs ${getTypeColor(code.type)}`}>
+                      {code.type.charAt(0).toUpperCase() + code.type.slice(1)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-1 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(code)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(code.id)}
+                        disabled={deleteAccountCode.isPending}
+                        className="h-8 w-8 p-0"
+                      >
+                        {deleteAccountCode.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 };
