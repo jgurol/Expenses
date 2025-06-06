@@ -36,6 +36,50 @@ export type Database = {
         }
         Relationships: []
       }
+      accounts: {
+        Row: {
+          account_code_id: string
+          account_number: string
+          balance: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          account_code_id: string
+          account_number: string
+          balance?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          account_code_id?: string
+          account_number?: string
+          balance?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_account_code_id_fkey"
+            columns: ["account_code_id"]
+            isOneToOne: false
+            referencedRelation: "account_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           account_code_id: string | null

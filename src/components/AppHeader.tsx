@@ -26,7 +26,7 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
-              onClick={() => navigate("/chart-of-accounts")}
+              onClick={() => navigate("/accounts")}
               className="flex items-center gap-2"
             >
               <FileText className="h-4 w-4" />
