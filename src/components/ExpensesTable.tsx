@@ -66,7 +66,7 @@ export const ExpensesTable = ({
               <TableRow key={expense.id} className="hover:bg-slate-50">
                 <TableCell>
                   <Badge variant="outline" className="text-xs font-mono">
-                    {expense.accountCode || getAccountName(expense.accountCode)}
+                    {expense.accountCode ? expense.accountCode : getAccountName(expense.accountCode)}
                   </Badge>
                 </TableCell>
                 <TableCell className="font-mono text-sm">
