@@ -110,6 +110,9 @@ export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfA
       case "equity": return "bg-blue-100 text-blue-700 border-blue-300";
       case "revenue": return "bg-purple-100 text-purple-700 border-purple-300";
       case "expense": return "bg-orange-100 text-orange-700 border-orange-300";
+      case "transfer": return "bg-teal-100 text-teal-700 border-teal-300";
+      case "payment": return "bg-indigo-100 text-indigo-700 border-indigo-300";
+      case "shareholder loan": return "bg-pink-100 text-pink-700 border-pink-300";
       default: return "bg-gray-100 text-gray-700 border-gray-300";
     }
   };
@@ -174,6 +177,9 @@ export const ChartOfAccounts = ({ accountCodes, onAccountCodesUpdate }: ChartOfA
                     <SelectItem value="equity">Equity</SelectItem>
                     <SelectItem value="revenue">Revenue</SelectItem>
                     <SelectItem value="expense">Expense</SelectItem>
+                    <SelectItem value="transfer">Transfer</SelectItem>
+                    <SelectItem value="payment">Payment</SelectItem>
+                    <SelectItem value="shareholder loan">Shareholder Loan</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
