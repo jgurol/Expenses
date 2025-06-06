@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { Upload, FileSpreadsheet, X } from "lucide-react";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
+import { useAccountCodes, useAddAccountCode } from "@/hooks/useAccountCodes";
 import type { Expense } from "@/pages/Index";
 
 interface FileUploadProps {
@@ -16,6 +16,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  const { data: accountCodes = [] } = useAccountCodes();
+  const addAccountCode = useAddAccountCode();
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -29,7 +32,32 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     return null;
   };
 
-  const processFileData = (data: any[], accountName: string) => {
+  const ensureAccountCodeExists = async (sheetName: string) => {
+    // Check if account code already exists
+    const existingCode = accountCodes.find(ac => ac.name === sheetName || ac.code === sheetName);
+    if (existingCode) {
+      return existingCode.code;
+    }
+
+    // Create new account code
+    try {
+      const newAccountCode = {
+        code: sheetName.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase(),
+        name: sheetName,
+        type: "expense" as const
+      };
+      
+      await addAccountCode.mutateAsync(newAccountCode);
+      console.log(`Created new account code: ${newAccountCode.code} for sheet: ${sheetName}`);
+      return newAccountCode.code;
+    } catch (error) {
+      console.error('Error creating account code:', error);
+      // Return sheet name as fallback
+      return sheetName;
+    }
+  };
+
+  const processFileData = async (data: any[], accountName: string) => {
     console.log(`Processing sheet: ${accountName}`);
     console.log(`Raw data length: ${data.length}`);
     
@@ -37,6 +65,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       console.log('First row keys:', Object.keys(data[0]));
       console.log('First row sample:', data[0]);
     }
+
+    // Ensure account code exists
+    const accountCode = await ensureAccountCodeExists(accountName);
 
     const expenses: Expense[] = data
       .map((row, index) => {
@@ -88,7 +119,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           description: description.toString(),
           category: category?.toString() || "Uncategorized",
           spent: parsedAmount,
-          accountCode: accountName,
+          accountCode: accountCode,
           classified: false,
         } as Expense;
       })
@@ -108,9 +139,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       if (fileExtension === 'csv') {
         Papa.parse(file, {
           header: true,
-          complete: (results) => {
+          complete: async (results) => {
             console.log('CSV parsing complete:', results);
-            const expenses = processFileData(results.data, "CSV Import");
+            const expenses = await processFileData(results.data, "CSV Import");
             onExpensesUploaded(expenses);
             toast({
               title: "Success!",
@@ -136,7 +167,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         let totalProcessed = 0;
         
         // Process each sheet/tab as a separate account
-        workbook.SheetNames.forEach(sheetName => {
+        for (const sheetName of workbook.SheetNames) {
           console.log(`Processing sheet: ${sheetName}`);
           const worksheet = workbook.Sheets[sheetName];
           const data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
@@ -144,7 +175,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           console.log(`Sheet ${sheetName} raw data:`, data.slice(0, 3)); // Log first 3 rows
           
           if (data.length > 0) {
-            const expenses = processFileData(data, sheetName);
+            const expenses = await processFileData(data, sheetName);
             allExpenses = [...allExpenses, ...expenses];
             totalProcessed += expenses.length;
             
@@ -152,7 +183,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           } else {
             console.log(`No data found in sheet: ${sheetName}`);
           }
-        });
+        }
         
         if (allExpenses.length > 0) {
           onExpensesUploaded(allExpenses);
@@ -185,7 +216,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [onExpensesUploaded]);
+  }, [onExpensesUploaded, accountCodes, addAccountCode]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -247,7 +278,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
                 Expected columns: date, description, amount/spent (any variation of these names)
               </p>
               <p className="text-sm text-blue-600 font-medium">
-                Excel files: Each tab represents a different account
+                Excel files: Each tab represents a different account and will auto-create account codes
               </p>
             </div>
 
