@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,8 @@ import { FileUpload } from "@/components/FileUpload";
 import { ExpenseClassifier } from "@/components/ExpenseClassifier";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { ExpensesTable } from "@/components/ExpensesTable";
-import { useExpenses, useAddExpenses, useClassifyExpense, useDeleteExpense } from "@/hooks/useExpenses";
+import { useExpenses, useAddExpenses, useClassifyExpense } from "@/hooks/useExpenses";
+import { useDeleteExpense } from "@/hooks/useDeleteExpense";
 import { useAccountCodes } from "@/hooks/useAccountCodes";
 import { toast } from "@/hooks/use-toast";
 
