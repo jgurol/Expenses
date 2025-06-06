@@ -33,7 +33,11 @@ export const ExpenseTableRow = ({
     return account ? `${account.code} - ${account.name}` : accountCodeId;
   };
 
-  console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton);
+  const handleCheckboxChange = (checked: boolean | "indeterminate") => {
+    onSelectExpense(expense.id, checked === true);
+  };
+
+  console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton, 'showMultiSelect:', showMultiSelect, 'isSelected:', isSelected);
 
   return (
     <TableRow className="hover:bg-slate-50">
@@ -41,7 +45,7 @@ export const ExpenseTableRow = ({
         <TableCell>
           <Checkbox
             checked={isSelected}
-            onCheckedChange={(checked) => onSelectExpense(expense.id, checked as boolean)}
+            onCheckedChange={handleCheckboxChange}
             aria-label={`Select expense ${expense.description}`}
           />
         </TableCell>

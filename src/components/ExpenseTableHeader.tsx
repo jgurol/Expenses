@@ -19,14 +19,23 @@ export const ExpenseTableHeader = ({
   isSomeSelected,
   onSelectAll
 }: ExpenseTableHeaderProps) => {
+  const handleSelectAllChange = (checked: boolean | "indeterminate") => {
+    onSelectAll(checked === true);
+  };
+
   return (
     <TableHeader>
       <TableRow>
         {showMultiSelect && (
           <TableHead className="w-12">
             <Checkbox
-              checked={isAllSelected || isSomeSelected}
-              onCheckedChange={onSelectAll}
+              checked={isAllSelected}
+              ref={(el) => {
+                if (el) {
+                  el.indeterminate = isSomeSelected && !isAllSelected;
+                }
+              }}
+              onCheckedChange={handleSelectAllChange}
               aria-label="Select all expenses"
             />
           </TableHead>
