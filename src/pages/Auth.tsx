@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,7 +45,20 @@ const Auth = () => {
     const token = searchParams.get('token');
     const tokenHash = searchParams.get('token_hash');
     
-    console.log('URL params check:', { errorCode, errorDescription, errorType, type, urlHash, token: !!token, tokenHash: !!tokenHash });
+    // Also check URL hash for these parameters as Supabase sometimes puts them there
+    const typeFromHash = errorFromHash.get('type');
+    const tokenFromHash = errorFromHash.get('token');
+    const tokenHashFromHash = errorFromHash.get('token_hash');
+    
+    console.log('URL params check:', { 
+      errorCode, 
+      errorDescription, 
+      errorType, 
+      type: type || typeFromHash,
+      urlHash, 
+      token: !!(token || tokenFromHash), 
+      tokenHash: !!(tokenHash || tokenHashFromHash)
+    });
     
     if (errorCode === 'otp_expired' || errorType === 'access_denied') {
       setError('The reset link has expired or is invalid. Please request a new password reset link.');
@@ -60,7 +72,10 @@ const Auth = () => {
     }
 
     // Check if this is a password reset callback - look for recovery type or specific tokens
-    if (type === 'recovery' || (token && tokenHash)) {
+    const isRecoveryType = (type === 'recovery' || typeFromHash === 'recovery');
+    const hasTokens = (token && tokenHash) || (tokenFromHash && tokenHashFromHash);
+    
+    if (isRecoveryType || hasTokens) {
       console.log('Password reset callback detected');
       setMode('update-password');
       setMessage('Please enter your new password below.');
@@ -71,7 +86,7 @@ const Auth = () => {
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     
-    if (accessToken && refreshToken && type !== 'recovery') {
+    if (accessToken && refreshToken && !isRecoveryType) {
       setMessage('Magic link verified! Signing you in...');
       // The useAuth hook will handle the session automatically
       setTimeout(() => {
