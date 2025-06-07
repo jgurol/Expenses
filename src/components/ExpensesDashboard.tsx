@@ -1,4 +1,5 @@
 
+import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExpensesTable } from "@/components/ExpensesTable";
@@ -11,7 +12,7 @@ interface ExpensesDashboardProps {
   onBulkDeleteExpenses?: (expenseIds: string[]) => void;
 }
 
-export const ExpensesDashboard = ({ 
+export const ExpensesDashboard = memo(({ 
   expenses, 
   accountCodes,
   onDeleteExpense,
@@ -60,4 +61,6 @@ export const ExpensesDashboard = ({
       )}
     </div>
   );
-};
+});
+
+ExpensesDashboard.displayName = 'ExpensesDashboard';

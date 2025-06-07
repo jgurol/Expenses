@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, memo, useMemo } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,7 @@ interface ExpensesTableProps {
   showMultiSelect?: boolean;
 }
 
-export const ExpensesTable = ({ 
+export const ExpensesTable = memo(({ 
   expenses, 
   accountCodes, 
   title = "Expenses",
@@ -32,6 +31,10 @@ export const ExpensesTable = ({
   showMultiSelect = false
 }: ExpensesTableProps) => {
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
+
+  // Memoize expensive calculations
+  const isAllSelected = useMemo(() => selectedExpenses.length === expenses.length, [selectedExpenses.length, expenses.length]);
+  const isSomeSelected = useMemo(() => selectedExpenses.length > 0 && selectedExpenses.length < expenses.length, [selectedExpenses.length, expenses.length]);
 
   console.log('ExpensesTable rendered with:', { 
     expensesCount: expenses.length, 
@@ -68,9 +71,6 @@ export const ExpensesTable = ({
       setSelectedExpenses([]);
     }
   };
-
-  const isAllSelected = selectedExpenses.length === expenses.length;
-  const isSomeSelected = selectedExpenses.length > 0 && selectedExpenses.length < expenses.length;
 
   return (
     <Card className="p-6">
@@ -123,4 +123,6 @@ export const ExpensesTable = ({
       <ExpenseTableSummary expenses={expenses} />
     </Card>
   );
-};
+});
+
+ExpensesTable.displayName = 'ExpensesTable';

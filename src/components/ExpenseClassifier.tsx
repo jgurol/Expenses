@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ interface ExpenseClassifierProps {
   onExpenseDeleted?: (expenseId: string) => void;
 }
 
-export const ExpenseClassifier = ({ 
+export const ExpenseClassifier = memo(({ 
   expenses, 
   accountCodes, 
   onExpenseClassified,
@@ -160,4 +160,6 @@ export const ExpenseClassifier = ({
       ))}
     </div>
   );
-};
+});
+
+ExpenseClassifier.displayName = 'ExpenseClassifier';
