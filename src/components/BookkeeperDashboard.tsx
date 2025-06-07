@@ -132,14 +132,12 @@ export const BookkeeperDashboard = ({
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
-        <ExpensesDashboard 
-          expenses={expenses}
-          accountCodes={accountCodes}
-          onDeleteExpense={onDeleteUnclassifiedExpense}
-          onBulkDeleteExpenses={onBulkDeleteUnclassifiedExpenses}
-        />
-      </Card>
+      <ExpensesDashboard 
+        expenses={expenses}
+        accountCodes={accountCodes}
+        onDeleteExpense={onDeleteUnclassifiedExpense}
+        onBulkDeleteExpenses={onBulkDeleteUnclassifiedExpenses}
+      />
     </div>
   );
 };
