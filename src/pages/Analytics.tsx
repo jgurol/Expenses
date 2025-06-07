@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingUp } from "lucide-react";
+import { ArrowLeft, TrendingUp, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
@@ -135,6 +134,15 @@ const Analytics = () => {
     }
   };
 
+  const handleReconcile = () => {
+    // Store classified expense IDs in localStorage
+    const expenseIds = classifiedExpenses.map(expense => expense.id);
+    localStorage.setItem('reconciledExpenses', JSON.stringify(expenseIds));
+    
+    // Navigate to reconciled page
+    navigate('/reconciled');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -155,10 +163,21 @@ const Analytics = () => {
               </div>
             </div>
             
-            <Badge variant="outline" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              {classifiedExpenses.length} Classified Expenses
-            </Badge>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleReconcile}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                disabled={classifiedExpenses.length === 0}
+              >
+                <CheckCircle className="h-4 w-4" />
+                Reconciled ({classifiedExpenses.length})
+              </Button>
+              
+              <Badge variant="outline" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                {classifiedExpenses.length} Classified Expenses
+              </Badge>
+            </div>
           </div>
         </div>
       </header>

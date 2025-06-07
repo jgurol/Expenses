@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import CategoriesPage from "./pages/Categories";
 import SourcePage from "./pages/Source";
 import Analytics from "./pages/Analytics";
+import Reconciled from "./pages/Reconciled";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/sources" element={<SourcePage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/reconciled" element={<Reconciled />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
