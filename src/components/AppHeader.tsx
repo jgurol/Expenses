@@ -1,18 +1,25 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, FileText, CheckCircle, UserCheck } from "lucide-react";
+import { Settings, FileText, CheckCircle, UserCheck, Users, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
+import { useAuth } from "@/hooks/useAuth";
 import type { UserRole } from "@/pages/Index";
 
 interface AppHeaderProps {
   currentRole: UserRole;
-  onRoleChange: (role: UserRole) => void;
+  onRoleChange?: (role: UserRole) => void;
 }
 
 export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
   const navigate = useNavigate();
+  const { signOut, user, isAdmin } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   return (
     <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -60,7 +67,33 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
               Reconciled
             </Button>
 
-            <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
+            {isAdmin && (
+              <Button
+                variant="outline"
+                onClick={() => navigate("/users")}
+                className="flex items-center gap-2"
+              >
+                <Users className="h-4 w-4" />
+                Users
+              </Button>
+            )}
+
+            {onRoleChange && (
+              <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
+            )}
+
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <span>{user?.email}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSignOut}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </div>

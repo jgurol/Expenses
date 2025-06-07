@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
@@ -7,6 +6,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { useImportedExpenses } from "@/hooks/useImportedExpenses";
 import { useExpenseOperations } from "@/hooks/useExpenseOperations";
+import { useAuth } from "@/hooks/useAuth";
 
 export type UserRole = "bookkeeper" | "classifier";
 
@@ -28,7 +28,17 @@ export interface AccountCode {
 }
 
 const Index = () => {
-  const [currentRole, setCurrentRole] = useState<UserRole>("bookkeeper");
+  const { isBookkeeper, isClassifier, isAdmin } = useAuth();
+  
+  // Determine initial role based on user permissions
+  const getInitialRole = (): UserRole => {
+    if (isAdmin) return "bookkeeper"; // Admins default to bookkeeper view
+    if (isBookkeeper) return "bookkeeper";
+    if (isClassifier) return "classifier";
+    return "bookkeeper"; // fallback
+  };
+
+  const [currentRole, setCurrentRole] = useState<UserRole>(getInitialRole());
   
   const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
   const { data: accountCodes = [], isLoading: accountCodesLoading } = useCategories();
@@ -53,9 +63,15 @@ const Index = () => {
   console.log('Imported expenses state:', importedExpenses);
   console.log('Imported expenses count:', importedExpenses.length);
 
+  // Only allow role switching if user has multiple roles or is admin
+  const canSwitchRoles = isAdmin || (isBookkeeper && isClassifier);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <AppHeader currentRole={currentRole} onRoleChange={setCurrentRole} />
+      <AppHeader 
+        currentRole={currentRole} 
+        onRoleChange={canSwitchRoles ? setCurrentRole : undefined}
+      />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {isLoading ? (
