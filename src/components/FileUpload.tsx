@@ -1,8 +1,7 @@
-
-
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { Upload, FileSpreadsheet, X } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -20,6 +19,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [progressText, setProgressText] = useState("");
 
   const { data: accountCodes = [] } = useAccountCodes();
   const { data: accounts = [] } = useAccounts();
@@ -108,9 +109,11 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     }
   };
 
-  const processFileData = async (data: any[], accountName: string) => {
+  const processFileData = async (data: any[], accountName: string, currentSheet: number, totalSheets: number) => {
     console.log(`Processing sheet: ${accountName}`);
     console.log(`Raw data length: ${data.length}`);
+    
+    setProgressText(`Processing sheet ${currentSheet}/${totalSheets}: ${accountName}`);
     
     if (data.length > 0) {
       console.log('First row keys:', Object.keys(data[0]));
@@ -131,6 +134,11 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     
     for (let index = 0; index < data.length; index++) {
       const row = data[index];
+      
+      // Update progress for individual rows
+      const rowProgress = ((currentSheet - 1) / totalSheets + (index + 1) / (data.length * totalSheets)) * 100;
+      setProgress(rowProgress);
+      setProgressText(`Processing sheet ${currentSheet}/${totalSheets}: ${accountName} (${index + 1}/${data.length} rows)`);
       
       // More flexible column name matching
       const date = findColumn(row, ['date', 'Date', 'DATE', 'Transaction Date', 'Post Date', 'Posted Date']);
@@ -178,6 +186,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       let finalCategory = category?.toString() || "Uncategorized"; // Default to original category or "Uncategorized"
       
       if (accountCodes.length > 0) {
+        setProgressText(`AI matching for "${description?.toString().substring(0, 30)}..."`);
         const aiMatchedCode = await matchExpenseToAccountCode(description.toString(), accountCodes);
         if (aiMatchedCode) {
           // Find the account code name to use as category
@@ -207,16 +216,22 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const handleFile = useCallback(async (file: File) => {
     setIsProcessing(true);
     setUploadedFile(file);
+    setProgress(0);
+    setProgressText("Starting file processing...");
 
     try {
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
       
       if (fileExtension === 'csv') {
+        setProgressText("Parsing CSV file...");
         Papa.parse(file, {
           header: true,
           complete: async (results) => {
             console.log('CSV parsing complete:', results);
-            const expenses = await processFileData(results.data, "CSV Import");
+            setProgress(50);
+            const expenses = await processFileData(results.data, "CSV Import", 1, 1);
+            setProgress(100);
+            setProgressText("Import complete!");
             onExpensesUploaded(expenses);
             toast({
               title: "Success!",
@@ -233,16 +248,20 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           }
         });
       } else if (['xlsx', 'xls'].includes(fileExtension || '')) {
+        setProgressText("Reading Excel file...");
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer);
         
         console.log('Available sheets:', workbook.SheetNames);
+        setProgress(20);
         
         let allExpenses: Expense[] = [];
         let totalProcessed = 0;
+        const totalSheets = workbook.SheetNames.length;
         
         // Process each sheet/tab as a separate account
-        for (const sheetName of workbook.SheetNames) {
+        for (let sheetIndex = 0; sheetIndex < workbook.SheetNames.length; sheetIndex++) {
+          const sheetName = workbook.SheetNames[sheetIndex];
           console.log(`Processing sheet: ${sheetName}`);
           const worksheet = workbook.Sheets[sheetName];
           const data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
@@ -250,7 +269,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           console.log(`Sheet ${sheetName} raw data:`, data.slice(0, 3)); // Log first 3 rows
           
           if (data.length > 0) {
-            const expenses = await processFileData(data, sheetName);
+            const expenses = await processFileData(data, sheetName, sheetIndex + 1, totalSheets);
             allExpenses = [...allExpenses, ...expenses];
             totalProcessed += expenses.length;
             
@@ -259,6 +278,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             console.log(`No data found in sheet: ${sheetName}`);
           }
         }
+        
+        setProgress(100);
+        setProgressText(`Import complete! Processed ${totalProcessed} expenses from ${totalSheets} sheets`);
         
         if (allExpenses.length > 0) {
           onExpensesUploaded(allExpenses);
@@ -290,6 +312,11 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       });
     } finally {
       setIsProcessing(false);
+      // Keep progress and text visible for a moment
+      setTimeout(() => {
+        setProgress(0);
+        setProgressText("");
+      }, 3000);
     }
   }, [onExpensesUploaded, accountCodes, accounts, addAccountCode, addAccount]);
 
@@ -378,6 +405,21 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         </div>
       </Card>
 
+      {isProcessing && progress > 0 && (
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-blue-900">Import Progress</span>
+              <span className="text-sm text-blue-700">{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+            {progressText && (
+              <p className="text-xs text-blue-600 truncate">{progressText}</p>
+            )}
+          </div>
+        </Card>
+      )}
+
       {uploadedFile && (
         <Card className="p-4 bg-green-50 border-green-200">
           <div className="flex items-center justify-between">
@@ -399,4 +441,3 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     </div>
   );
 };
-
