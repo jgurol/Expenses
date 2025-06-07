@@ -49,6 +49,8 @@ refresh_token_rotation_enabled = true
 refresh_token_reuse_interval = 10
 enable_signup = true
 enable_anonymous_sign_ins = false
+password_min_length = 6
+enable_leaked_password_protection = true
 
 [auth.email]
 enable_signup = true
@@ -88,4 +90,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.set-user-password]
+verify_jwt = false
+
+[functions.generate-temp-password]
 verify_jwt = false
