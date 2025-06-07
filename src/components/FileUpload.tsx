@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,8 @@ import { toast } from "@/hooks/use-toast";
 import { Upload, FileSpreadsheet, X } from "lucide-react";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
-import { useAccountCodes } from "@/hooks/useAccountCodes";
-import { useAccounts, useAddAccount } from "@/hooks/useAccounts";
+import { useCategories } from "@/hooks/useCategories";
+import { useSources, useAddSource } from "@/hooks/useSources";
 import type { Expense, AccountCode } from "@/pages/Index";
 import { useAIAccountMatching } from "@/hooks/useAIAccountMatching";
 
@@ -22,9 +23,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState("");
 
-  const { data: accountCodes = [] } = useAccountCodes();
-  const { data: accounts = [] } = useAccounts();
-  const addAccount = useAddAccount();
+  const { data: accountCodes = [] } = useCategories();
+  const { data: accounts = [] } = useSources();
+  const addAccount = useAddSource();
   const aiMatching = useAIAccountMatching();
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -79,7 +80,6 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       const accountNumber = `SRC-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
       
       const newAccount = {
-        account_code_id: defaultAccountCode.id,
         account_number: accountNumber,
         name: sheetName,
         description: `Source account created from spreadsheet tab: ${sheetName}`,
