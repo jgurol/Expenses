@@ -115,8 +115,12 @@ export const ExpenseClassifier = memo(({
                 value=""
                 onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={getCategoryDisplayText(expense.category)} />
+                <SelectTrigger className="w-full h-auto min-h-[40px]">
+                  <SelectValue>
+                    <span className="whitespace-normal text-left break-words">
+                      {getCategoryDisplayText(expense.category)}
+                    </span>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {accountCodes.map((code) => (
