@@ -58,28 +58,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch user roles when user is authenticated
-          setTimeout(async () => {
-            const roles = await fetchUserRoles(session.user.id);
-            setUserRoles(roles);
-            setLoading(false);
-          }, 0);
-        } else {
-          setUserRoles([]);
-          setLoading(false);
-        }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting session:', error);
       }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+      
+      console.log('Initial session:', session ? 'Found' : 'None');
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -93,12 +78,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change:', event, session ? 'Session exists' : 'No session');
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user && event === 'SIGNED_IN') {
+          // Defer role fetching to avoid potential issues
+          setTimeout(async () => {
+            const roles = await fetchUserRoles(session.user.id);
+            setUserRoles(roles);
+            setLoading(false);
+          }, 100);
+        } else if (event === 'SIGNED_OUT') {
+          setUserRoles([]);
+          setLoading(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signInWithMagicLink = async (email: string) => {
     try {
       const redirectUrl = `${window.location.origin}/auth`;
+      
+      console.log('Sending magic link to:', email, 'with redirect:', redirectUrl);
       
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -107,14 +120,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       });
       
+      if (error) {
+        console.error('Magic link error:', error);
+      }
+      
       return { error };
     } catch (error) {
+      console.error('Magic link exception:', error);
       return { error };
     }
   };
 
   const signOut = async () => {
     try {
+      console.log('Signing out...');
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);

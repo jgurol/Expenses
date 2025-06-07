@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CreateDefaultUserButton } from '@/components/CreateDefaultUserButton';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -18,29 +18,17 @@ const Auth = () => {
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user, signInWithMagicLink } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
-    // Check if this is a magic link callback
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const type = searchParams.get('type');
-
-    if (accessToken && refreshToken && type === 'magiclink') {
-      // Set the session from the URL parameters
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      }).then(({ error }) => {
-        if (error) {
-          setError('Invalid or expired magic link. Please request a new one.');
-        } else {
-          setMessage('Successfully signed in! Redirecting...');
-          setTimeout(() => navigate('/'), 1000);
-        }
-      });
-    }
-
-    // Check for error parameters
+    // Check for error parameters from Supabase
     const errorCode = searchParams.get('error_code');
     const errorDescription = searchParams.get('error_description');
     
@@ -49,7 +37,23 @@ const Auth = () => {
     } else if (errorDescription) {
       setError(decodeURIComponent(errorDescription));
     }
-  }, [searchParams, navigate]);
+
+    // Check if this is a successful magic link callback
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+    
+    if (accessToken && refreshToken) {
+      setMessage('Magic link verified! Signing you in...');
+      // The useAuth hook will handle the session automatically
+      // Just wait a moment for the auth state to update
+      setTimeout(() => {
+        if (!user) {
+          // If user is still not set after a delay, there might be an issue
+          setError('Authentication successful but there was an issue loading your profile. Please try refreshing the page.');
+        }
+      }, 2000);
+    }
+  }, [searchParams, user]);
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,14 +62,7 @@ const Auth = () => {
     setMessage('');
     
     try {
-      const redirectUrl = `${window.location.origin}/auth`;
-      
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectUrl,
-        },
-      });
+      const { error } = await signInWithMagicLink(email);
       
       if (error) {
         setError(error.message);
