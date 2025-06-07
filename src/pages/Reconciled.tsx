@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Undo2, Download } from "lucide-react";
+import { CheckCircle, Undo2, Download, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
@@ -130,9 +130,19 @@ const Reconciled = () => {
       <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Reconciled Expenses</h1>
-              <p className="text-slate-600">Expenses that have been reconciled</p>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/")}
+                className="flex items-center gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900">Reconciled Expenses</h1>
+                <p className="text-slate-600">Expenses that have been reconciled</p>
+              </div>
             </div>
             
             <div className="flex items-center gap-4">
