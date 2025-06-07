@@ -8,11 +8,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Users, Loader2, Mail } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Loader2, Mail, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useUserManagement, UserProfile } from '@/hooks/useUserManagement';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const UserManagement = () => {
+  const navigate = useNavigate();
   const { users, isLoading, createUser, updateUserRoles, deleteUser, sendTempPassword, isCreating, isUpdating, isDeleting, isSendingTempPassword } = useUserManagement();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -96,9 +98,19 @@ const UserManagement = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">User Management</h1>
-              <p className="text-slate-600">Manage users and their roles</p>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/")}
+                className="flex items-center gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900">User Management</h1>
+                <p className="text-slate-600">Manage users and their roles</p>
+              </div>
             </div>
             
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
