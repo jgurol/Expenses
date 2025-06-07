@@ -1,21 +1,23 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Archive, Home, ChevronDown, ChevronRight } from "lucide-react";
+import { Archive, Home, ChevronDown, ChevronRight, ArchiveRestore } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useArchivedExpenses } from "@/hooks/useArchivedExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { useSources } from "@/hooks/useSources";
+import { useUnarchiveExpenses } from "@/hooks/useUnarchiveExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useToast } from "@/hooks/use-toast";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
 
 const ArchivedExpenses = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [sortField, setSortField] = useState<SortField>('sourceAccount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
@@ -23,6 +25,7 @@ const ArchivedExpenses = () => {
   const { data: archivedExpenses = [] } = useArchivedExpenses();
   const { data: accountCodes = [] } = useCategories();
   const { data: sources = [] } = useSources();
+  const unarchiveExpenses = useUnarchiveExpenses();
   
   // Group expenses by archived date
   const groupedExpenses = archivedExpenses.reduce((groups, expense) => {
@@ -80,6 +83,23 @@ const ArchivedExpenses = () => {
 
   const totalAmount = archivedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
   const averageExpense = archivedExpenses.length > 0 ? totalAmount / archivedExpenses.length : 0;
+
+  const handleUnarchiveGroup = async (expenses: typeof archivedExpenses) => {
+    const expenseIds = expenses.map(expense => expense.id);
+    try {
+      await unarchiveExpenses.mutateAsync(expenseIds);
+      toast({
+        title: "Success",
+        description: `Unarchived ${expenses.length} expense${expenses.length !== 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to unarchive expenses",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -183,6 +203,16 @@ const ArchivedExpenses = () => {
                           </div>
                           
                           <div className="flex items-center gap-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUnarchiveGroup(expenses)}
+                              disabled={unarchiveExpenses.isPending}
+                              className="flex items-center gap-2"
+                            >
+                              <ArchiveRestore className="h-4 w-4" />
+                              Unarchive Group
+                            </Button>
                             <Badge variant="secondary">
                               {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
                             </Badge>
@@ -202,11 +232,14 @@ const ArchivedExpenses = () => {
                             title={`Expenses archived on ${archivedDate}`}
                             showClassificationStatus={false}
                             showDeleteButton={false}
-                            showMultiSelect={false}
+                            showMultiSelect={true}
                             showCodeColumn={true}
                             sortField={sortField}
                             sortDirection={sortDirection}
                             onSort={handleSort}
+                            onBulkDeleteExpenses={(expenseIds) => handleUnarchiveGroup(expenses.filter(e => expenseIds.includes(e.id)))}
+                            bulkActionLabel="Unarchive Selected"
+                            bulkActionIcon={ArchiveRestore}
                           />
                         </div>
                       )}
