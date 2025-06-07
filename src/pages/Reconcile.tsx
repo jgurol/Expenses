@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { useSources } from "@/hooks/useSources";
+import { useReconcileExpenses } from "@/hooks/useReconcileExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { toast } from "@/hooks/use-toast";
 
@@ -24,14 +24,16 @@ const Reconcile = () => {
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
   const { data: sources = [] } = useSources();
+  const reconcileExpensesMutation = useReconcileExpenses();
   
-  const classifiedExpenses = expenses.filter(e => e.classified);
+  // Filter for classified but not yet reconciled expenses
+  const classifiedUnreconciledExpenses = expenses.filter(e => e.classified && !e.reconciled);
   
-  // Get unique source accounts from expenses
-  const sourceAccounts = Array.from(new Set(classifiedExpenses.map(e => e.sourceAccount).filter(Boolean)));
+  // Get unique source accounts from unreconciled expenses
+  const sourceAccounts = Array.from(new Set(classifiedUnreconciledExpenses.map(e => e.sourceAccount).filter(Boolean)));
   
   // Sort expenses based on current sort state
-  const sortedExpenses = [...classifiedExpenses].sort((a, b) => {
+  const sortedExpenses = [...classifiedUnreconciledExpenses].sort((a, b) => {
     let aValue: string | number;
     let bValue: string | number;
     
@@ -74,8 +76,8 @@ const Reconcile = () => {
     }
   });
   
-  const totalAmount = classifiedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
-  const averageExpense = classifiedExpenses.length > 0 ? totalAmount / classifiedExpenses.length : 0;
+  const totalAmount = classifiedUnreconciledExpenses.reduce((sum, expense) => sum + expense.spent, 0);
+  const averageExpense = classifiedUnreconciledExpenses.length > 0 ? totalAmount / classifiedUnreconciledExpenses.length : 0;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -86,7 +88,7 @@ const Reconcile = () => {
     }
   };
 
-  const handleReconcileAccount = () => {
+  const handleReconcileAccount = async () => {
     if (!selectedAccount) {
       toast({
         title: "No Account Selected",
@@ -96,35 +98,49 @@ const Reconcile = () => {
       return;
     }
 
-    // Get existing reconciled expenses
-    const existingReconciledIds = JSON.parse(localStorage.getItem('reconciledExpenses') || '[]');
-    
     // Find expenses for the selected account
-    const accountExpenses = classifiedExpenses.filter(expense => expense.sourceAccount === selectedAccount);
+    const accountExpenses = classifiedUnreconciledExpenses.filter(expense => expense.sourceAccount === selectedAccount);
     const accountExpenseIds = accountExpenses.map(expense => expense.id);
     
-    // Add new expense IDs to existing reconciled expenses
-    const updatedReconciledIds = [...new Set([...existingReconciledIds, ...accountExpenseIds])];
-    
-    // Store updated reconciled expenses
-    localStorage.setItem('reconciledExpenses', JSON.stringify(updatedReconciledIds));
-    
-    toast({
-      title: "Account Reconciled",
-      description: `Successfully reconciled ${accountExpenses.length} expenses from ${selectedAccount}`,
-    });
+    try {
+      await reconcileExpensesMutation.mutateAsync(accountExpenseIds);
+      
+      toast({
+        title: "Account Reconciled",
+        description: `Successfully reconciled ${accountExpenses.length} expenses from ${selectedAccount}`,
+      });
 
-    // Reset selection
-    setSelectedAccount('');
+      // Reset selection
+      setSelectedAccount('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reconcile expenses. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleReconcileAll = () => {
-    // Store classified expense IDs in localStorage
-    const expenseIds = classifiedExpenses.map(expense => expense.id);
-    localStorage.setItem('reconciledExpenses', JSON.stringify(expenseIds));
+  const handleReconcileAll = async () => {
+    const expenseIds = classifiedUnreconciledExpenses.map(expense => expense.id);
     
-    // Navigate to reconciled page
-    navigate('/reconciled');
+    try {
+      await reconcileExpensesMutation.mutateAsync(expenseIds);
+      
+      toast({
+        title: "All Expenses Reconciled",
+        description: `Successfully reconciled ${expenseIds.length} expenses`,
+      });
+      
+      // Navigate to reconciled page
+      navigate('/reconciled');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reconcile expenses. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -165,7 +181,7 @@ const Reconcile = () => {
                 <Button
                   onClick={handleReconcileAccount}
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                  disabled={!selectedAccount}
+                  disabled={!selectedAccount || reconcileExpensesMutation.isPending}
                 >
                   <CheckCircle className="h-4 w-4" />
                   Reconcile
@@ -175,15 +191,15 @@ const Reconcile = () => {
               <Button
                 onClick={handleReconcileAll}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                disabled={classifiedExpenses.length === 0}
+                disabled={classifiedUnreconciledExpenses.length === 0 || reconcileExpensesMutation.isPending}
               >
                 <CheckCircle className="h-4 w-4" />
-                Mark All as Reconciled ({classifiedExpenses.length})
+                Mark All as Reconciled ({classifiedUnreconciledExpenses.length})
               </Button>
               
               <Badge variant="outline" className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
-                {classifiedExpenses.length} Ready for Reconciliation
+                {classifiedUnreconciledExpenses.length} Ready for Reconciliation
               </Badge>
             </div>
           </div>
@@ -196,7 +212,7 @@ const Reconcile = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="p-6">
               <h3 className="text-sm font-medium text-slate-600 mb-2">Ready to Reconcile</h3>
-              <div className="text-3xl font-bold text-slate-900">{classifiedExpenses.length}</div>
+              <div className="text-3xl font-bold text-slate-900">{classifiedUnreconciledExpenses.length}</div>
               <div className="text-sm text-slate-500">expenses</div>
             </Card>
             

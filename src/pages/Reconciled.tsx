@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +19,8 @@ const Reconciled = () => {
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
   
-  // Get reconciled expenses from localStorage
-  const reconciledExpenseIds = JSON.parse(localStorage.getItem('reconciledExpenses') || '[]');
-  const reconciledExpenses = expenses.filter(e => reconciledExpenseIds.includes(e.id));
+  // Get reconciled expenses from database
+  const reconciledExpenses = expenses.filter(e => e.reconciled);
   
   // Sort expenses based on current sort state
   const sortedExpenses = [...reconciledExpenses].sort((a, b) => {

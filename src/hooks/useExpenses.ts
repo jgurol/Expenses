@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Expense } from '@/pages/Index';
@@ -24,7 +23,8 @@ export const useExpenses = () => {
         category: expense.category,
         spent: Number(expense.spent),
         sourceAccount: expense.sourceaccount || 'Unknown', // Only fall back to 'Unknown', not category
-        classified: expense.classified
+        classified: expense.classified,
+        reconciled: expense.reconciled
       }));
     },
   });
