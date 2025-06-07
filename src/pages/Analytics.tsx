@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,13 +9,62 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { ExpensesTable } from "@/components/ExpensesTable";
 
+type SortField = 'sourceAccount' | 'date' | 'code';
+type SortDirection = 'asc' | 'desc';
+
 const Analytics = () => {
   const navigate = useNavigate();
+  const [sortField, setSortField] = useState<SortField>('sourceAccount');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
   
   const classifiedExpenses = expenses.filter(e => e.classified);
+  
+  // Sort expenses based on current sort state
+  const sortedExpenses = [...classifiedExpenses].sort((a, b) => {
+    let aValue: string | number;
+    let bValue: string | number;
+    
+    switch (sortField) {
+      case 'sourceAccount':
+        aValue = a.sourceAccount || 'Unknown';
+        bValue = b.sourceAccount || 'Unknown';
+        break;
+      case 'date':
+        aValue = new Date(a.date).getTime();
+        bValue = new Date(b.date).getTime();
+        break;
+      case 'code':
+        const aCode = accountCodes.find(code => code.name === a.category)?.code || 'ZZZ';
+        const bCode = accountCodes.find(code => code.name === b.category)?.code || 'ZZZ';
+        aValue = aCode;
+        bValue = bCode;
+        break;
+      default:
+        aValue = a.sourceAccount || 'Unknown';
+        bValue = b.sourceAccount || 'Unknown';
+    }
+    
+    if (sortDirection === 'asc') {
+      if (aValue < bValue) return -1;
+      if (aValue > bValue) return 1;
+      // Secondary sort by date for same values
+      if (sortField !== 'date') {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      return 0;
+    } else {
+      if (aValue > bValue) return -1;
+      if (aValue < bValue) return 1;
+      // Secondary sort by date for same values
+      if (sortField !== 'date') {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+      return 0;
+    }
+  });
   
   const totalAmount = classifiedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
   const averageExpense = classifiedExpenses.length > 0 ? totalAmount / classifiedExpenses.length : 0;
@@ -74,6 +124,15 @@ const Analytics = () => {
     complaint += `At this rate, you'll have spent $${(totalAmount * 12 / new Date().getMonth() || 1).toFixed(2)} this year. Time for a budget intervention! 💸`;
     
     return complaint;
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
   };
 
   return (
@@ -159,13 +218,16 @@ const Analytics = () => {
 
           {/* Expenses Table */}
           <ExpensesTable 
-            expenses={classifiedExpenses}
+            expenses={sortedExpenses}
             accountCodes={accountCodes}
             title="Classified Expenses"
             showClassificationStatus={true}
             showDeleteButton={false}
             showMultiSelect={false}
             showCodeColumn={true}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         </div>
       </main>

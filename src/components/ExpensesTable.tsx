@@ -10,6 +10,9 @@ import { ExpenseTableRow } from "./ExpenseTableRow";
 import { ExpenseTableSummary } from "./ExpenseTableSummary";
 import type { Expense, AccountCode } from "@/pages/Index";
 
+type SortField = 'sourceAccount' | 'date' | 'code';
+type SortDirection = 'asc' | 'desc';
+
 interface ExpensesTableProps {
   expenses: Expense[];
   accountCodes: AccountCode[];
@@ -20,6 +23,9 @@ interface ExpensesTableProps {
   showDeleteButton?: boolean;
   showMultiSelect?: boolean;
   showCodeColumn?: boolean;
+  sortField?: SortField;
+  sortDirection?: SortDirection;
+  onSort?: (field: SortField) => void;
 }
 
 export const ExpensesTable = memo(({ 
@@ -31,7 +37,10 @@ export const ExpensesTable = memo(({
   onBulkDeleteExpenses,
   showDeleteButton = false,
   showMultiSelect = false,
-  showCodeColumn = false
+  showCodeColumn = false,
+  sortField,
+  sortDirection,
+  onSort
 }: ExpensesTableProps) => {
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
 
@@ -46,7 +55,9 @@ export const ExpensesTable = memo(({
     showCodeColumn,
     hasOnDeleteExpense: !!onDeleteExpense,
     hasOnBulkDeleteExpenses: !!onBulkDeleteExpenses,
-    title 
+    title,
+    sortField,
+    sortDirection
   });
 
   if (expenses.length === 0) {
@@ -103,6 +114,9 @@ export const ExpensesTable = memo(({
             isAllSelected={isAllSelected}
             isSomeSelected={isSomeSelected}
             onSelectAll={handleSelectAll}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
           />
           <TableBody>
             {expenses.map((expense) => {
@@ -132,4 +146,3 @@ export const ExpensesTable = memo(({
 });
 
 ExpensesTable.displayName = 'ExpensesTable';
-
