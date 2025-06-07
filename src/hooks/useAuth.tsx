@@ -10,9 +10,8 @@ interface AuthContextType {
   session: Session | null;
   userRoles: UserRole[];
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: any }>;
   hasRole: (role: UserRole) => boolean;
   isAdmin: boolean;
   isBookkeeper: boolean;
@@ -97,22 +96,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signInWithMagicLink = async (email: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const redirectUrl = `${window.location.origin}/auth`;
+      
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
       });
       
-      if (error) return { error };
-      
-      if (data.user) {
-        // Fetch roles after successful login
-        const roles = await fetchUserRoles(data.user.id);
-        setUserRoles(roles);
-      }
-      
-      return { error: null };
+      return { error };
     } catch (error) {
       return { error };
     }
@@ -129,20 +124,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const resetPassword = async (email: string) => {
-    try {
-      // Use the current window location as the redirect URL
-      const redirectTo = `${window.location.origin}/auth`;
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectTo,
-      });
-      return { error };
-    } catch (error) {
-      return { error };
-    }
-  };
-
   const hasRole = (role: UserRole): boolean => {
     return userRoles.includes(role);
   };
@@ -156,9 +137,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     session,
     userRoles,
     loading,
-    signIn,
+    signInWithMagicLink,
     signOut,
-    resetPassword,
     hasRole,
     isAdmin,
     isBookkeeper,
