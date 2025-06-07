@@ -8,7 +8,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 
 const Analytics = () => {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const Analytics = () => {
     const category = expense.category;
     if (!acc[category]) {
       acc[category] = {
-        name: category,
+        category: category,
         amount: 0,
         count: 0
       };
@@ -31,7 +31,7 @@ const Analytics = () => {
     acc[category].amount += expense.spent;
     acc[category].count += 1;
     return acc;
-  }, {} as Record<string, { name: string; amount: number; count: number }>);
+  }, {} as Record<string, { category: string; amount: number; count: number }>);
 
   const chartData = Object.values(categoryData);
 
@@ -40,7 +40,7 @@ const Analytics = () => {
 
   const chartConfig = {
     amount: {
-      label: "Amount",
+      label: "Amount ($)",
     },
   };
 
@@ -103,27 +103,33 @@ const Analytics = () => {
               </div>
               
               <ChartContainer config={chartConfig} className="h-[400px]">
-                <BarChart data={chartData} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis 
-                    type="category"
-                    dataKey="name" 
-                    width={120}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value, name) => [
-                          `$${Number(value).toFixed(2)}`,
-                          "Amount"
-                        ]}
-                      />
-                    }
-                  />
-                  <Bar dataKey="amount" fill="#0088FE" />
-                </BarChart>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={chartData} 
+                    layout="horizontal"
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis 
+                      type="category"
+                      dataKey="category" 
+                      width={120}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value) => [
+                            `$${Number(value).toFixed(2)}`,
+                            "Amount"
+                          ]}
+                        />
+                      }
+                    />
+                    <Bar dataKey="amount" fill="#3b82f6" />
+                  </BarChart>
+                </ResponsiveContainer>
               </ChartContainer>
             </Card>
           )}
