@@ -46,7 +46,7 @@ export const ExpenseTableRow = ({
       )}
       <TableCell>
         <Badge variant="outline" className="text-xs font-mono">
-          {expense.accountCode || "Unknown"}
+          {expense.sourceAccount || "Unknown"}
         </Badge>
       </TableCell>
       <TableCell className="font-mono text-sm">

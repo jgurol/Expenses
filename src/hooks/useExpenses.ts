@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Expense } from '@/pages/Index';
@@ -23,7 +22,7 @@ export const useExpenses = () => {
         description: expense.description,
         category: expense.category,
         spent: Number(expense.spent),
-        sourceAccount: expense.source_account, // Map source_account to sourceAccount
+        sourceAccount: expense.source_account || 'Unknown', // Handle null values
         classified: expense.classified
       }));
     },
@@ -41,7 +40,6 @@ export const useAddExpenses = () => {
         category: expense.category,
         spent: expense.spent,
         classified: expense.classified,
-        source_account: expense.sourceAccount, // Map sourceAccount to source_account
         account_code_id: null // No longer automatically assigning account codes during import
       }));
 

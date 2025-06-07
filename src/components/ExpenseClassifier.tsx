@@ -1,3 +1,4 @@
+
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -101,7 +102,7 @@ export const ExpenseClassifier = memo(({
               <div>
                 <p className="text-sm text-slate-600">Source Account</p>
                 <Badge variant="outline" className="text-xs font-mono">
-                  {expense.accountCode || "Unknown"}
+                  {expense.sourceAccount || "Unknown"}
                 </Badge>
               </div>
               <div>
