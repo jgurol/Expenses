@@ -41,6 +41,7 @@ const Analytics = () => {
   const chartConfig = {
     amount: {
       label: "Amount ($)",
+      color: "hsl(var(--chart-1))",
     },
   };
 
@@ -107,27 +108,54 @@ const Analytics = () => {
                   <BarChart 
                     data={chartData} 
                     layout="horizontal"
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
+                    <XAxis 
+                      type="number" 
+                      tickFormatter={(value) => `$${value}`}
+                    />
                     <YAxis 
                       type="category"
                       dataKey="category" 
-                      width={120}
-                      tick={{ fontSize: 12 }}
+                      width={90}
+                      tick={{ fontSize: 11 }}
+                      interval={0}
                     />
                     <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          formatter={(value) => [
-                            `$${Number(value).toFixed(2)}`,
-                            "Amount"
-                          ]}
-                        />
-                      }
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <div className="grid gap-2">
+                                <div className="flex flex-col">
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Category
+                                  </span>
+                                  <span className="font-bold text-muted-foreground">
+                                    {label}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Amount
+                                  </span>
+                                  <span className="font-bold">
+                                    ${Number(payload[0].value).toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
-                    <Bar dataKey="amount" fill="#3b82f6" />
+                    <Bar 
+                      dataKey="amount" 
+                      fill="var(--color-amount)"
+                      radius={[0, 4, 4, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
