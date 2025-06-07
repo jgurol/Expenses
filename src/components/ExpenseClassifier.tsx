@@ -123,7 +123,6 @@ export const ExpenseClassifier = memo(({
             <TableHead className="w-32">Source Account</TableHead>
             <TableHead className="w-24">Date</TableHead>
             <TableHead className="min-w-0 flex-1">Description</TableHead>
-            <TableHead className="w-36">Suggested Category</TableHead>
             <TableHead className="w-64">Assign Account Code</TableHead>
             <TableHead className="text-right w-24">Amount</TableHead>
             <TableHead className="text-center w-20">Actions</TableHead>
@@ -142,11 +141,6 @@ export const ExpenseClassifier = memo(({
               </TableCell>
               <TableCell className="font-medium">
                 {expense.description}
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className="text-xs">
-                  {expense.category}
-                </Badge>
               </TableCell>
               <TableCell>
                 <Select
