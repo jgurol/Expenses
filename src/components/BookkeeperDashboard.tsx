@@ -1,5 +1,7 @@
 
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Clock, FileCheck } from "lucide-react";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import type { Expense, AccountCode } from "@/pages/Index";
 
@@ -18,15 +20,79 @@ export const BookkeeperDashboard = ({
   onDeleteUnclassifiedExpense,
   onBulkDeleteUnclassifiedExpenses
 }: BookkeeperDashboardProps) => {
+  // Calculate workflow stage statistics
+  const classifiedExpenses = expenses.filter(e => e.classified && !e.reconciled);
+  const reconciledExpenses = expenses.filter(e => e.reconciled);
+  
+  const classifiedAmount = classifiedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
+  const reconciledAmount = reconciledExpenses.reduce((sum, expense) => sum + expense.spent, 0);
+
   return (
-    <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
-      <h2 className="text-xl font-semibold mb-4 text-slate-900">Expenses Overview</h2>
-      <ExpensesDashboard 
-        expenses={expenses}
-        accountCodes={accountCodes}
-        onDeleteExpense={onDeleteUnclassifiedExpense}
-        onBulkDeleteExpenses={onBulkDeleteUnclassifiedExpenses}
-      />
-    </Card>
+    <div className="space-y-6">
+      <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
+        <h2 className="text-xl font-semibold mb-6 text-slate-900">Expense Workflow Summary</h2>
+        
+        {/* Workflow Stage Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="p-4 border-blue-200 bg-blue-50/50">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FileCheck className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-slate-600">Classified</h3>
+                <p className="text-xs text-slate-500">Ready for reconciliation</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-blue-600">{classifiedExpenses.length}</div>
+              <div className="text-sm text-slate-600">${classifiedAmount.toFixed(2)}</div>
+            </div>
+          </Card>
+          
+          <Card className="p-4 border-orange-200 bg-orange-50/50">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Clock className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-slate-600">To Be Reconciled</h3>
+                <p className="text-xs text-slate-500">Classified, awaiting reconciliation</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-orange-600">{classifiedExpenses.length}</div>
+              <div className="text-sm text-slate-600">${classifiedAmount.toFixed(2)}</div>
+            </div>
+          </Card>
+          
+          <Card className="p-4 border-green-200 bg-green-50/50">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-slate-600">Reconciled</h3>
+                <p className="text-xs text-slate-500">Completed</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-green-600">{reconciledExpenses.length}</div>
+              <div className="text-sm text-slate-600">${reconciledAmount.toFixed(2)}</div>
+            </div>
+          </Card>
+        </div>
+      </Card>
+
+      <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
+        <h2 className="text-xl font-semibold mb-4 text-slate-900">Expenses Overview</h2>
+        <ExpensesDashboard 
+          expenses={expenses}
+          accountCodes={accountCodes}
+          onDeleteExpense={onDeleteUnclassifiedExpense}
+          onBulkDeleteExpenses={onBulkDeleteUnclassifiedExpenses}
+        />
+      </Card>
+    </div>
   );
 };
