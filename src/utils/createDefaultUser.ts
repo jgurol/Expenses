@@ -5,7 +5,7 @@ export const createDefaultUser = async () => {
   try {
     const { data, error } = await supabase.functions.invoke('create-user', {
       body: {
-        email: 'jim@gurol.net',
+        email: 'jim@californiatelecom.com',
         password: 'Roadster7!',
         firstName: 'Jim',
         lastName: 'Gurol',

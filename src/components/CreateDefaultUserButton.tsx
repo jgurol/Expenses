@@ -12,7 +12,7 @@ export const CreateDefaultUserButton = () => {
     if (result.success) {
       toast({
         title: 'Success',
-        description: 'Default admin user jim@gurol.net created successfully',
+        description: 'Default admin user jim@californiatelecom.com created successfully',
       });
     } else {
       toast({
@@ -30,7 +30,7 @@ export const CreateDefaultUserButton = () => {
       className="flex items-center gap-2"
     >
       <UserPlus className="h-4 w-4" />
-      Create Admin User (jim@gurol.net)
+      Create Admin User (jim@californiatelecom.com)
     </Button>
   );
 };
