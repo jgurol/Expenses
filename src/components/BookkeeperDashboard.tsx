@@ -1,8 +1,6 @@
-
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, FileCheck, Receipt, Archive } from "lucide-react";
+import { CheckCircle, Clock, FileCheck, Receipt, Archive, ArrowRight } from "lucide-react";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { useArchivedExpenses } from "@/hooks/useArchivedExpenses";
 import type { Expense, AccountCode } from "@/pages/Index";
@@ -58,6 +56,11 @@ export const BookkeeperDashboard = ({
               <div className="text-sm text-slate-600">${unclassifiedAmount.toFixed(2)}</div>
             </div>
           </Card>
+
+          {/* Arrow 1: Unclassified → Classified */}
+          <div className="hidden md:flex items-center justify-center">
+            <ArrowRight className="h-6 w-6 text-slate-400" />
+          </div>
           
           <Card className="p-4 border-blue-200 bg-blue-50/50">
             <div className="flex items-center gap-3 mb-3">
@@ -74,6 +77,11 @@ export const BookkeeperDashboard = ({
               <div className="text-sm text-slate-600">${classifiedAmount.toFixed(2)}</div>
             </div>
           </Card>
+
+          {/* Arrow 2: Classified → Reconciled */}
+          <div className="hidden md:flex items-center justify-center">
+            <ArrowRight className="h-6 w-6 text-slate-400" />
+          </div>
           
           <Card className="p-4 border-green-200 bg-green-50/50">
             <div className="flex items-center gap-3 mb-3">
@@ -90,7 +98,10 @@ export const BookkeeperDashboard = ({
               <div className="text-sm text-slate-600">${reconciledAmount.toFixed(2)}</div>
             </div>
           </Card>
+        </div>
 
+        {/* Additional Cards Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="p-4 border-slate-200 bg-slate-50/50">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-slate-100 rounded-lg">
@@ -106,6 +117,11 @@ export const BookkeeperDashboard = ({
               <div className="text-sm text-slate-600">${totalAmount.toFixed(2)}</div>
             </div>
           </Card>
+
+          {/* Arrow 3: Total → Archived */}
+          <div className="hidden md:flex items-center justify-center">
+            <ArrowRight className="h-6 w-6 text-slate-400" />
+          </div>
 
           <Card className="p-4 border-purple-200 bg-purple-50/50">
             <div className="flex items-center gap-3 mb-3">
@@ -136,4 +152,3 @@ export const BookkeeperDashboard = ({
     </div>
   );
 };
-
