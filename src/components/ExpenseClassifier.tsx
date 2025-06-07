@@ -24,6 +24,8 @@ export const ExpenseClassifier = memo(({
 
   const handleClassifyExpense = (expenseId: string) => {
     const accountCode = selectedAccountCodes[expenseId];
+    console.log('Classifying expense:', { expenseId, accountCode, selectedAccountCodes });
+    
     if (accountCode) {
       onExpenseClassified(expenseId, accountCode);
       // Remove from selected after classification
@@ -32,11 +34,15 @@ export const ExpenseClassifier = memo(({
         delete updated[expenseId];
         return updated;
       });
+    } else {
+      console.warn('No account code selected for expense:', expenseId);
     }
   };
 
   const handleAcceptCategory = (expenseId: string) => {
     const expense = expenses.find(e => e.id === expenseId);
+    console.log('Accepting category for expense:', { expenseId, expense });
+    
     if (expense) {
       // Find account code that matches the category name
       const matchingAccountCode = accountCodes.find(ac => 
@@ -44,11 +50,15 @@ export const ExpenseClassifier = memo(({
         ac.code.toLowerCase() === expense.category.toLowerCase()
       );
       
+      console.log('Found matching account code:', matchingAccountCode);
+      
       if (matchingAccountCode) {
         onExpenseClassified(expenseId, matchingAccountCode.code);
       } else {
-        // If no exact match, use the first available account code or create a default
+        // If no exact match, use the first available expense account code or create a default
         const defaultAccountCode = accountCodes.find(ac => ac.type === 'expense') || accountCodes[0];
+        console.log('Using default account code:', defaultAccountCode);
+        
         if (defaultAccountCode) {
           onExpenseClassified(expenseId, defaultAccountCode.code);
         }
@@ -69,6 +79,7 @@ export const ExpenseClassifier = memo(({
   };
 
   const handleAccountCodeSelect = (expenseId: string, accountCode: string) => {
+    console.log('Account code selected:', { expenseId, accountCode });
     setSelectedAccountCodes(prev => ({
       ...prev,
       [expenseId]: accountCode
