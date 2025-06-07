@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { useAccountCodes, useAddAccountCode } from "@/hooks/useAccountCodes";
 import { useAccounts, useAddAccount } from "@/hooks/useAccounts";
-import type { Expense } from "@/pages/Index";
+import type { Expense, AccountCode } from "@/pages/Index";
 import { useAIAccountMatching } from "@/hooks/useAIAccountMatching";
 
 interface FileUploadProps {
