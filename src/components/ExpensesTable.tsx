@@ -20,9 +20,11 @@ interface ExpensesTableProps {
   showClassificationStatus?: boolean;
   onDeleteExpense?: (expenseId: string) => void;
   onBulkDeleteExpenses?: (expenseIds: string[]) => void;
+  onReconcileExpense?: (expenseId: string) => void;
   showDeleteButton?: boolean;
   showMultiSelect?: boolean;
   showCodeColumn?: boolean;
+  showReconcileButton?: boolean;
   sortField?: SortField;
   sortDirection?: SortDirection;
   onSort?: (field: SortField) => void;
@@ -35,9 +37,11 @@ export const ExpensesTable = memo(({
   showClassificationStatus = true,
   onDeleteExpense,
   onBulkDeleteExpenses,
+  onReconcileExpense,
   showDeleteButton = false,
   showMultiSelect = false,
   showCodeColumn = false,
+  showReconcileButton = false,
   sortField,
   sortDirection,
   onSort
@@ -53,8 +57,10 @@ export const ExpensesTable = memo(({
     showDeleteButton, 
     showMultiSelect,
     showCodeColumn,
+    showReconcileButton,
     hasOnDeleteExpense: !!onDeleteExpense,
     hasOnBulkDeleteExpenses: !!onBulkDeleteExpenses,
+    hasOnReconcileExpense: !!onReconcileExpense,
     title,
     sortField,
     sortDirection
@@ -111,6 +117,7 @@ export const ExpensesTable = memo(({
             showClassificationStatus={showClassificationStatus}
             showDeleteButton={showDeleteButton}
             showCodeColumn={showCodeColumn}
+            showReconcileButton={showReconcileButton}
             isAllSelected={isAllSelected}
             isSomeSelected={isSomeSelected}
             onSelectAll={handleSelectAll}
@@ -130,9 +137,11 @@ export const ExpensesTable = memo(({
                   showClassificationStatus={showClassificationStatus}
                   showDeleteButton={showDeleteButton}
                   showCodeColumn={showCodeColumn}
+                  showReconcileButton={showReconcileButton}
                   isSelected={isSelected}
                   onSelectExpense={handleSelectExpense}
                   onDeleteExpense={onDeleteExpense}
+                  onReconcileExpense={onReconcileExpense}
                 />
               );
             })}

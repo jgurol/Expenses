@@ -6,18 +6,23 @@ import { ArrowLeft, TrendingUp, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
+import { useReconcileExpense, useBulkReconcileExpenses } from "@/hooks/useReconcileExpense";
 import { ExpensesTable } from "@/components/ExpensesTable";
+import { useToast } from "@/hooks/use-toast";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
 
 const Analytics = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [sortField, setSortField] = useState<SortField>('sourceAccount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
+  const reconcileExpenseMutation = useReconcileExpense();
+  const bulkReconcileMutation = useBulkReconcileExpenses();
   
   const classifiedExpenses = expenses.filter(e => e.classified);
   
@@ -49,7 +54,6 @@ const Analytics = () => {
     if (sortDirection === 'asc') {
       if (aValue < bValue) return -1;
       if (aValue > bValue) return 1;
-      // Secondary sort by date for same values
       if (sortField !== 'date') {
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       }
@@ -57,7 +61,6 @@ const Analytics = () => {
     } else {
       if (aValue > bValue) return -1;
       if (aValue < bValue) return 1;
-      // Secondary sort by date for same values
       if (sortField !== 'date') {
         return new Date(b.date).getTime() - new Date(a.date).getTime();
       }
@@ -134,13 +137,38 @@ const Analytics = () => {
     }
   };
 
-  const handleReconcile = () => {
-    // Store classified expense IDs in localStorage
-    const expenseIds = classifiedExpenses.map(expense => expense.id);
-    localStorage.setItem('reconciledExpenses', JSON.stringify(expenseIds));
-    
-    // Navigate to reconciled page
-    navigate('/reconciled');
+  const handleReconcileExpense = async (expenseId: string) => {
+    try {
+      await reconcileExpenseMutation.mutateAsync(expenseId);
+      toast({
+        title: "Success",
+        description: "Expense has been reconciled.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reconcile expense.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkReconcile = async () => {
+    try {
+      const expenseIds = classifiedExpenses.filter(e => !e.reconciled).map(e => e.id);
+      await bulkReconcileMutation.mutateAsync(expenseIds);
+      toast({
+        title: "Success",
+        description: `${expenseIds.length} expenses have been reconciled.`,
+      });
+      navigate('/reconciled');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reconcile expenses.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -165,12 +193,12 @@ const Analytics = () => {
             
             <div className="flex items-center gap-4">
               <Button
-                onClick={handleReconcile}
+                onClick={handleBulkReconcile}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                disabled={classifiedExpenses.length === 0}
+                disabled={classifiedExpenses.filter(e => !e.reconciled).length === 0}
               >
                 <CheckCircle className="h-4 w-4" />
-                Reconciled ({classifiedExpenses.length})
+                Reconcile All ({classifiedExpenses.filter(e => !e.reconciled).length})
               </Button>
               
               <Badge variant="outline" className="flex items-center gap-2">
@@ -244,6 +272,8 @@ const Analytics = () => {
             showDeleteButton={false}
             showMultiSelect={false}
             showCodeColumn={true}
+            showReconcileButton={true}
+            onReconcileExpense={handleReconcileExpense}
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}

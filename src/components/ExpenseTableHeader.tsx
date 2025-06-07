@@ -12,6 +12,7 @@ interface ExpenseTableHeaderProps {
   showClassificationStatus: boolean;
   showDeleteButton: boolean;
   showCodeColumn?: boolean;
+  showReconcileButton?: boolean;
   isAllSelected: boolean;
   isSomeSelected: boolean;
   onSelectAll: (checked: boolean) => void;
@@ -25,6 +26,7 @@ export const ExpenseTableHeader = ({
   showClassificationStatus,
   showDeleteButton,
   showCodeColumn = false,
+  showReconcileButton = false,
   isAllSelected,
   isSomeSelected,
   onSelectAll,
@@ -90,6 +92,7 @@ export const ExpenseTableHeader = ({
         <TableHead className="w-36">Category</TableHead>
         <TableHead className="text-right w-24">Amount</TableHead>
         {showClassificationStatus && <TableHead className="text-center w-20">Status</TableHead>}
+        {showReconcileButton && <TableHead className="text-center w-16">Reconcile</TableHead>}
         {showDeleteButton && <TableHead className="text-center w-16">Actions</TableHead>}
       </TableRow>
     </TableHeader>
