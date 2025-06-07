@@ -93,47 +93,47 @@ export const ExpenseClassifier = memo(({
   return (
     <div className="space-y-4">
       {expenses.map((expense) => (
-        <div key={expense.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
-          <div className="flex-1">
-            <div className="grid grid-cols-4 gap-4 items-center">
-              <div>
-                <p className="text-sm text-slate-600">Source Account</p>
-                <Badge variant="outline" className="text-xs font-mono">
-                  {getAccountName(expense.sourceAccount || "Unknown")}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Date</p>
-                <p className="font-medium">{new Date(expense.date).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Description</p>
-                <p className="font-medium">{expense.description}</p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Amount</p>
-                <p className="font-semibold text-green-600">${expense.spent.toFixed(2)}</p>
-              </div>
+        <div key={expense.id} className="flex items-center p-4 bg-slate-50 rounded-lg border">
+          <div className="flex items-center w-full gap-4">
+            <div className="w-32">
+              <p className="text-sm text-slate-600">Source Account</p>
+              <Badge variant="outline" className="text-xs font-mono">
+                {getAccountName(expense.sourceAccount || "Unknown")}
+              </Badge>
+            </div>
+            <div className="w-24">
+              <p className="text-sm text-slate-600">Date</p>
+              <p className="font-medium">{new Date(expense.date).toLocaleDateString()}</p>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-slate-600">Description</p>
+              <p className="font-medium">{expense.description}</p>
+            </div>
+            <div className="w-36">
+              <p className="text-sm text-slate-600">Category</p>
+              <Select
+                value=""
+                onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={getCategoryDisplayText(expense.category)} />
+                </SelectTrigger>
+                <SelectContent>
+                  {accountCodes.map((code) => (
+                    <SelectItem key={code.id} value={code.code}>
+                      {code.code} - {code.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-24 text-right">
+              <p className="text-sm text-slate-600">Amount</p>
+              <p className="font-semibold text-green-600">${expense.spent.toFixed(2)}</p>
             </div>
           </div>
           
           <div className="flex items-center gap-3 ml-4">
-            <Select
-              value=""
-              onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
-            >
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder={getCategoryDisplayText(expense.category)} />
-              </SelectTrigger>
-              <SelectContent>
-                {accountCodes.map((code) => (
-                  <SelectItem key={code.id} value={code.code}>
-                    {code.code} - {code.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
             <Button
               onClick={() => handleAcceptCategory(expense.id)}
               variant="outline"
