@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -16,6 +15,34 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [error, setError] = React.useState<string>('');
   const [isProcessing, setIsProcessing] = React.useState(false);
 
+  // Column mapping for loose matching
+  const getColumnMapping = (headers: string[]) => {
+    const mapping: { [key: string]: string } = {};
+    
+    // Define column aliases for loose matching
+    const columnAliases = {
+      date: ['date', 'transaction date', 'trans date', 'expense date'],
+      description: ['description', 'desc', 'details', 'memo', 'transaction description', 'payee'],
+      amount: ['amount', 'spent', 'cost', 'expense', 'value', 'total', 'sum'],
+      category: ['category', 'cat', 'type', 'expense type', 'classification'],
+      sourceaccount: ['sourceaccount', 'source account', 'account', 'bank account', 'source', 'from account']
+    };
+
+    // Match headers to standard column names
+    headers.forEach(header => {
+      const normalizedHeader = header.toLowerCase().trim();
+      
+      for (const [standardColumn, aliases] of Object.entries(columnAliases)) {
+        if (aliases.some(alias => normalizedHeader.includes(alias) || alias.includes(normalizedHeader))) {
+          mapping[header] = standardColumn;
+          break;
+        }
+      }
+    });
+
+    return mapping;
+  };
+
   const processCSVFile = async (file: File): Promise<Expense[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -30,37 +57,47 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             return;
           }
 
-          const headers = lines[0].split(',').map(h => sanitizeInput(h.toLowerCase().trim()));
+          const rawHeaders = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+          const columnMapping = getColumnMapping(rawHeaders);
+          
+          console.log('Column mapping:', columnMapping);
+          
           const expenses: Expense[] = [];
 
-          // Validate required headers
-          const requiredHeaders = ['date', 'description', 'amount', 'category'];
-          const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+          // Check if we have the required mappings
+          const requiredMappings = ['date', 'description', 'amount'];
+          const foundMappings = Object.values(columnMapping);
+          const missingMappings = requiredMappings.filter(req => !foundMappings.includes(req));
           
-          if (missingHeaders.length > 0) {
-            reject(new Error(`Missing required columns: ${missingHeaders.join(', ')}`));
+          if (missingMappings.length > 0) {
+            const availableColumns = rawHeaders.join(', ');
+            reject(new Error(`Could not find columns for: ${missingMappings.join(', ')}. Available columns: ${availableColumns}`));
             return;
           }
 
           for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => sanitizeInput(v.trim()));
+            const values = lines[i].split(',').map(v => sanitizeInput(v.trim().replace(/"/g, '')));
             
-            if (values.length !== headers.length) {
+            if (values.length !== rawHeaders.length) {
               console.warn(`Skipping row ${i + 1}: column count mismatch`);
               continue;
             }
 
-            const row: { [key: string]: string } = {};
-            headers.forEach((header, index) => {
-              row[header] = values[index] || '';
+            // Build row data using column mapping
+            const rowData: { [key: string]: string } = {};
+            rawHeaders.forEach((header, index) => {
+              const mappedColumn = columnMapping[header];
+              if (mappedColumn) {
+                rowData[mappedColumn] = values[index] || '';
+              }
             });
 
-            // Validate and parse the row
-            const dateStr = row.date;
-            const description = row.description;
-            const amountStr = row.amount || row.spent;
-            const category = row.category || 'Unclassified';
-            const sourceAccount = row.sourceaccount || row['source account'] || 'Unknown';
+            // Extract required fields
+            const dateStr = rowData.date;
+            const description = rowData.description;
+            const amountStr = rowData.amount;
+            const category = rowData.category || 'Unclassified';
+            const sourceAccount = rowData.sourceaccount || 'Unknown';
 
             // Security: Validate required fields
             if (!dateStr || !description || !amountStr) {
@@ -202,8 +239,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       )}
 
       <div className="text-xs text-slate-500 space-y-1">
-        <p><strong>Required columns:</strong> date, description, amount, category</p>
-        <p><strong>Optional columns:</strong> sourceaccount (or "source account")</p>
+        <p><strong>Flexible column matching:</strong> Headers like "spent", "amount", "cost" will be recognized as amount fields</p>
+        <p><strong>Required data:</strong> date, description, and amount (with flexible column names)</p>
+        <p><strong>Optional:</strong> category, source account (will use defaults if not found)</p>
         <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
       </div>
     </div>
