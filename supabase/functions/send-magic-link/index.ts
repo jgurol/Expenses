@@ -54,8 +54,9 @@ serve(async (req) => {
     
     console.log('Sending magic link to:', user.email);
 
-    // Construct the magic link URL
-    const magicLinkUrl = `${email_data.site_url}/auth/v1/verify?token=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to)}`;
+    // Construct the magic link URL correctly - use the base Supabase URL without duplicating auth/v1
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const magicLinkUrl = `${supabaseUrl}/auth/v1/verify?token=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to)}`;
 
     // Send email using Resend
     const emailResult = await resend.emails.send({
