@@ -2,10 +2,10 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { Accounts } from "@/components/Accounts";
+import { Sources } from "@/components/Sources";
 import { useNavigate } from "react-router-dom";
 
-const AccountsPage = () => {
+const SourcePage = () => {
   const navigate = useNavigate();
 
   return (
@@ -24,8 +24,8 @@ const AccountsPage = () => {
               Back to Dashboard
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Accounts</h1>
-              <p className="text-slate-600">Manage your active accounts</p>
+              <h1 className="text-2xl font-bold text-slate-900">Sources</h1>
+              <p className="text-slate-600">Manage your expense sources</p>
             </div>
           </div>
         </div>
@@ -34,11 +34,11 @@ const AccountsPage = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
-          <Accounts />
+          <Sources />
         </Card>
       </main>
     </div>
   );
 };
 
-export default AccountsPage;
+export default SourcePage;

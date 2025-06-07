@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,23 +11,23 @@ import { Plus, Edit, Trash2, DollarSign, Loader2 } from "lucide-react";
 import type { AccountCode } from "@/pages/Index";
 import { useAccountCodes, useAddAccountCode, useUpdateAccountCode, useDeleteAccountCode } from "@/hooks/useAccountCodes";
 
-export const ChartOfAccounts = () => {
+export const Categories = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingCode, setEditingCode] = useState<AccountCode | null>(null);
+  const [editingCategory, setEditingCategory] = useState<AccountCode | null>(null);
   const [formData, setFormData] = useState({
     code: "",
     name: "",
     type: "expense" as AccountCode["type"],
   });
 
-  const { data: accountCodes = [], isLoading } = useAccountCodes();
-  const addAccountCode = useAddAccountCode();
-  const updateAccountCode = useUpdateAccountCode();
-  const deleteAccountCode = useDeleteAccountCode();
+  const { data: categories = [], isLoading } = useAccountCodes();
+  const addCategory = useAddAccountCode();
+  const updateCategory = useUpdateAccountCode();
+  const deleteCategory = useDeleteAccountCode();
 
   const resetForm = () => {
     setFormData({ code: "", name: "", type: "expense" });
-    setEditingCode(null);
+    setEditingCategory(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,31 +43,31 @@ export const ChartOfAccounts = () => {
     }
 
     // Check for duplicate codes
-    const isDuplicate = accountCodes.some(
-      code => code.code === formData.code && code.id !== editingCode?.id
+    const isDuplicate = categories.some(
+      category => category.code === formData.code && category.id !== editingCategory?.id
     );
 
     if (isDuplicate) {
       toast({
         title: "Error",
-        description: "Account code already exists",
+        description: "Category code already exists",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      if (editingCode) {
-        await updateAccountCode.mutateAsync({ id: editingCode.id, ...formData });
+      if (editingCategory) {
+        await updateCategory.mutateAsync({ id: editingCategory.id, ...formData });
         toast({
           title: "Success",
-          description: "Account code updated successfully",
+          description: "Category updated successfully",
         });
       } else {
-        await addAccountCode.mutateAsync(formData);
+        await addCategory.mutateAsync(formData);
         toast({
           title: "Success",
-          description: "Account code added successfully",
+          description: "Category added successfully",
         });
       }
 
@@ -75,31 +76,31 @@ export const ChartOfAccounts = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save account code",
+        description: "Failed to save category",
         variant: "destructive",
       });
     }
   };
 
-  const handleEdit = (code: AccountCode) => {
-    setEditingCode(code);
+  const handleEdit = (category: AccountCode) => {
+    setEditingCategory(category);
     setFormData({
-      code: code.code,
-      name: code.name,
-      type: code.type,
+      code: category.code,
+      name: category.name,
+      type: category.type,
     });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (codeId: string) => {
+  const handleDelete = async (categoryId: string) => {
     try {
-      await deleteAccountCode.mutateAsync(codeId);
+      await deleteCategory.mutateAsync(categoryId);
       toast({
         title: "Success",
-        description: "Account code deleted successfully",
+        description: "Category deleted successfully",
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to delete account code";
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete category";
       toast({
         title: "Error",
         description: errorMessage,
@@ -134,27 +135,27 @@ export const ChartOfAccounts = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">Account Codes</h3>
-          <p className="text-sm text-slate-600">Manage your chart of accounts</p>
+          <h3 className="text-lg font-semibold text-slate-900">Categories</h3>
+          <p className="text-sm text-slate-600">Manage your expense categories</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              Add Account
+              Add Category
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingCode ? "Edit Account Code" : "Add New Account Code"}
+                {editingCategory ? "Edit Category" : "Add New Category"}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Account Code *
+                  Category Code *
                 </label>
                 <Input
                   value={formData.code}
@@ -166,7 +167,7 @@ export const ChartOfAccounts = () => {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Account Name *
+                  Category Name *
                 </label>
                 <Input
                   value={formData.name}
@@ -178,7 +179,7 @@ export const ChartOfAccounts = () => {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Account Type
+                  Category Type
                 </label>
                 <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value as AccountCode["type"] })}>
                   <SelectTrigger>
@@ -204,12 +205,12 @@ export const ChartOfAccounts = () => {
                 <Button 
                   type="submit" 
                   className="flex-1"
-                  disabled={addAccountCode.isPending || updateAccountCode.isPending}
+                  disabled={addCategory.isPending || updateCategory.isPending}
                 >
-                  {(addAccountCode.isPending || updateAccountCode.isPending) && (
+                  {(addCategory.isPending || updateCategory.isPending) && (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   )}
-                  {editingCode ? "Update" : "Add"} Account
+                  {editingCategory ? "Update" : "Add"} Category
                 </Button>
               </div>
             </form>
@@ -217,11 +218,11 @@ export const ChartOfAccounts = () => {
         </Dialog>
       </div>
 
-      {accountCodes.length === 0 ? (
+      {categories.length === 0 ? (
         <div className="text-center py-8 bg-slate-50 rounded-lg">
           <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-700 mb-2">No account codes yet</h3>
-          <p className="text-slate-500">Add your first account code to get started</p>
+          <h3 className="text-lg font-medium text-slate-700 mb-2">No categories yet</h3>
+          <p className="text-slate-500">Add your first category to get started</p>
         </div>
       ) : (
         <div className="border rounded-lg">
@@ -235,17 +236,17 @@ export const ChartOfAccounts = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {accountCodes.map((code) => (
-                <TableRow key={code.id} className="hover:bg-slate-50">
+              {categories.map((category) => (
+                <TableRow key={category.id} className="hover:bg-slate-50">
                   <TableCell className="font-mono text-sm font-medium">
-                    {code.code}
+                    {category.code}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {code.name}
+                    {category.name}
                   </TableCell>
                   <TableCell>
-                    <Badge className={`text-xs ${getTypeColor(code.type)}`}>
-                      {code.type.charAt(0).toUpperCase() + code.type.slice(1)}
+                    <Badge className={`text-xs ${getTypeColor(category.type)}`}>
+                      {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -253,7 +254,7 @@ export const ChartOfAccounts = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(code)}
+                        onClick={() => handleEdit(category)}
                         className="h-8 w-8 p-0"
                       >
                         <Edit className="h-4 w-4" />
@@ -261,11 +262,11 @@ export const ChartOfAccounts = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(code.id)}
-                        disabled={deleteAccountCode.isPending}
+                        onClick={() => handleDelete(category.id)}
+                        disabled={deleteCategory.isPending}
                         className="h-8 w-8 p-0"
                       >
-                        {deleteAccountCode.isPending ? (
+                        {deleteCategory.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Trash2 className="h-4 w-4" />

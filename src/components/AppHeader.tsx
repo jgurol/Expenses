@@ -26,20 +26,20 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
-              onClick={() => navigate("/accounts")}
+              onClick={() => navigate("/sources")}
               className="flex items-center gap-2"
             >
               <FileText className="h-4 w-4" />
-              Accounts
+              Sources
             </Button>
 
             <Button
               variant="outline"
-              onClick={() => navigate("/chart-of-accounts")}
+              onClick={() => navigate("/categories")}
               className="flex items-center gap-2"
             >
               <Settings className="h-4 w-4" />
-              Chart of Accounts
+              Categories
             </Button>
 
             <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />

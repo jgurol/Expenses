@@ -2,10 +2,10 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { ChartOfAccounts } from "@/components/ChartOfAccounts";
+import { Categories } from "@/components/Categories";
 import { useNavigate } from "react-router-dom";
 
-const ChartOfAccountsPage = () => {
+const CategoriesPage = () => {
   const navigate = useNavigate();
 
   return (
@@ -24,8 +24,8 @@ const ChartOfAccountsPage = () => {
               Back to Dashboard
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Chart of Accounts</h1>
-              <p className="text-slate-600">Manage your account codes and classifications</p>
+              <h1 className="text-2xl font-bold text-slate-900">Categories</h1>
+              <p className="text-slate-600">Manage your expense categories</p>
             </div>
           </div>
         </div>
@@ -34,11 +34,11 @@ const ChartOfAccountsPage = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
-          <ChartOfAccounts />
+          <Categories />
         </Card>
       </main>
     </div>
   );
 };
 
-export default ChartOfAccountsPage;
+export default CategoriesPage;
