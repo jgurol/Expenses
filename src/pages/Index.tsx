@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
@@ -18,6 +19,7 @@ export interface Expense {
   spent: number;
   sourceAccount?: string; // Changed from accountCode to sourceAccount
   classified: boolean;
+  reconciled: boolean; // Added missing reconciled property
 }
 
 export interface AccountCode {
