@@ -1,3 +1,4 @@
+
 import { useState, memo, useMemo } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { ExpenseTableHeader } from "./ExpenseTableHeader";
 import { ExpenseTableRow } from "./ExpenseTableRow";
 import { ExpenseTableSummary } from "./ExpenseTableSummary";
 import type { Expense, AccountCode } from "@/pages/Index";
+import type { Source } from "@/hooks/useSources";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
@@ -15,6 +17,7 @@ type SortDirection = 'asc' | 'desc';
 interface ExpensesTableProps {
   expenses: Expense[];
   accountCodes: AccountCode[];
+  sources?: Source[];
   title?: string;
   showClassificationStatus?: boolean;
   onDeleteExpense?: (expenseId: string) => void;
@@ -31,7 +34,8 @@ interface ExpensesTableProps {
 
 export const ExpensesTable = memo(({ 
   expenses, 
-  accountCodes, 
+  accountCodes,
+  sources = [],
   title = "Expenses",
   showClassificationStatus = true,
   onDeleteExpense,
@@ -66,7 +70,8 @@ export const ExpensesTable = memo(({
     title,
     sortField,
     sortDirection,
-    bulkActionLabel
+    bulkActionLabel,
+    sourcesCount: sources.length
   });
 
   if (expenses.length === 0) {
@@ -135,6 +140,7 @@ export const ExpensesTable = memo(({
                   key={expense.id}
                   expense={expense}
                   accountCodes={accountCodes}
+                  sources={sources}
                   showMultiSelect={showMultiSelect}
                   showClassificationStatus={showClassificationStatus}
                   showDeleteButton={showDeleteButton}

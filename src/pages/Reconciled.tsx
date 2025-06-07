@@ -7,6 +7,7 @@ import { CheckCircle, Undo2, Download, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
+import { useSources } from "@/hooks/useSources";
 import { useUnreconcileExpenses } from "@/hooks/useUnreconcileExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,7 @@ const Reconciled = () => {
   
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
+  const { data: sources = [] } = useSources();
   const unreconcileExpensesMutation = useUnreconcileExpenses();
   
   // Get reconciled expenses from database
@@ -198,6 +200,7 @@ const Reconciled = () => {
           <ExpensesTable 
             expenses={sortedExpenses}
             accountCodes={accountCodes}
+            sources={sources}
             title="Reconciled Expenses"
             showClassificationStatus={false}
             showDeleteButton={false}

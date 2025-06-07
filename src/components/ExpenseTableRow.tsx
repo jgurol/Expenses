@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
 import type { Expense, AccountCode } from "@/pages/Index";
+import type { Source } from "@/hooks/useSources";
 
 interface ExpenseTableRowProps {
   expense: Expense;
   accountCodes: AccountCode[];
+  sources?: Source[];
   showMultiSelect: boolean;
   showClassificationStatus: boolean;
   showDeleteButton: boolean;
@@ -21,6 +23,7 @@ interface ExpenseTableRowProps {
 export const ExpenseTableRow = ({
   expense,
   accountCodes,
+  sources = [],
   showMultiSelect,
   showClassificationStatus,
   showDeleteButton,
@@ -36,6 +39,19 @@ export const ExpenseTableRow = ({
   // Display the full source account name without any parsing
   const getSourceAccountName = (sourceAccount: string) => {
     return sourceAccount || "Unknown";
+  };
+
+  // Get source description by matching account name or account number
+  const getSourceDescription = (sourceAccount: string) => {
+    if (!sourceAccount || sources.length === 0) return null;
+    
+    // Try to find source by name first, then by account number
+    const source = sources.find(s => 
+      s.name === sourceAccount || 
+      s.account_number === sourceAccount
+    );
+    
+    return source?.description || null;
   };
 
   // Get the account code for this expense's category
@@ -71,6 +87,8 @@ export const ExpenseTableRow = ({
     return colors[Math.abs(hash) % colors.length];
   };
 
+  const sourceDescription = getSourceDescription(expense.sourceAccount);
+
   console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton, 'showMultiSelect:', showMultiSelect, 'showCodeColumn:', showCodeColumn, 'isSelected:', isSelected);
 
   return (
@@ -85,9 +103,16 @@ export const ExpenseTableRow = ({
         </TableCell>
       )}
       <TableCell>
-        <Badge variant="outline" className="text-xs font-mono">
-          {getSourceAccountName(expense.sourceAccount || "Unknown")}
-        </Badge>
+        <div>
+          <Badge variant="outline" className="text-xs font-mono">
+            {getSourceAccountName(expense.sourceAccount || "Unknown")}
+          </Badge>
+          {sourceDescription && (
+            <div className="text-xs text-slate-500 mt-1">
+              {sourceDescription}
+            </div>
+          )}
+        </div>
       </TableCell>
       <TableCell className="font-mono text-sm">
         {new Date(expense.date).toLocaleDateString()}
