@@ -209,6 +209,28 @@ const Reconciled = () => {
             </Card>
           </div>
 
+          {/* Archive Section - Moved to top */}
+          {reconciledExpenses.length > 0 && (
+            <Card className="p-6 border-orange-200 bg-orange-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Archive Reconciled Expenses</h3>
+                  <p className="text-slate-600">
+                    Archive all reconciled expenses to process a new batch. Archived expenses won't appear in reports or exports.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => handleArchiveExpenses(reconciledExpenses.map(e => e.id))}
+                  className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 text-lg"
+                  disabled={archiveExpensesMutation.isPending}
+                >
+                  <Archive className="h-5 w-5" />
+                  Archive All ({reconciledExpenses.length})
+                </Button>
+              </div>
+            </Card>
+          )}
+
           {/* Expense Summary by Category */}
           <ExpenseSummaryByCategory 
             expenses={reconciledExpenses}
@@ -233,28 +255,6 @@ const Reconciled = () => {
               bulkActionLabel="Unreconcile Selected"
               bulkActionIcon={Undo2}
             />
-            
-            {/* Archive Button */}
-            {reconciledExpenses.length > 0 && (
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900">Archive Reconciled Expenses</h3>
-                    <p className="text-sm text-slate-600">
-                      Archive all reconciled expenses to process a new batch. Archived expenses won't appear in reports or exports.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => handleArchiveExpenses(reconciledExpenses.map(e => e.id))}
-                    className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white"
-                    disabled={archiveExpensesMutation.isPending}
-                  >
-                    <Archive className="h-4 w-4" />
-                    Archive All ({reconciledExpenses.length})
-                  </Button>
-                </div>
-              </Card>
-            )}
           </div>
         </div>
       </main>
