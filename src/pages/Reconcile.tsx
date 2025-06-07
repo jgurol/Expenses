@@ -3,11 +3,14 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
+import { useSources } from "@/hooks/useSources";
 import { ExpensesTable } from "@/components/ExpensesTable";
+import { toast } from "@/hooks/use-toast";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
@@ -16,11 +19,16 @@ const Reconcile = () => {
   const navigate = useNavigate();
   const [sortField, setSortField] = useState<SortField>('sourceAccount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [selectedAccount, setSelectedAccount] = useState<string>('');
   
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
+  const { data: sources = [] } = useSources();
   
   const classifiedExpenses = expenses.filter(e => e.classified);
+  
+  // Get unique source accounts from expenses
+  const sourceAccounts = Array.from(new Set(classifiedExpenses.map(e => e.sourceAccount).filter(Boolean)));
   
   // Sort expenses based on current sort state
   const sortedExpenses = [...classifiedExpenses].sort((a, b) => {
@@ -78,7 +86,39 @@ const Reconcile = () => {
     }
   };
 
-  const handleReconcile = () => {
+  const handleReconcileAccount = () => {
+    if (!selectedAccount) {
+      toast({
+        title: "No Account Selected",
+        description: "Please select an account to reconcile",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get existing reconciled expenses
+    const existingReconciledIds = JSON.parse(localStorage.getItem('reconciledExpenses') || '[]');
+    
+    // Find expenses for the selected account
+    const accountExpenses = classifiedExpenses.filter(expense => expense.sourceAccount === selectedAccount);
+    const accountExpenseIds = accountExpenses.map(expense => expense.id);
+    
+    // Add new expense IDs to existing reconciled expenses
+    const updatedReconciledIds = [...new Set([...existingReconciledIds, ...accountExpenseIds])];
+    
+    // Store updated reconciled expenses
+    localStorage.setItem('reconciledExpenses', JSON.stringify(updatedReconciledIds));
+    
+    toast({
+      title: "Account Reconciled",
+      description: `Successfully reconciled ${accountExpenses.length} expenses from ${selectedAccount}`,
+    });
+
+    // Reset selection
+    setSelectedAccount('');
+  };
+
+  const handleReconcileAll = () => {
     // Store classified expense IDs in localStorage
     const expenseIds = classifiedExpenses.map(expense => expense.id);
     localStorage.setItem('reconciledExpenses', JSON.stringify(expenseIds));
@@ -108,13 +148,37 @@ const Reconcile = () => {
             </div>
             
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sourceAccounts.map((account) => (
+                      <SelectItem key={account} value={account}>
+                        {account}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  onClick={handleReconcileAccount}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  disabled={!selectedAccount}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Reconcile
+                </Button>
+              </div>
+
               <Button
-                onClick={handleReconcile}
+                onClick={handleReconcileAll}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
                 disabled={classifiedExpenses.length === 0}
               >
                 <CheckCircle className="h-4 w-4" />
-                Mark as Reconciled ({classifiedExpenses.length})
+                Mark All as Reconciled ({classifiedExpenses.length})
               </Button>
               
               <Badge variant="outline" className="flex items-center gap-2">
