@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { ExpensesTable } from "@/components/ExpensesTable";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 
 const Analytics = () => {
   const navigate = useNavigate();
@@ -17,32 +16,8 @@ const Analytics = () => {
   
   const classifiedExpenses = expenses.filter(e => e.classified);
   
-  // Group expenses by category for analysis
-  const categoryData = classifiedExpenses.reduce((acc, expense) => {
-    const category = expense.category;
-    if (!acc[category]) {
-      acc[category] = {
-        category: category,
-        amount: 0,
-        count: 0
-      };
-    }
-    acc[category].amount += expense.spent;
-    acc[category].count += 1;
-    return acc;
-  }, {} as Record<string, { category: string; amount: number; count: number }>);
-
-  const chartData = Object.values(categoryData);
-
   const totalAmount = classifiedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
   const averageExpense = classifiedExpenses.length > 0 ? totalAmount / classifiedExpenses.length : 0;
-
-  const chartConfig = {
-    amount: {
-      label: "Amount ($)",
-      color: "hsl(var(--chart-1))",
-    },
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -94,73 +69,6 @@ const Analytics = () => {
               <div className="text-sm text-slate-500">per transaction</div>
             </Card>
           </div>
-
-          {/* Chart Section */}
-          {chartData.length > 0 && (
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-slate-900">Expense Distribution by Category</h3>
-              </div>
-              
-              <ChartContainer config={chartConfig} className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    data={chartData} 
-                    layout="horizontal"
-                    margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      type="number" 
-                      tickFormatter={(value) => `$${value}`}
-                      domain={[0, 'dataMax']}
-                    />
-                    <YAxis 
-                      type="category"
-                      dataKey="category" 
-                      width={90}
-                      tick={{ fontSize: 11 }}
-                      interval={0}
-                    />
-                    <ChartTooltip
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="rounded-lg border bg-background p-2 shadow-sm">
-                              <div className="grid gap-2">
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Category
-                                  </span>
-                                  <span className="font-bold text-muted-foreground">
-                                    {label}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Amount
-                                  </span>
-                                  <span className="font-bold">
-                                    ${Number(payload[0].value).toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar 
-                      dataKey="amount" 
-                      fill="var(--color-amount)"
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </Card>
-          )}
 
           {/* Expenses Table */}
           <ExpensesTable 
