@@ -38,11 +38,11 @@ export const ExpenseTableHeader = ({
             />
           </TableHead>
         )}
-        <TableHead className="w-36">Source Account</TableHead>
+        <TableHead className="w-32">Source Account</TableHead>
         <TableHead className="w-24">Date</TableHead>
-        <TableHead className="w-96">Description</TableHead>
-        <TableHead className="w-40">Category</TableHead>
-        <TableHead className="text-right w-28">Amount</TableHead>
+        <TableHead className="min-w-0 flex-1">Description</TableHead>
+        <TableHead className="w-36">Category</TableHead>
+        <TableHead className="text-right w-24">Amount</TableHead>
         {showClassificationStatus && <TableHead className="text-center w-20">Status</TableHead>}
         {showDeleteButton && <TableHead className="text-center w-16">Actions</TableHead>}
       </TableRow>
