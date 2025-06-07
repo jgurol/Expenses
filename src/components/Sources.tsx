@@ -235,7 +235,6 @@ export const Sources = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Source #</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Balance</TableHead>
                 <TableHead>Status</TableHead>
@@ -245,9 +244,6 @@ export const Sources = () => {
             <TableBody>
               {sources.map((source) => (
                 <TableRow key={source.id} className="hover:bg-slate-50">
-                  <TableCell className="font-mono text-sm font-medium">
-                    {source.account_number}
-                  </TableCell>
                   <TableCell className="font-medium">
                     {source.name}
                     {source.description && (
