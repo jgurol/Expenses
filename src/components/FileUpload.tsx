@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { Upload, FileSpreadsheet, X } from "lucide-react";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
-import { useAccountCodes, useAddAccountCode } from "@/hooks/useAccountCodes";
+import { useAccountCodes } from "@/hooks/useAccountCodes";
 import { useAccounts, useAddAccount } from "@/hooks/useAccounts";
 import type { Expense, AccountCode } from "@/pages/Index";
 import { useAIAccountMatching } from "@/hooks/useAIAccountMatching";
@@ -24,7 +24,6 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
 
   const { data: accountCodes = [] } = useAccountCodes();
   const { data: accounts = [] } = useAccounts();
-  const addAccountCode = useAddAccountCode();
   const addAccount = useAddAccount();
   const aiMatching = useAIAccountMatching();
 
@@ -53,82 +52,64 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     return null;
   };
 
-  const ensureAccountCodeExists = async (sheetName: string) => {
-    // Check if account code already exists
-    const existingCode = accountCodes.find(ac => ac.name === sheetName || ac.code === sheetName);
-    if (existingCode) {
-      return existingCode.code;
-    }
-
-    // Create new account code
-    try {
-      const newAccountCode = {
-        code: sheetName.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase(),
-        name: sheetName,
-        type: "expense" as const
-      };
-      
-      await addAccountCode.mutateAsync(newAccountCode);
-      console.log(`Created new account code: ${newAccountCode.code} for sheet: ${sheetName}`);
-      return newAccountCode.code;
-    } catch (error) {
-      console.error('Error creating account code:', error);
-      // Return sheet name as fallback
-      return sheetName;
-    }
-  };
-
-  const ensureAccountExists = async (sheetName: string, accountCodeId: string) => {
-    // Check if account already exists for this sheet
+  const ensureSourceAccountExists = async (sheetName: string) => {
+    // Check if source account already exists
     const existingAccount = accounts.find(acc => acc.name === sheetName);
     if (existingAccount) {
       return existingAccount.account_number;
     }
 
-    // Create new account
+    // Create new source account - we need a default account code for this
     try {
+      // Find or use a default account code (preferably an asset or expense type)
+      let defaultAccountCode = accountCodes.find(ac => ac.type === "asset");
+      if (!defaultAccountCode) {
+        defaultAccountCode = accountCodes.find(ac => ac.type === "expense");
+      }
+      if (!defaultAccountCode && accountCodes.length > 0) {
+        defaultAccountCode = accountCodes[0]; // Use first available if no asset/expense found
+      }
+
+      if (!defaultAccountCode) {
+        console.error('No account codes available to create source account');
+        return sheetName; // Return sheet name as fallback
+      }
+
       // Generate a unique account number
-      const accountNumber = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
+      const accountNumber = `SRC-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
       
       const newAccount = {
-        account_code_id: accountCodeId,
+        account_code_id: defaultAccountCode.id,
         account_number: accountNumber,
         name: sheetName,
-        description: `Account created from spreadsheet tab: ${sheetName}`,
+        description: `Source account created from spreadsheet tab: ${sheetName}`,
         balance: 0,
         is_active: true
       };
       
       await addAccount.mutateAsync(newAccount);
-      console.log(`Created new account: ${accountNumber} for sheet: ${sheetName}`);
+      console.log(`Created new source account: ${accountNumber} for sheet: ${sheetName}`);
       return accountNumber;
     } catch (error) {
-      console.error('Error creating account:', error);
+      console.error('Error creating source account:', error);
       // Return sheet name as fallback
       return sheetName;
     }
   };
 
-  const processFileData = async (data: any[], accountName: string, currentSheet: number, totalSheets: number) => {
-    console.log(`Processing sheet: ${accountName}`);
+  const processFileData = async (data: any[], sheetName: string, currentSheet: number, totalSheets: number) => {
+    console.log(`Processing sheet: ${sheetName}`);
     console.log(`Raw data length: ${data.length}`);
     
-    setProgressText(`Processing sheet ${currentSheet}/${totalSheets}: ${accountName}`);
+    setProgressText(`Processing sheet ${currentSheet}/${totalSheets}: ${sheetName}`);
     
     if (data.length > 0) {
       console.log('First row keys:', Object.keys(data[0]));
       console.log('First row sample:', data[0]);
     }
 
-    // Ensure account code exists and get its ID
-    const accountCode = await ensureAccountCodeExists(accountName);
-    
-    // Find the account code ID for creating the account
-    const accountCodeRecord = accountCodes.find(ac => ac.code === accountCode || ac.name === accountName);
-    if (accountCodeRecord) {
-      // Ensure account exists
-      await ensureAccountExists(accountName, accountCodeRecord.id);
-    }
+    // Ensure source account exists for this sheet
+    const sourceAccount = await ensureSourceAccountExists(sheetName);
 
     const expenses: Expense[] = [];
     
@@ -138,7 +119,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       // Update progress for individual rows
       const rowProgress = ((currentSheet - 1) / totalSheets + (index + 1) / (data.length * totalSheets)) * 100;
       setProgress(rowProgress);
-      setProgressText(`Processing sheet ${currentSheet}/${totalSheets}: ${accountName} (${index + 1}/${data.length} rows)`);
+      setProgressText(`Processing sheet ${currentSheet}/${totalSheets}: ${sheetName} (${index + 1}/${data.length} rows)`);
       
       // More flexible column name matching
       const date = findColumn(row, ['date', 'Date', 'DATE', 'Transaction Date', 'Post Date', 'Posted Date']);
@@ -182,7 +163,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         parsedDate = excelDate.toISOString().split('T')[0];
       }
 
-      // Try to match expense description to existing account codes using AI
+      // Try to match expense description to existing account codes using AI for classification
       let finalCategory = category?.toString() || "Uncategorized"; // Default to original category or "Uncategorized"
       
       if (accountCodes.length > 0) {
@@ -204,12 +185,12 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         description: description.toString(),
         category: finalCategory,
         spent: parsedAmount,
-        accountCode: accountCode, // This remains the sheet-based account code
+        sourceAccount: sourceAccount, // This is now the source account from the sheet
         classified: false,
       } as Expense);
     }
 
-    console.log(`Processed ${expenses.length} valid expenses from ${accountName}`);
+    console.log(`Processed ${expenses.length} valid expenses from ${sheetName}`);
     return expenses;
   };
 
@@ -259,7 +240,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         let totalProcessed = 0;
         const totalSheets = workbook.SheetNames.length;
         
-        // Process each sheet/tab as a separate account
+        // Process each sheet/tab as a separate source account
         for (let sheetIndex = 0; sheetIndex < workbook.SheetNames.length; sheetIndex++) {
           const sheetName = workbook.SheetNames[sheetIndex];
           console.log(`Processing sheet: ${sheetName}`);
@@ -286,7 +267,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           onExpensesUploaded(allExpenses);
           toast({
             title: "Success!",
-            description: `Uploaded ${totalProcessed} expenses from ${workbook.SheetNames.length} accounts`,
+            description: `Uploaded ${totalProcessed} expenses from ${workbook.SheetNames.length} source accounts`,
           });
         } else {
           console.log('No valid expenses found. Check console for details.');
@@ -318,7 +299,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         setProgressText("");
       }, 3000);
     }
-  }, [onExpensesUploaded, accountCodes, accounts, addAccountCode, addAccount]);
+  }, [onExpensesUploaded, accountCodes, accounts, addAccount]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -380,7 +361,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
                 Expected columns: date, description, amount/spent (any variation of these names)
               </p>
               <p className="text-sm text-blue-600 font-medium">
-                Excel files: Each tab represents a different account and will auto-create account codes
+                Excel files: Each tab represents a different source account and will auto-create source accounts
               </p>
             </div>
 

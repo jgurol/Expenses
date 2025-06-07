@@ -19,7 +19,7 @@ export interface Expense {
   description: string;
   category: string;
   spent: number;
-  accountCode?: string;
+  sourceAccount?: string; // Changed from accountCode to sourceAccount
   classified: boolean;
 }
 

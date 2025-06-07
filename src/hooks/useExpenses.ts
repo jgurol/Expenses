@@ -23,7 +23,7 @@ export const useExpenses = () => {
         description: expense.description,
         category: expense.category,
         spent: Number(expense.spent),
-        accountCode: expense.account_codes?.code,
+        sourceAccount: expense.source_account, // Map source_account to sourceAccount
         classified: expense.classified
       }));
     },
@@ -35,26 +35,15 @@ export const useAddExpenses = () => {
   
   return useMutation({
     mutationFn: async (expenses: Omit<Expense, 'id'>[]) => {
-      // First, get all account codes to map accountCode strings to IDs
-      const { data: accountCodes, error: accountCodesError } = await supabase
-        .from('account_codes')
-        .select('id, code');
-      
-      if (accountCodesError) throw accountCodesError;
-
-      const expensesToInsert = expenses.map(expense => {
-        // Find the account_code_id based on the accountCode string
-        const accountCodeRecord = accountCodes?.find(ac => ac.code === expense.accountCode);
-        
-        return {
-          date: expense.date,
-          description: expense.description,
-          category: expense.category,
-          spent: expense.spent,
-          classified: expense.classified,
-          account_code_id: accountCodeRecord?.id || null
-        };
-      });
+      const expensesToInsert = expenses.map(expense => ({
+        date: expense.date,
+        description: expense.description,
+        category: expense.category,
+        spent: expense.spent,
+        classified: expense.classified,
+        source_account: expense.sourceAccount, // Map sourceAccount to source_account
+        account_code_id: null // No longer automatically assigning account codes during import
+      }));
 
       const { data, error } = await supabase
         .from('expenses')
@@ -78,7 +67,7 @@ export const useClassifyExpense = () => {
       // Get the account code details to update the category
       const { data: accountCodeData, error: accountCodeError } = await supabase
         .from('account_codes')
-        .select('name')
+        .select('id, name')
         .eq('code', accountCode)
         .single();
       
@@ -88,6 +77,7 @@ export const useClassifyExpense = () => {
         .from('expenses')
         .update({ 
           category: accountCodeData.name,
+          account_code_id: accountCodeData.id, // Set the account code ID for classification
           classified: true 
         })
         .eq('id', expenseId)
