@@ -8,7 +8,7 @@ interface ExpenseSummaryByCategoryProps {
   accountCodes: AccountCode[];
 }
 
-// Generate overall spending analysis
+// Generate overall spending analysis with snippy commentary
 const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: number; count: number; code: string }>): string => {
   const categories = Object.keys(categoryTotals);
   const totalCategories = categories.length;
@@ -16,33 +16,33 @@ const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: numb
   const topCategory = sortedByAmount[0];
   const totalSpent = Object.values(categoryTotals).reduce((sum, cat) => sum + cat.total, 0);
   
-  if (totalCategories === 0) return "No spending data available for analysis.";
+  if (totalCategories === 0) return "Well, at least you managed to avoid spending money entirely. That's... something.";
   
-  let analysis = `Spending spread across ${totalCategories} categories with `;
+  let analysis = `Oh wonderful, you've managed to scatter ${totalSpent.toFixed(2)} across ${totalCategories} different categories. `;
   
   if (topCategory && topCategory[1].total > totalSpent * 0.4) {
-    analysis += `heavy concentration in ${topCategory[0]} (${((topCategory[1].total / totalSpent) * 100).toFixed(1)}% of total spending). `;
+    analysis += `And look at that - you've dumped a whopping ${((topCategory[1].total / totalSpent) * 100).toFixed(1)}% into ${topCategory[0]}. Clearly someone has their priorities straight. `;
   } else {
-    analysis += "relatively balanced distribution across categories. ";
+    analysis += `At least you're consistently wasteful across all categories instead of just one. How balanced of you. `;
   }
   
-  // Analyze spending patterns
+  // Analyze spending patterns with attitude
   const highFreqCategories = Object.entries(categoryTotals).filter(([, data]) => data.count > 5);
   const highValueCategories = Object.entries(categoryTotals).filter(([, data]) => data.total > 1000);
   
   if (highFreqCategories.length > 0) {
-    analysis += `Frequent spending patterns observed in ${highFreqCategories.length} categories. `;
+    analysis += `I see you've made ${highFreqCategories.length} categories into regular money drains. Consistency is key, I suppose. `;
   }
   
   if (highValueCategories.length > 0) {
-    analysis += `${highValueCategories.length} categories show significant investment levels. `;
+    analysis += `And ${highValueCategories.length} categories managed to hit the $1,000+ mark. Because why spend small when you can spend big? `;
   }
   
   const avgPerCategory = totalSpent / totalCategories;
   if (avgPerCategory > 500) {
-    analysis += "Overall spending levels suggest substantial operational activity.";
+    analysis += "With an average of $" + avgPerCategory.toFixed(2) + " per category, you're really showing that money who's boss.";
   } else {
-    analysis += "Spending patterns indicate controlled, moderate operational expenses.";
+    analysis += "At least your spending per category is somewhat restrained. Baby steps, I guess.";
   }
   
   return analysis;
@@ -87,12 +87,12 @@ export const ExpenseSummaryByCategory = ({ expenses, accountCodes }: ExpenseSumm
       </div>
       
       {/* Overall Spending Analysis */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
           <div>
-            <h4 className="font-medium text-blue-900 mb-1">Spending Pattern Analysis</h4>
-            <p className="text-sm text-blue-800">{overallAnalysis}</p>
+            <h4 className="font-medium text-red-900 mb-1">Reality Check on Your Spending</h4>
+            <p className="text-sm text-red-800">{overallAnalysis}</p>
           </div>
         </div>
       </div>
