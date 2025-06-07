@@ -1,4 +1,3 @@
-
 import { useState, memo, useMemo } from "react";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
@@ -163,7 +162,7 @@ export const ExpensesTable = memo(({
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         {title && <h3 className="text-lg font-semibold text-slate-900">{title}</h3>}
-        {showMultiSelect && selectedExpenses.length > 0 && (
+        {showMultiSelect && selectedExpenses.length > 0 && onBulkDeleteExpenses && (
           <Button
             variant={buttonVariant}
             size="sm"

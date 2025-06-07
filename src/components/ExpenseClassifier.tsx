@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Check, CheckSquare } from "lucide-react";
+import { Check, CheckSquare } from "lucide-react";
 import { ExpensesTable } from "./ExpensesTable";
 import type { Expense, AccountCode } from "@/pages/Index";
 
@@ -15,14 +15,12 @@ interface ExpenseClassifierProps {
   expenses: Expense[];
   accountCodes: AccountCode[];
   onExpenseClassified: (expenseId: string, accountCode: string) => void;
-  onExpenseDeleted?: (expenseId: string) => void;
 }
 
 export const ExpenseClassifier = memo(({ 
   expenses, 
   accountCodes, 
-  onExpenseClassified,
-  onExpenseDeleted 
+  onExpenseClassified
 }: ExpenseClassifierProps) => {
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
   const [sortField, setSortField] = useState<SortField>('date');
@@ -158,12 +156,6 @@ export const ExpenseClassifier = memo(({
     }
   };
 
-  const handleDeleteExpense = (expenseId: string) => {
-    if (onExpenseDeleted) {
-      onExpenseDeleted(expenseId);
-    }
-  };
-
   const handleAccountCodeSelect = (expenseId: string, accountCode: string) => {
     console.log('Account code selected - automatically reclassifying:', { expenseId, accountCode });
     // Automatically reclassify when dropdown selection changes
@@ -216,7 +208,7 @@ export const ExpenseClassifier = memo(({
           accountCodes={accountCodes}
           title=""
           showClassificationStatus={false}
-          showDeleteButton={!!onExpenseDeleted}
+          showDeleteButton={false}
           showMultiSelect={true}
           sortField={sortField}
           sortDirection={sortDirection}
@@ -229,7 +221,6 @@ export const ExpenseClassifier = memo(({
               isSelected={isSelected}
               onSelectExpense={onSelectExpense}
               onAcceptCategory={handleAcceptCategory}
-              onDeleteExpense={handleDeleteExpense}
               onAccountCodeSelect={handleAccountCodeSelect}
               getCategoryDisplayText={getCategoryDisplayText}
             />
@@ -247,7 +238,6 @@ interface ClassifierTableRowProps {
   isSelected: boolean;
   onSelectExpense: (expenseId: string, checked: boolean) => void;
   onAcceptCategory: (expenseId: string) => void;
-  onDeleteExpense: (expenseId: string) => void;
   onAccountCodeSelect: (expenseId: string, accountCode: string) => void;
   getCategoryDisplayText: (category: string) => string;
 }
@@ -258,7 +248,6 @@ const ClassifierTableRow = ({
   isSelected,
   onSelectExpense,
   onAcceptCategory,
-  onDeleteExpense,
   onAccountCodeSelect,
   getCategoryDisplayText
 }: ClassifierTableRowProps) => {
@@ -339,26 +328,16 @@ const ClassifierTableRow = ({
         </Select>
       </td>
       <td className="p-4">
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => onAcceptCategory(expense.id)}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-            title="Accept the current category and assign matching account code"
-          >
-            <Check className="h-4 w-4" />
-            Accept
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDeleteExpense(expense.id)}
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          onClick={() => onAcceptCategory(expense.id)}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+          title="Accept the current category and assign matching account code"
+        >
+          <Check className="h-4 w-4" />
+          Accept
+        </Button>
       </td>
     </tr>
   );

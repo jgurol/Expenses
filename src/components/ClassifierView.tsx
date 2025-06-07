@@ -10,15 +10,13 @@ interface ClassifierViewProps {
   classifiedExpenses: Expense[];
   accountCodes: AccountCode[];
   onExpenseClassified: (expenseId: string, accountCode: string) => void;
-  onExpenseDeleted: (expenseId: string) => void;
 }
 
 export const ClassifierView = ({
   unclassifiedExpenses,
   classifiedExpenses,
   accountCodes,
-  onExpenseClassified,
-  onExpenseDeleted
+  onExpenseClassified
 }: ClassifierViewProps) => {
   return (
     <div className="space-y-8">
@@ -33,7 +31,6 @@ export const ClassifierView = ({
           expenses={unclassifiedExpenses}
           accountCodes={accountCodes}
           onExpenseClassified={onExpenseClassified}
-          onExpenseDeleted={onExpenseDeleted}
         />
       </Card>
 
