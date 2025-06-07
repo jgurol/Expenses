@@ -1,3 +1,4 @@
+
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -102,7 +103,7 @@ export const ExpenseClassifier = memo(({
       {expenses.map((expense) => (
         <div key={expense.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
           <div className="flex-1">
-            <div className="grid grid-cols-5 gap-4 items-center">
+            <div className="grid grid-cols-4 gap-4 items-center">
               <div>
                 <p className="text-sm text-slate-600">Source Account</p>
                 <Badge variant="outline" className="text-xs font-mono">
@@ -118,10 +119,6 @@ export const ExpenseClassifier = memo(({
                 <p className="font-medium">{expense.description}</p>
               </div>
               <div>
-                <p className="text-sm text-slate-600">AI Category</p>
-                <p className="font-medium text-blue-600">{expense.category}</p>
-              </div>
-              <div>
                 <p className="text-sm text-slate-600">Amount</p>
                 <p className="font-semibold text-green-600">${expense.spent.toFixed(2)}</p>
               </div>
@@ -134,7 +131,7 @@ export const ExpenseClassifier = memo(({
               onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
             >
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="Choose different category" />
+                <SelectValue placeholder={expense.category} />
               </SelectTrigger>
               <SelectContent>
                 {accountCodes.map((code) => (
