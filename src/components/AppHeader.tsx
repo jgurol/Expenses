@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, FileText, BarChart3 } from "lucide-react";
+import { Settings, FileText, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
 import type { UserRole } from "@/pages/Index";
@@ -26,11 +26,11 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
-              onClick={() => navigate("/analytics")}
+              onClick={() => navigate("/reconcile")}
               className="flex items-center gap-2"
             >
-              <BarChart3 className="h-4 w-4" />
-              Analytics
+              <CheckCircle className="h-4 w-4" />
+              Reconcile
             </Button>
 
             <Button
