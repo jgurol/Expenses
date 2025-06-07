@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -5,7 +6,6 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { validateFileUpload, sanitizeInput } from '@/utils/authCleanup';
-import { useSources } from '@/hooks/useSources';
 import type { Expense } from '@/pages/Index';
 
 interface FileUploadProps {
@@ -15,60 +15,6 @@ interface FileUploadProps {
 export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [error, setError] = React.useState<string>('');
   const [isProcessing, setIsProcessing] = React.useState(false);
-  const { data: sources = [] } = useSources();
-
-  // Function to match sheet tab name with source account
-  const matchSourceAccount = (tabName: string) => {
-    if (!tabName) return 'Unknown';
-    
-    const normalizedTabName = tabName.toLowerCase().trim();
-    
-    // Try to find exact match first
-    let matchedSource = sources.find(source => 
-      source.name.toLowerCase() === normalizedTabName ||
-      source.account_number.toLowerCase() === normalizedTabName
-    );
-    
-    // If no exact match, try partial matching
-    if (!matchedSource) {
-      matchedSource = sources.find(source =>
-        normalizedTabName.includes(source.name.toLowerCase()) ||
-        source.name.toLowerCase().includes(normalizedTabName) ||
-        normalizedTabName.includes(source.account_number.toLowerCase()) ||
-        source.account_number.toLowerCase().includes(normalizedTabName)
-      );
-    }
-    
-    return matchedSource ? matchedSource.name : 'Unknown';
-  };
-
-  // Column mapping for loose matching
-  const getColumnMapping = (headers: string[]) => {
-    const mapping: { [key: string]: string } = {};
-    
-    // Define column aliases for loose matching
-    const columnAliases = {
-      date: ['date', 'transaction date', 'trans date', 'expense date'],
-      description: ['description', 'desc', 'details', 'memo', 'transaction description', 'payee'],
-      amount: ['amount', 'spent', 'cost', 'expense', 'value', 'total', 'sum'],
-      category: ['category', 'cat', 'type', 'expense type', 'classification'],
-      sourceaccount: ['sourceaccount', 'source account', 'account', 'bank account', 'source', 'from account']
-    };
-
-    // Match headers to standard column names
-    headers.forEach(header => {
-      const normalizedHeader = header.toLowerCase().trim();
-      
-      for (const [standardColumn, aliases] of Object.entries(columnAliases)) {
-        if (aliases.some(alias => normalizedHeader.includes(alias) || alias.includes(normalizedHeader))) {
-          mapping[header] = standardColumn;
-          break;
-        }
-      }
-    });
-
-    return mapping;
-  };
 
   const processCSVFile = async (file: File): Promise<Expense[]> => {
     return new Promise((resolve, reject) => {
@@ -84,58 +30,37 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             return;
           }
 
-          const rawHeaders = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-          const columnMapping = getColumnMapping(rawHeaders);
-          
-          console.log('Column mapping:', columnMapping);
-          console.log('Available sources:', sources);
-          
-          // Try to determine source account from file name or sheet tab
-          const fileName = file.name.replace(/\.(csv|xlsx?)$/i, '');
-          const detectedSourceAccount = matchSourceAccount(fileName);
-          console.log('Detected source account from file name:', detectedSourceAccount);
-          
+          const headers = lines[0].split(',').map(h => sanitizeInput(h.toLowerCase().trim()));
           const expenses: Expense[] = [];
 
-          // Check if we have the required mappings
-          const requiredMappings = ['date', 'description', 'amount'];
-          const foundMappings = Object.values(columnMapping);
-          const missingMappings = requiredMappings.filter(req => !foundMappings.includes(req));
+          // Validate required headers
+          const requiredHeaders = ['date', 'description', 'amount', 'category'];
+          const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
           
-          if (missingMappings.length > 0) {
-            const availableColumns = rawHeaders.join(', ');
-            reject(new Error(`Could not find columns for: ${missingMappings.join(', ')}. Available columns: ${availableColumns}`));
+          if (missingHeaders.length > 0) {
+            reject(new Error(`Missing required columns: ${missingHeaders.join(', ')}`));
             return;
           }
 
           for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => sanitizeInput(v.trim().replace(/"/g, '')));
+            const values = lines[i].split(',').map(v => sanitizeInput(v.trim()));
             
-            if (values.length !== rawHeaders.length) {
+            if (values.length !== headers.length) {
               console.warn(`Skipping row ${i + 1}: column count mismatch`);
               continue;
             }
 
-            // Build row data using column mapping
-            const rowData: { [key: string]: string } = {};
-            rawHeaders.forEach((header, index) => {
-              const mappedColumn = columnMapping[header];
-              if (mappedColumn) {
-                rowData[mappedColumn] = values[index] || '';
-              }
+            const row: { [key: string]: string } = {};
+            headers.forEach((header, index) => {
+              row[header] = values[index] || '';
             });
 
-            // Extract required fields
-            const dateStr = rowData.date;
-            const description = rowData.description;
-            const amountStr = rowData.amount;
-            const category = rowData.category || 'Unclassified';
-            
-            // Use detected source account or try to match from row data
-            let sourceAccount = detectedSourceAccount;
-            if (rowData.sourceaccount) {
-              sourceAccount = matchSourceAccount(rowData.sourceaccount);
-            }
+            // Validate and parse the row
+            const dateStr = row.date;
+            const description = row.description;
+            const amountStr = row.amount || row.spent;
+            const category = row.category || 'Unclassified';
+            const sourceAccount = row.sourceaccount || row['source account'] || 'Unknown';
 
             // Security: Validate required fields
             if (!dateStr || !description || !amountStr) {
@@ -174,7 +99,6 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             return;
           }
 
-          console.log('Processed expenses with source accounts:', expenses.map(e => ({ description: e.description, sourceAccount: e.sourceAccount })));
           resolve(expenses);
         } catch (error) {
           reject(new Error('Failed to parse CSV file: ' + (error as Error).message));
@@ -218,7 +142,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [onExpensesUploaded, sources]);
+  }, [onExpensesUploaded]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -278,10 +202,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       )}
 
       <div className="text-xs text-slate-500 space-y-1">
-        <p><strong>Flexible column matching:</strong> Headers like "spent", "amount", "cost" will be recognized as amount fields</p>
-        <p><strong>Source account matching:</strong> File names and sheet tabs will be matched to your configured sources</p>
-        <p><strong>Required data:</strong> date, description, and amount (with flexible column names)</p>
-        <p><strong>Optional:</strong> category, source account (will use defaults if not found)</p>
+        <p><strong>Required columns:</strong> date, description, amount, category</p>
+        <p><strong>Optional columns:</strong> sourceaccount (or "source account")</p>
         <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
       </div>
     </div>
