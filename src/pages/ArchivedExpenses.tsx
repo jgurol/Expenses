@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Archive, Home } from "lucide-react";
+import { Archive, Home, ChevronDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useArchivedExpenses } from "@/hooks/useArchivedExpenses";
 import { useCategories } from "@/hooks/useCategories";
@@ -18,6 +18,7 @@ const ArchivedExpenses = () => {
   const navigate = useNavigate();
   const [sortField, setSortField] = useState<SortField>('sourceAccount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   
   const { data: archivedExpenses = [] } = useArchivedExpenses();
   const { data: accountCodes = [] } = useCategories();
@@ -89,6 +90,16 @@ const ArchivedExpenses = () => {
     }
   };
 
+  const toggleDateExpansion = (date: string) => {
+    const newExpanded = new Set(expandedDates);
+    if (newExpanded.has(date)) {
+      newExpanded.delete(date);
+    } else {
+      newExpanded.add(date);
+    }
+    setExpandedDates(newExpanded);
+  };
+
   return (
     <ProtectedRoute requiredRoles={['admin']}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -143,39 +154,65 @@ const ArchivedExpenses = () => {
               </Card>
             </div>
 
-            {/* Grouped Archived Expenses */}
-            <div className="space-y-6">
+            {/* Grouped Archived Expenses - Summary View */}
+            <div className="space-y-4">
               {Object.entries(groupedExpenses)
                 .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
-                .map(([archivedDate, expenses]) => (
-                <div key={archivedDate} className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-semibold text-slate-900">
-                      Archived on {archivedDate}
-                    </h2>
-                    <Badge variant="secondary">
-                      {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
-                    </Badge>
-                    <Badge variant="outline">
-                      ${expenses.reduce((sum, exp) => sum + exp.spent, 0).toFixed(2)}
-                    </Badge>
-                  </div>
+                .map(([archivedDate, expenses]) => {
+                  const isExpanded = expandedDates.has(archivedDate);
+                  const totalForDate = expenses.reduce((sum, exp) => sum + exp.spent, 0);
                   
-                  <ExpensesTable 
-                    expenses={expenses}
-                    accountCodes={accountCodes}
-                    sources={sources}
-                    title={`Expenses archived on ${archivedDate}`}
-                    showClassificationStatus={false}
-                    showDeleteButton={false}
-                    showMultiSelect={false}
-                    showCodeColumn={true}
-                    sortField={sortField}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                </div>
-              ))}
+                  return (
+                    <div key={archivedDate} className="space-y-2">
+                      <Card className="p-4 hover:shadow-md transition-shadow">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleDateExpansion(archivedDate)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <Button variant="ghost" size="sm" className="p-0 h-auto">
+                              {isExpanded ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <h3 className="text-lg font-semibold text-slate-900">
+                              {archivedDate}
+                            </h3>
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary">
+                              {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
+                            </Badge>
+                            <Badge variant="outline" className="font-mono">
+                              ${totalForDate.toFixed(2)}
+                            </Badge>
+                          </div>
+                        </div>
+                      </Card>
+                      
+                      {isExpanded && (
+                        <div className="ml-8">
+                          <ExpensesTable 
+                            expenses={expenses}
+                            accountCodes={accountCodes}
+                            sources={sources}
+                            title={`Expenses archived on ${archivedDate}`}
+                            showClassificationStatus={false}
+                            showDeleteButton={false}
+                            showMultiSelect={false}
+                            showCodeColumn={true}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                            onSort={handleSort}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               
               {Object.keys(groupedExpenses).length === 0 && (
                 <Card className="p-12 text-center">
