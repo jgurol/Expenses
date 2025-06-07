@@ -3,7 +3,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, CheckCircle } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface ExpenseTableRowProps {
@@ -13,11 +13,9 @@ interface ExpenseTableRowProps {
   showClassificationStatus: boolean;
   showDeleteButton: boolean;
   showCodeColumn?: boolean;
-  showReconcileButton?: boolean;
   isSelected: boolean;
   onSelectExpense: (expenseId: string, checked: boolean) => void;
   onDeleteExpense?: (expenseId: string) => void;
-  onReconcileExpense?: (expenseId: string) => void;
 }
 
 export const ExpenseTableRow = ({
@@ -27,11 +25,9 @@ export const ExpenseTableRow = ({
   showClassificationStatus,
   showDeleteButton,
   showCodeColumn = false,
-  showReconcileButton = false,
   isSelected,
   onSelectExpense,
-  onDeleteExpense,
-  onReconcileExpense
+  onDeleteExpense
 }: ExpenseTableRowProps) => {
   const handleCheckboxChange = (checked: boolean | "indeterminate") => {
     onSelectExpense(expense.id, checked === true);
@@ -75,7 +71,7 @@ export const ExpenseTableRow = ({
     return colors[Math.abs(hash) % colors.length];
   };
 
-  console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton, 'showMultiSelect:', showMultiSelect, 'showCodeColumn:', showCodeColumn, 'showReconcileButton:', showReconcileButton, 'isSelected:', isSelected);
+  console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton, 'showMultiSelect:', showMultiSelect, 'showCodeColumn:', showCodeColumn, 'isSelected:', isSelected);
 
   return (
     <TableRow className={getAccountColor(expense.sourceAccount)}>
@@ -122,26 +118,6 @@ export const ExpenseTableRow = ({
           >
             {expense.classified ? "Classified" : "Pending"}
           </Badge>
-        </TableCell>
-      )}
-      {showReconcileButton && (
-        <TableCell className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              console.log('Reconcile button clicked for expense:', expense.id);
-              if (onReconcileExpense) {
-                onReconcileExpense(expense.id);
-              } else {
-                console.warn('onReconcileExpense function not provided');
-              }
-            }}
-            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-            disabled={expense.reconciled}
-          >
-            <CheckCircle className="h-4 w-4" />
-          </Button>
         </TableCell>
       )}
       {showDeleteButton && (

@@ -24,8 +24,7 @@ export const useExpenses = () => {
         category: expense.category,
         spent: Number(expense.spent),
         sourceAccount: expense.sourceaccount || 'Unknown', // Only fall back to 'Unknown', not category
-        classified: expense.classified,
-        reconciled: expense.reconciled || false
+        classified: expense.classified
       }));
     },
   });
