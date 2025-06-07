@@ -34,15 +34,26 @@ const Auth = () => {
   }, [user, navigate, mode]);
 
   useEffect(() => {
-    // Check for error parameters from Supabase
-    const errorCode = searchParams.get('error_code');
-    const errorDescription = searchParams.get('error_description');
+    // Check for error parameters from URL hash or search params
+    const urlHash = window.location.hash;
+    const errorFromHash = new URLSearchParams(urlHash.replace('#', '?'));
+    
+    const errorCode = errorFromHash.get('error_code') || searchParams.get('error_code');
+    const errorDescription = errorFromHash.get('error_description') || searchParams.get('error_description');
+    const errorType = errorFromHash.get('error') || searchParams.get('error');
     const type = searchParams.get('type');
     
-    if (errorCode === 'otp_expired') {
-      setError('The reset link has expired. Please request a new one.');
+    console.log('URL params check:', { errorCode, errorDescription, errorType, type, urlHash });
+    
+    if (errorCode === 'otp_expired' || errorType === 'access_denied') {
+      setError('The reset link has expired or is invalid. Please request a new password reset link.');
+      setMode('reset');
+      // Clear the URL hash to prevent the error from persisting
+      window.history.replaceState(null, '', window.location.pathname);
+      return;
     } else if (errorDescription) {
       setError(decodeURIComponent(errorDescription));
+      return;
     }
 
     // Check if this is a password reset callback
@@ -216,6 +227,8 @@ const Auth = () => {
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     resetForm();
+    // Clear URL parameters when switching modes
+    window.history.replaceState(null, '', window.location.pathname);
   };
 
   const getTitle = () => {
