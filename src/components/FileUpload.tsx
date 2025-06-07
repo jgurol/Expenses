@@ -32,15 +32,6 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           const headers = lines[0].split(',').map(h => sanitizeInput(h.toLowerCase().trim()));
           const expenses: Expense[] = [];
 
-          // Validate required headers - updated to new requirements
-          const requiredHeaders = ['date', 'description', 'categories', 'spent'];
-          const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-          
-          if (missingHeaders.length > 0) {
-            reject(new Error(`Missing required columns: ${missingHeaders.join(', ')}`));
-            return;
-          }
-
           for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(',').map(v => sanitizeInput(v.trim()));
             
@@ -54,32 +45,30 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               row[header] = values[index] || '';
             });
 
-            // Validate and parse the row - updated to use new column names
+            // Extract data from available columns with fallbacks
             const dateStr = row.date;
-            const description = row.description;
-            const spentStr = row.spent;
-            const category = row.categories || 'Unclassified';
+            const description = row.description || row.desc || row.transaction || 'Unknown';
+            const spentStr = row.spent || row.amount || row.value || '0';
+            const category = row.categories || row.category || 'Unclassified';
             const sourceAccount = row.sourceaccount || row['source account'] || 'Unknown';
 
-            // Security: Validate required fields
-            if (!dateStr || !description || !spentStr) {
-              console.warn(`Skipping row ${i + 1}: missing required data`);
+            // Skip rows without essential data
+            if (!dateStr && !description) {
+              console.warn(`Skipping row ${i + 1}: no meaningful data found`);
               continue;
             }
 
-            // Security: Validate date format
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) {
-              console.warn(`Skipping row ${i + 1}: invalid date format`);
-              continue;
+            // Parse date with fallback
+            let date = new Date();
+            if (dateStr) {
+              const parsedDate = new Date(dateStr);
+              if (!isNaN(parsedDate.getTime())) {
+                date = parsedDate;
+              }
             }
 
-            // Security: Validate spent is a number
-            const spent = parseFloat(spentStr.replace(/[^0-9.-]/g, ''));
-            if (isNaN(spent)) {
-              console.warn(`Skipping row ${i + 1}: invalid spent amount`);
-              continue;
-            }
+            // Parse spent amount with fallback
+            const spent = parseFloat(spentStr.replace(/[^0-9.-]/g, '')) || 0;
 
             expenses.push({
               id: `temp-${Date.now()}-${i}`,
@@ -201,8 +190,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       )}
 
       <div className="text-xs text-slate-500 space-y-1">
-        <p><strong>Required columns:</strong> date, description, categories, spent</p>
-        <p><strong>Optional columns:</strong> sourceaccount (or "source account")</p>
+        <p><strong>Flexible import:</strong> Automatically detects and maps common column names</p>
+        <p><strong>Supported columns:</strong> date, description, amount/spent, category/categories, source account</p>
         <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
       </div>
     </div>
