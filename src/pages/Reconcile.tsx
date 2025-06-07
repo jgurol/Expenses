@@ -1,14 +1,16 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Undo2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { useSources } from "@/hooks/useSources";
 import { useReconcileExpenses } from "@/hooks/useReconcileExpenses";
+import { useUnclassifyExpenses } from "@/hooks/useUnclassifyExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { toast } from "@/hooks/use-toast";
 
@@ -25,6 +27,7 @@ const Reconcile = () => {
   const { data: accountCodes = [] } = useCategories();
   const { data: sources = [] } = useSources();
   const reconcileExpensesMutation = useReconcileExpenses();
+  const unclassifyExpensesMutation = useUnclassifyExpenses();
   
   // Filter for classified but not yet reconciled expenses
   const classifiedUnreconciledExpenses = expenses.filter(e => e.classified && !e.reconciled);
@@ -143,6 +146,23 @@ const Reconcile = () => {
     }
   };
 
+  const handleUnclassifyExpenses = async (expenseIds: string[]) => {
+    try {
+      await unclassifyExpensesMutation.mutateAsync(expenseIds);
+      toast({
+        title: "Success",
+        description: `${expenseIds.length} expense${expenseIds.length === 1 ? '' : 's'} unclassified successfully`,
+      });
+    } catch (error) {
+      console.error('Error unclassifying expenses:', error);
+      toast({
+        title: "Error",
+        description: "Failed to unclassify expenses. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -236,11 +256,14 @@ const Reconcile = () => {
             title="Expenses Ready for Reconciliation"
             showClassificationStatus={true}
             showDeleteButton={false}
-            showMultiSelect={false}
+            showMultiSelect={true}
             showCodeColumn={true}
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
+            onBulkDeleteExpenses={handleUnclassifyExpenses}
+            bulkActionLabel="Unclassify Selected"
+            bulkActionIcon={Undo2}
           />
         </div>
       </main>
