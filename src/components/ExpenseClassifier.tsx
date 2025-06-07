@@ -145,7 +145,7 @@ export const ExpenseClassifier = memo(({
           <Checkbox
             checked={isAllSelected}
             ref={(el) => {
-              if (el) el.indeterminate = isSomeSelected;
+              if (el) (el as any).indeterminate = isSomeSelected;
             }}
             onCheckedChange={handleSelectAll}
             aria-label="Select all expenses"
