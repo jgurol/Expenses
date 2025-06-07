@@ -69,25 +69,35 @@ const Analytics = () => {
   const totalAmount = classifiedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
   const averageExpense = classifiedExpenses.length > 0 ? totalAmount / classifiedExpenses.length : 0;
 
-  // Calculate category summaries
-  const categorySpending = classifiedExpenses.reduce((acc, expense) => {
+  // Calculate category summaries grouped by source account
+  const accountCategorySpending = classifiedExpenses.reduce((acc, expense) => {
+    const sourceAccount = expense.sourceAccount || 'Unknown';
     const category = expense.category;
-    if (!acc[category]) {
-      acc[category] = { total: 0, count: 0 };
+    
+    if (!acc[sourceAccount]) {
+      acc[sourceAccount] = {};
     }
-    acc[category].total += expense.spent;
-    acc[category].count += 1;
+    
+    if (!acc[sourceAccount][category]) {
+      acc[sourceAccount][category] = { total: 0, count: 0 };
+    }
+    
+    acc[sourceAccount][category].total += expense.spent;
+    acc[sourceAccount][category].count += 1;
+    
     return acc;
-  }, {} as Record<string, { total: number; count: number }>);
+  }, {} as Record<string, Record<string, { total: number; count: number }>>);
 
-  const categorySummary = Object.entries(categorySpending)
-    .map(([category, data]) => ({
+  // Flatten and create summary with account info
+  const categorySummary = Object.entries(accountCategorySpending).flatMap(([sourceAccount, categories]) =>
+    Object.entries(categories).map(([category, data]) => ({
+      sourceAccount,
       category,
       total: data.total,
       count: data.count,
       percentage: (data.total / totalAmount) * 100
     }))
-    .sort((a, b) => b.total - a.total);
+  ).sort((a, b) => b.total - a.total);
 
   // Generate emoji based on spending percentage
   const getSpendingEmoji = (percentage: number) => {
@@ -96,6 +106,28 @@ const Analytics = () => {
     if (percentage >= 15) return "😐"; // Neutral for moderate spending
     if (percentage >= 10) return "🙂"; // Slightly happy for low-moderate spending
     return "😊"; // Happy for low spending
+  };
+
+  // Get color for source account
+  const getAccountColor = (sourceAccount: string) => {
+    const colors = [
+      "bg-blue-50 border-blue-200",
+      "bg-green-50 border-green-200", 
+      "bg-purple-50 border-purple-200",
+      "bg-orange-50 border-orange-200",
+      "bg-pink-50 border-pink-200",
+      "bg-indigo-50 border-indigo-200",
+      "bg-yellow-50 border-yellow-200",
+      "bg-red-50 border-red-200"
+    ];
+    
+    // Create a simple hash of the account name to get consistent colors
+    const hash = sourceAccount.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    
+    return colors[Math.abs(hash) % colors.length];
   };
 
   // Generate AI complaint about spending
@@ -174,16 +206,21 @@ const Analytics = () => {
           {/* Category Summary */}
           {categorySummary.length > 0 && (
             <Card className="p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Spending by Category</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Spending by Category & Account</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {categorySummary.map((item, index) => (
-                  <div key={item.category} className="p-4 border rounded-lg bg-slate-50">
+                  <div key={`${item.sourceAccount}-${item.category}`} className={`p-4 border rounded-lg ${getAccountColor(item.sourceAccount)}`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{getSpendingEmoji(item.percentage)}</span>
-                        <Badge variant="outline" className={index === 0 ? "bg-red-100 text-red-800" : ""}>
-                          {item.category}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline" className="text-xs font-mono">
+                            {item.sourceAccount}
+                          </Badge>
+                          <Badge variant="outline" className={index === 0 ? "bg-red-100 text-red-800" : ""}>
+                            {item.category}
+                          </Badge>
+                        </div>
                       </div>
                       <span className="text-sm text-slate-500">{item.count} expenses</span>
                     </div>
