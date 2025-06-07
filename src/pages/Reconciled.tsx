@@ -2,22 +2,26 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Undo2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
+import { useUnreconcileExpenses } from "@/hooks/useUnreconcileExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
+import { useToast } from "@/hooks/use-toast";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
 
 const Reconciled = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [sortField, setSortField] = useState<SortField>('sourceAccount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
+  const unreconcileExpensesMutation = useUnreconcileExpenses();
   
   // Get reconciled expenses from database
   const reconciledExpenses = expenses.filter(e => e.reconciled);
@@ -73,6 +77,23 @@ const Reconciled = () => {
     } else {
       setSortField(field);
       setSortDirection('asc');
+    }
+  };
+
+  const handleUnreconcileExpenses = async (expenseIds: string[]) => {
+    try {
+      await unreconcileExpensesMutation.mutateAsync(expenseIds);
+      toast({
+        title: "Success",
+        description: `${expenseIds.length} expense${expenseIds.length === 1 ? '' : 's'} unreconciled successfully`,
+      });
+    } catch (error) {
+      console.error('Error unreconciling expenses:', error);
+      toast({
+        title: "Error",
+        description: "Failed to unreconcile expenses. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -134,11 +155,14 @@ const Reconciled = () => {
             title="Reconciled Expenses"
             showClassificationStatus={false}
             showDeleteButton={false}
-            showMultiSelect={false}
+            showMultiSelect={true}
             showCodeColumn={true}
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
+            onBulkDeleteExpenses={handleUnreconcileExpenses}
+            bulkActionLabel="Unreconcile Selected"
+            bulkActionIcon={Undo2}
           />
         </div>
       </main>

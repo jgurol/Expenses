@@ -1,9 +1,8 @@
-
 import { useState, memo, useMemo } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Undo2 } from "lucide-react";
 import { ExpenseTableEmpty } from "./ExpenseTableEmpty";
 import { ExpenseTableHeader } from "./ExpenseTableHeader";
 import { ExpenseTableRow } from "./ExpenseTableRow";
@@ -26,6 +25,8 @@ interface ExpensesTableProps {
   sortField?: SortField;
   sortDirection?: SortDirection;
   onSort?: (field: SortField) => void;
+  bulkActionLabel?: string;
+  bulkActionIcon?: React.ComponentType<{ className?: string }>;
 }
 
 export const ExpensesTable = memo(({ 
@@ -40,13 +41,20 @@ export const ExpensesTable = memo(({
   showCodeColumn = false,
   sortField,
   sortDirection,
-  onSort
+  onSort,
+  bulkActionLabel,
+  bulkActionIcon: BulkActionIcon
 }: ExpensesTableProps) => {
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
 
   // Memoize expensive calculations
   const isAllSelected = useMemo(() => selectedExpenses.length === expenses.length, [selectedExpenses.length, expenses.length]);
   const isSomeSelected = useMemo(() => selectedExpenses.length > 0 && selectedExpenses.length < expenses.length, [selectedExpenses.length, expenses.length]);
+
+  // Determine the bulk action button properties
+  const actionLabel = bulkActionLabel || "Delete Selected";
+  const ActionIcon = BulkActionIcon || Trash2;
+  const buttonVariant = bulkActionLabel ? "outline" : "destructive";
 
   console.log('ExpensesTable rendered with:', { 
     expensesCount: expenses.length, 
@@ -57,7 +65,8 @@ export const ExpensesTable = memo(({
     hasOnBulkDeleteExpenses: !!onBulkDeleteExpenses,
     title,
     sortField,
-    sortDirection
+    sortDirection,
+    bulkActionLabel
   });
 
   if (expenses.length === 0) {
@@ -93,13 +102,13 @@ export const ExpensesTable = memo(({
         {title && <h3 className="text-lg font-semibold text-slate-900">{title}</h3>}
         {showMultiSelect && selectedExpenses.length > 0 && (
           <Button
-            variant="destructive"
+            variant={buttonVariant}
             size="sm"
             onClick={handleBulkDelete}
             className="flex items-center gap-2"
           >
-            <Trash2 className="h-4 w-4" />
-            Delete Selected ({selectedExpenses.length})
+            <ActionIcon className="h-4 w-4" />
+            {actionLabel} ({selectedExpenses.length})
           </Button>
         )}
       </div>
