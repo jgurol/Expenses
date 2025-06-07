@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, Undo2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, Undo2, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { useUnreconcileExpenses } from "@/hooks/useUnreconcileExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { useToast } from "@/hooks/use-toast";
+import { exportReconciledExpensesToSpreadsheet } from "@/utils/exportUtils";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
@@ -97,6 +98,32 @@ const Reconciled = () => {
     }
   };
 
+  const handleExportToSpreadsheet = () => {
+    if (reconciledExpenses.length === 0) {
+      toast({
+        title: "No Data to Export",
+        description: "There are no reconciled expenses to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      exportReconciledExpensesToSpreadsheet(reconciledExpenses, accountCodes);
+      toast({
+        title: "Export Successful",
+        description: `Exported ${reconciledExpenses.length} reconciled expenses to spreadsheet.`,
+      });
+    } catch (error) {
+      console.error('Error exporting to spreadsheet:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export expenses. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -117,10 +144,22 @@ const Reconciled = () => {
               </div>
             </div>
             
-            <Badge variant="outline" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              {reconciledExpenses.length} Reconciled Expenses
-            </Badge>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleExportToSpreadsheet}
+                variant="outline"
+                className="flex items-center gap-2"
+                disabled={reconciledExpenses.length === 0}
+              >
+                <Download className="h-4 w-4" />
+                Export to Spreadsheet
+              </Button>
+              
+              <Badge variant="outline" className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                {reconciledExpenses.length} Reconciled Expenses
+              </Badge>
+            </div>
           </div>
         </div>
       </header>
