@@ -20,28 +20,9 @@ export const ExpenseClassifier = memo(({
   onExpenseClassified,
   onExpenseDeleted 
 }: ExpenseClassifierProps) => {
-  const [selectedAccountCodes, setSelectedAccountCodes] = useState<Record<string, string>>({});
-
   // Display the full source account name without any parsing
   const getAccountName = (sourceAccount: string) => {
     return sourceAccount || "Unknown";
-  };
-
-  const handleClassifyExpense = (expenseId: string) => {
-    const accountCode = selectedAccountCodes[expenseId];
-    console.log('Reclassifying expense - changing category:', { expenseId, accountCode, selectedAccountCodes });
-    
-    if (accountCode) {
-      onExpenseClassified(expenseId, accountCode);
-      // Remove from selected after classification
-      setSelectedAccountCodes(prev => {
-        const updated = { ...prev };
-        delete updated[expenseId];
-        return updated;
-      });
-    } else {
-      console.warn('No account code selected for expense:', expenseId);
-    }
   };
 
   const handleAcceptCategory = (expenseId: string) => {
@@ -77,21 +58,13 @@ export const ExpenseClassifier = memo(({
   const handleDeleteExpense = (expenseId: string) => {
     if (onExpenseDeleted) {
       onExpenseDeleted(expenseId);
-      // Remove from selected after deletion
-      setSelectedAccountCodes(prev => {
-        const updated = { ...prev };
-        delete updated[expenseId];
-        return updated;
-      });
     }
   };
 
   const handleAccountCodeSelect = (expenseId: string, accountCode: string) => {
-    console.log('Account code selected for reclassification:', { expenseId, accountCode });
-    setSelectedAccountCodes(prev => ({
-      ...prev,
-      [expenseId]: accountCode
-    }));
+    console.log('Account code selected - automatically reclassifying:', { expenseId, accountCode });
+    // Automatically reclassify when dropdown selection changes
+    onExpenseClassified(expenseId, accountCode);
   };
 
   if (expenses.length === 0) {
@@ -127,7 +100,7 @@ export const ExpenseClassifier = memo(({
           
           <div className="flex items-center gap-3 ml-4">
             <Select
-              value={selectedAccountCodes[expense.id] || ""}
+              value=""
               onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
             >
               <SelectTrigger className="w-64">
@@ -147,19 +120,10 @@ export const ExpenseClassifier = memo(({
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
-              title="Accept the AI-suggested category and assign matching account code"
+              title="Accept the current category and assign matching account code"
             >
               <Check className="h-4 w-4" />
               Accept
-            </Button>
-            
-            <Button
-              onClick={() => handleClassifyExpense(expense.id)}
-              disabled={!selectedAccountCodes[expense.id]}
-              size="sm"
-              title="Assign the selected account code to this expense"
-            >
-              Reclassify
             </Button>
 
             {onExpenseDeleted && (
