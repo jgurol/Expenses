@@ -25,6 +25,23 @@ export const ExpenseClassifier = memo(({
     return sourceAccount || "Unknown";
   };
 
+  // Get the formatted category text with code and name
+  const getCategoryDisplayText = (category: string) => {
+    // Find account code that matches the current category name
+    const matchingAccountCode = accountCodes.find(ac => 
+      ac.name.toLowerCase().includes(category.toLowerCase()) ||
+      category.toLowerCase().includes(ac.name.toLowerCase()) ||
+      ac.code.toLowerCase() === category.toLowerCase()
+    );
+    
+    if (matchingAccountCode) {
+      return `${matchingAccountCode.code} - ${matchingAccountCode.name}`;
+    }
+    
+    // If no match found, just return the original category
+    return category;
+  };
+
   const handleAcceptCategory = (expenseId: string) => {
     const expense = expenses.find(e => e.id === expenseId);
     console.log('Accepting current category for expense:', { expenseId, expense });
@@ -104,7 +121,7 @@ export const ExpenseClassifier = memo(({
               onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
             >
               <SelectTrigger className="w-64">
-                <SelectValue placeholder={expense.category} />
+                <SelectValue placeholder={getCategoryDisplayText(expense.category)} />
               </SelectTrigger>
               <SelectContent>
                 {accountCodes.map((code) => (
