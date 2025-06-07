@@ -8,7 +8,111 @@ interface ExpenseSummaryByCategoryProps {
   accountCodes: AccountCode[];
 }
 
-// Generate overall spending analysis with snippy commentary
+// Random wondering commentary for different categories
+const getCategoryCommentary = (categoryName: string): string => {
+  const lowerCategory = categoryName.toLowerCase();
+  
+  if (lowerCategory.includes('food') || lowerCategory.includes('dining') || lowerCategory.includes('restaurant')) {
+    const comments = [
+      "what exactly are you eating that costs this much? Gold-plated avocado toast?",
+      "are you dining exclusively at Michelin-starred establishments?",
+      "I'm genuinely curious - is this food or are you buying the entire restaurant?",
+      "what kind of culinary adventures require this level of financial commitment?",
+      "are you eating caviar for breakfast or just really bad at cooking?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
+  if (lowerCategory.includes('entertainment') || lowerCategory.includes('fun')) {
+    const comments = [
+      "what kind of \"entertainment\" requires hemorrhaging this much cash?",
+      "are you personally funding Broadway shows?",
+      "I'm wondering what passes for fun when it costs this astronomical amount?",
+      "what exactly are you being entertained by - private concerts?",
+      "is this entertainment or are you buying happiness by the pound?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
+  if (lowerCategory.includes('travel') || lowerCategory.includes('vacation')) {
+    const comments = [
+      "are you buying first-class tickets to Mars?",
+      "what kind of travel involves spending this much - space tourism?",
+      "I'm curious about these travel choices - private jets to corner stores?",
+      "are you traveling or relocating entire cities?",
+      "what destinations require this level of financial sacrifice?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
+  if (lowerCategory.includes('shopping') || lowerCategory.includes('retail')) {
+    const comments = [
+      "what are you buying that adds up to this astronomical amount?",
+      "are you shopping for a small country's GDP?",
+      "I'm genuinely wondering what retail therapy looks like at this price point?",
+      "what exactly requires this level of consumer dedication?",
+      "are you collecting rare artifacts or just really enthusiastic about shopping?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
+  if (lowerCategory.includes('office') || lowerCategory.includes('supplies')) {
+    const comments = [
+      "what kind of office supplies cost this much - diamond-encrusted staplers?",
+      "are you running an office or a luxury boutique?",
+      "I'm wondering what office essentials require this investment?",
+      "what exactly do you need for work that costs this fortune?",
+      "are these supplies or are you buying the entire office building?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
+  if (lowerCategory.includes('gas') || lowerCategory.includes('fuel')) {
+    const comments = [
+      "are you driving a tank or just really bad at finding gas stations?",
+      "what kind of vehicle requires this much fuel - a rocket ship?",
+      "I'm curious about your transportation choices at this price point?",
+      "are you commuting to another planet?",
+      "what exactly are you fueling that costs this astronomical amount?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
+  if (lowerCategory.includes('coffee') || lowerCategory.includes('cafe')) {
+    const comments = [
+      "is this coffee made from unicorn tears?",
+      "what kind of caffeine addiction requires this level of funding?",
+      "are you drinking liquid gold or just really expensive beans?",
+      "I'm wondering what coffee costs this much - imported from space?",
+      "what exactly are you brewing that requires this investment?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
+  if (lowerCategory.includes('subscription') || lowerCategory.includes('streaming')) {
+    const comments = [
+      "how many streaming services does one person need? Are you single-handedly funding Netflix?",
+      "what subscriptions cost this much - premium access to the internet?",
+      "are you subscribing to every service known to humanity?",
+      "I'm curious about what requires this level of monthly commitment?",
+      "what exactly are you subscribing to that adds up to this amount?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
+  // Generic comments for unrecognized categories
+  const genericComments = [
+    "I'm genuinely baffled by what could possibly cost this much in this category.",
+    "what exactly requires this level of financial commitment?",
+    "I'm wondering what kind of expenses justify this astronomical spending?",
+    "what are you buying that adds up to this mind-boggling total?",
+    "I'm curious about what necessities cost this much money?"
+  ];
+  
+  return genericComments[Math.floor(Math.random() * genericComments.length)];
+};
+
+// Generate overall spending analysis with randomized snippy commentary
 const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: number; count: number; code: string }>): string => {
   const categories = Object.keys(categoryTotals);
   const totalCategories = categories.length;
@@ -18,7 +122,15 @@ const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: numb
   
   if (totalCategories === 0) return "Well, at least you managed to avoid spending money entirely. That's... something.";
   
-  let analysis = `You've blown $${totalSpent.toFixed(2)} across ${totalCategories} categories. `;
+  // Random opening phrases
+  const openings = [
+    `You've blown $${totalSpent.toFixed(2)} across ${totalCategories} categories.`,
+    `Congratulations on spending $${totalSpent.toFixed(2)} across ${totalCategories} different ways.`,
+    `Your wallet took a $${totalSpent.toFixed(2)} hit across ${totalCategories} categories.`,
+    `You managed to distribute $${totalSpent.toFixed(2)} across ${totalCategories} spending categories.`
+  ];
+  
+  let analysis = openings[Math.floor(Math.random() * openings.length)] + " ";
   
   // Focus on top category with wondering commentary
   if (topCategory) {
@@ -26,32 +138,17 @@ const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: numb
     const percentage = ((data.total / totalSpent) * 100).toFixed(1);
     
     analysis += `Your biggest drain is "${categoryName}" at $${data.total.toFixed(2)} (${percentage}%). `;
+    analysis += getCategoryCommentary(categoryName) + " ";
     
-    // Category-specific wondering/questioning roasts
-    if (categoryName.toLowerCase().includes('food') || categoryName.toLowerCase().includes('dining') || categoryName.toLowerCase().includes('restaurant')) {
-      analysis += `I'm curious - what exactly are you eating that costs this much? Gold-plated avocado toast? `;
-    } else if (categoryName.toLowerCase().includes('entertainment') || categoryName.toLowerCase().includes('fun')) {
-      analysis += `I wonder what kind of "entertainment" requires hemorrhaging this much cash? `;
-    } else if (categoryName.toLowerCase().includes('travel') || categoryName.toLowerCase().includes('vacation')) {
-      analysis += `Fascinating travel choices - are you buying first-class tickets to Mars? `;
-    } else if (categoryName.toLowerCase().includes('shopping') || categoryName.toLowerCase().includes('retail')) {
-      analysis += `I'm genuinely wondering what you're buying that adds up to this astronomical amount? `;
-    } else if (categoryName.toLowerCase().includes('office') || categoryName.toLowerCase().includes('supplies')) {
-      analysis += `What kind of office supplies cost this much - diamond-encrusted staplers? `;
-    } else if (categoryName.toLowerCase().includes('gas') || categoryName.toLowerCase().includes('fuel')) {
-      analysis += `Are you driving a tank or just really bad at finding gas stations? `;
-    } else if (categoryName.toLowerCase().includes('coffee') || categoryName.toLowerCase().includes('cafe')) {
-      analysis += `I'm dying to know - is this coffee made from unicorn tears? `;
-    } else if (categoryName.toLowerCase().includes('subscription') || categoryName.toLowerCase().includes('streaming')) {
-      analysis += `How many streaming services does one person need? Are you single-handedly funding Netflix? `;
-    } else {
-      analysis += `I'm genuinely baffled by what could possibly cost this much in this category. `;
-    }
-    
-    // Quick jab at runner-up if exists
+    // Random runner-up comments if exists
     if (sortedByAmount.length > 1) {
       const runnerUp = sortedByAmount[1];
-      analysis += `Runner-up "${runnerUp[0]}" at $${runnerUp[1].total.toFixed(2)} isn't helping your case either.`;
+      const runnerUpComments = [
+        `Runner-up "${runnerUp[0]}" at $${runnerUp[1].total.toFixed(2)} isn't helping your case either.`,
+        `And "${runnerUp[0]}" at $${runnerUp[1].total.toFixed(2)} is making things worse.`,
+        `Plus "${runnerUp[0]}" weighing in at $${runnerUp[1].total.toFixed(2)} for good measure.`
+      ];
+      analysis += runnerUpComments[Math.floor(Math.random() * runnerUpComments.length)];
     }
   }
   
