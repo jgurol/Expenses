@@ -38,7 +38,7 @@ export const ExpenseTableHeader = ({
             />
           </TableHead>
         )}
-        <TableHead>Account</TableHead>
+        <TableHead>Source Account</TableHead>
         <TableHead>Date</TableHead>
         <TableHead>Description</TableHead>
         <TableHead>Category</TableHead>

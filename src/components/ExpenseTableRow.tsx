@@ -27,12 +27,6 @@ export const ExpenseTableRow = ({
   onSelectExpense,
   onDeleteExpense
 }: ExpenseTableRowProps) => {
-  const getAccountName = (accountCodeId?: string) => {
-    if (!accountCodeId) return "Unassigned";
-    const account = accountCodes.find(code => code.id === accountCodeId);
-    return account ? `${account.code} - ${account.name}` : accountCodeId;
-  };
-
   const handleCheckboxChange = (checked: boolean | "indeterminate") => {
     onSelectExpense(expense.id, checked === true);
   };
@@ -52,7 +46,7 @@ export const ExpenseTableRow = ({
       )}
       <TableCell>
         <Badge variant="outline" className="text-xs font-mono">
-          {expense.accountCode || getAccountName(expense.accountCode)}
+          {expense.accountCode || "Unknown"}
         </Badge>
       </TableCell>
       <TableCell className="font-mono text-sm">
