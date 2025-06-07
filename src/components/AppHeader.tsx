@@ -1,4 +1,5 @@
 
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -56,6 +57,14 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
               Reconciled
             </Button>
 
+            {onRoleChange && (
+              <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
+            )}
+
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <span>{user?.email}</span>
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
@@ -81,28 +90,17 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
                     </DropdownMenuItem>
                   </>
                 )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {onRoleChange && (
-              <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
-            )}
-
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <span>{user?.email}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </Button>
-            </div>
           </div>
         </div>
       </div>
     </header>
   );
 };
+
