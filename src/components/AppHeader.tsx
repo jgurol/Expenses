@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -21,12 +20,16 @@ interface AppHeaderProps {
 
 export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
   const navigate = useNavigate();
-  const { signOut, user, isAdmin, isClassifier } = useAuth();
+  const { signOut, user, isAdmin, isClassifier, isBookkeeper } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
   };
+
+  // Only show classifier button if user has classifier role or is admin
+  // Don't show it for bookkeeper-only users
+  const showClassifierButton = isClassifier && !(!isClassifier && isBookkeeper);
 
   return (
     <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -38,7 +41,7 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
           </div>
           
           <div className="flex items-center gap-4">
-            {(isClassifier || isAdmin) && (
+            {showClassifierButton && (
               <Button
                 variant="outline"
                 onClick={() => navigate("/classifier")}
