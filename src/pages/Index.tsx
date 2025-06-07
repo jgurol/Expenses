@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
@@ -113,20 +112,12 @@ const Index = () => {
   };
 
   const handleExpenseClassified = async (expenseId: string, accountCode: string) => {
-    const selectedAccountCode = accountCodes.find(ac => ac.code === accountCode);
-    if (!selectedAccountCode) {
-      toast({
-        title: "Error",
-        description: "Invalid account code selected",
-        variant: "destructive",
-      });
-      return;
-    }
+    console.log('Classifying expense with account code:', { expenseId, accountCode });
 
     try {
       await classifyExpense.mutateAsync({ 
         expenseId, 
-        accountCodeId: selectedAccountCode.id 
+        accountCode 
       });
       toast({
         title: "Success",

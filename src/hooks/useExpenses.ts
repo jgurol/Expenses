@@ -74,11 +74,20 @@ export const useClassifyExpense = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ expenseId, accountCodeId }: { expenseId: string; accountCodeId: string }) => {
+    mutationFn: async ({ expenseId, accountCode }: { expenseId: string; accountCode: string }) => {
+      // Get the account code details to update the category
+      const { data: accountCodeData, error: accountCodeError } = await supabase
+        .from('account_codes')
+        .select('name')
+        .eq('code', accountCode)
+        .single();
+      
+      if (accountCodeError) throw accountCodeError;
+
       const { data, error } = await supabase
         .from('expenses')
         .update({ 
-          account_code_id: accountCodeId, 
+          category: accountCodeData.name,
           classified: true 
         })
         .eq('id', expenseId)

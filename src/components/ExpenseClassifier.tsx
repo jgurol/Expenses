@@ -1,4 +1,3 @@
-
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -54,7 +53,7 @@ export const ExpenseClassifier = memo(({
       console.log('Found matching account code for category:', matchingAccountCode);
       
       if (matchingAccountCode) {
-        // Only classify with the matching account code, don't change source account
+        // Accept the current category by assigning the matching account code
         onExpenseClassified(expenseId, matchingAccountCode.code);
       } else {
         // If no exact match, use the first available expense account code
@@ -62,7 +61,7 @@ export const ExpenseClassifier = memo(({
         console.log('Using default account code for category:', defaultAccountCode);
         
         if (defaultAccountCode) {
-          // Only classify with the default account code, don't change source account
+          // Accept with the default account code
           onExpenseClassified(expenseId, defaultAccountCode.code);
         }
       }
