@@ -1,3 +1,4 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ interface ExpenseTableRowProps {
   showMultiSelect: boolean;
   showClassificationStatus: boolean;
   showDeleteButton: boolean;
+  showCodeColumn?: boolean;
   isSelected: boolean;
   onSelectExpense: (expenseId: string, checked: boolean) => void;
   onDeleteExpense?: (expenseId: string) => void;
@@ -22,6 +24,7 @@ export const ExpenseTableRow = ({
   showMultiSelect,
   showClassificationStatus,
   showDeleteButton,
+  showCodeColumn = false,
   isSelected,
   onSelectExpense,
   onDeleteExpense
@@ -35,7 +38,13 @@ export const ExpenseTableRow = ({
     return sourceAccount || "Unknown";
   };
 
-  console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton, 'showMultiSelect:', showMultiSelect, 'isSelected:', isSelected);
+  // Get the account code for this expense's category
+  const getAccountCode = (categoryName: string) => {
+    const accountCode = accountCodes.find(code => code.name === categoryName);
+    return accountCode?.code || "N/A";
+  };
+
+  console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton, 'showMultiSelect:', showMultiSelect, 'showCodeColumn:', showCodeColumn, 'isSelected:', isSelected);
 
   return (
     <TableRow className="hover:bg-slate-50">
@@ -59,6 +68,13 @@ export const ExpenseTableRow = ({
       <TableCell className="font-medium">
         {expense.description}
       </TableCell>
+      {showCodeColumn && (
+        <TableCell>
+          <Badge variant="outline" className="text-xs font-mono">
+            {getAccountCode(expense.category)}
+          </Badge>
+        </TableCell>
+      )}
       <TableCell>
         <Badge variant="outline" className="text-xs">
           {expense.category}
@@ -99,3 +115,4 @@ export const ExpenseTableRow = ({
     </TableRow>
   );
 };
+

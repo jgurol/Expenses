@@ -1,3 +1,4 @@
+
 import { useState, memo, useMemo } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
@@ -18,6 +19,7 @@ interface ExpensesTableProps {
   onBulkDeleteExpenses?: (expenseIds: string[]) => void;
   showDeleteButton?: boolean;
   showMultiSelect?: boolean;
+  showCodeColumn?: boolean;
 }
 
 export const ExpensesTable = memo(({ 
@@ -28,7 +30,8 @@ export const ExpensesTable = memo(({
   onDeleteExpense,
   onBulkDeleteExpenses,
   showDeleteButton = false,
-  showMultiSelect = false
+  showMultiSelect = false,
+  showCodeColumn = false
 }: ExpensesTableProps) => {
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
 
@@ -40,6 +43,7 @@ export const ExpensesTable = memo(({
     expensesCount: expenses.length, 
     showDeleteButton, 
     showMultiSelect,
+    showCodeColumn,
     hasOnDeleteExpense: !!onDeleteExpense,
     hasOnBulkDeleteExpenses: !!onBulkDeleteExpenses,
     title 
@@ -95,6 +99,7 @@ export const ExpensesTable = memo(({
             showMultiSelect={showMultiSelect}
             showClassificationStatus={showClassificationStatus}
             showDeleteButton={showDeleteButton}
+            showCodeColumn={showCodeColumn}
             isAllSelected={isAllSelected}
             isSomeSelected={isSomeSelected}
             onSelectAll={handleSelectAll}
@@ -110,6 +115,7 @@ export const ExpensesTable = memo(({
                   showMultiSelect={showMultiSelect}
                   showClassificationStatus={showClassificationStatus}
                   showDeleteButton={showDeleteButton}
+                  showCodeColumn={showCodeColumn}
                   isSelected={isSelected}
                   onSelectExpense={handleSelectExpense}
                   onDeleteExpense={onDeleteExpense}
@@ -126,3 +132,4 @@ export const ExpensesTable = memo(({
 });
 
 ExpensesTable.displayName = 'ExpensesTable';
+

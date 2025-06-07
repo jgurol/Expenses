@@ -1,4 +1,5 @@
 
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,7 @@ const Analytics = () => {
             showClassificationStatus={true}
             showDeleteButton={false}
             showMultiSelect={false}
+            showCodeColumn={true}
           />
         </div>
       </main>
@@ -86,3 +88,4 @@ const Analytics = () => {
 };
 
 export default Analytics;
+

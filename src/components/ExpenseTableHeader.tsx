@@ -1,4 +1,5 @@
 
+
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -6,6 +7,7 @@ interface ExpenseTableHeaderProps {
   showMultiSelect: boolean;
   showClassificationStatus: boolean;
   showDeleteButton: boolean;
+  showCodeColumn?: boolean;
   isAllSelected: boolean;
   isSomeSelected: boolean;
   onSelectAll: (checked: boolean) => void;
@@ -15,6 +17,7 @@ export const ExpenseTableHeader = ({
   showMultiSelect,
   showClassificationStatus,
   showDeleteButton,
+  showCodeColumn = false,
   isAllSelected,
   isSomeSelected,
   onSelectAll
@@ -41,6 +44,7 @@ export const ExpenseTableHeader = ({
         <TableHead className="w-32">Source Account</TableHead>
         <TableHead className="w-24">Date</TableHead>
         <TableHead className="min-w-0 flex-1">Description</TableHead>
+        {showCodeColumn && <TableHead className="w-24">Code</TableHead>}
         <TableHead className="w-36">Category</TableHead>
         <TableHead className="text-right w-24">Amount</TableHead>
         {showClassificationStatus && <TableHead className="text-center w-20">Status</TableHead>}
@@ -49,3 +53,4 @@ export const ExpenseTableHeader = ({
     </TableHeader>
   );
 };
+
