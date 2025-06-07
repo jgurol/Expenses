@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
@@ -19,64 +18,41 @@ const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: numb
   
   if (totalCategories === 0) return "Well, at least you managed to avoid spending money entirely. That's... something.";
   
-  let analysis = `Oh wonderful, you've managed to scatter $${totalSpent.toFixed(2)} across ${totalCategories} different categories. `;
+  let analysis = `You've blown $${totalSpent.toFixed(2)} across ${totalCategories} categories. `;
   
-  // Get crazy specific about top categories
-  if (sortedByAmount.length > 0) {
-    const top3 = sortedByAmount.slice(0, 3);
-    analysis += `Let's talk about your questionable life choices: `;
+  // Focus on top category with wondering commentary
+  if (topCategory) {
+    const [categoryName, data] = topCategory;
+    const percentage = ((data.total / totalSpent) * 100).toFixed(1);
     
-    top3.forEach(([categoryName, data], index) => {
-      const percentage = ((data.total / totalSpent) * 100).toFixed(1);
-      
-      if (index === 0) {
-        analysis += `Your #1 money pit is "${categoryName}" where you've hemorrhaged $${data.total.toFixed(2)} (${percentage}% of everything!). `;
-        
-        // Category-specific roasts
-        if (categoryName.toLowerCase().includes('food') || categoryName.toLowerCase().includes('dining') || categoryName.toLowerCase().includes('restaurant')) {
-          analysis += `Because apparently cooking at home is for peasants. `;
-        } else if (categoryName.toLowerCase().includes('entertainment') || categoryName.toLowerCase().includes('fun')) {
-          analysis += `Nothing says "financial responsibility" like blowing money on fun. `;
-        } else if (categoryName.toLowerCase().includes('travel') || categoryName.toLowerCase().includes('vacation')) {
-          analysis += `Living your best life while your wallet cries. `;
-        } else if (categoryName.toLowerCase().includes('shopping') || categoryName.toLowerCase().includes('retail')) {
-          analysis += `Retail therapy isn't actual therapy, you know. `;
-        } else if (categoryName.toLowerCase().includes('office') || categoryName.toLowerCase().includes('supplies')) {
-          analysis += `Because you definitely needed THAT much office stuff. `;
-        } else {
-          analysis += `What an absolutely stellar use of money. `;
-        }
-      } else if (index === 1) {
-        analysis += `Your runner-up disaster is "${categoryName}" at $${data.total.toFixed(2)} (${percentage}%). `;
-      } else if (index === 2) {
-        analysis += `And rounding out your top 3 financial failures: "${categoryName}" with $${data.total.toFixed(2)} (${percentage}%). `;
-      }
-    });
-  }
-  
-  if (topCategory && topCategory[1].total > totalSpent * 0.4) {
-    analysis += `Clearly someone has their priorities straight. `;
-  } else {
-    analysis += `At least you're consistently wasteful across all categories instead of just one. How balanced of you. `;
-  }
-  
-  // Analyze spending patterns with attitude
-  const highFreqCategories = Object.entries(categoryTotals).filter(([, data]) => data.count > 5);
-  const highValueCategories = Object.entries(categoryTotals).filter(([, data]) => data.total > 1000);
-  
-  if (highFreqCategories.length > 0) {
-    analysis += `I see you've made ${highFreqCategories.length} categories into regular money drains. Consistency is key, I suppose. `;
-  }
-  
-  if (highValueCategories.length > 0) {
-    analysis += `And ${highValueCategories.length} categories managed to hit the $1,000+ mark. Because why spend small when you can spend big? `;
-  }
-  
-  const avgPerCategory = totalSpent / totalCategories;
-  if (avgPerCategory > 500) {
-    analysis += "With an average of $" + avgPerCategory.toFixed(2) + " per category, you're really showing that money who's boss.";
-  } else {
-    analysis += "At least your spending per category is somewhat restrained. Baby steps, I guess.";
+    analysis += `Your biggest drain is "${categoryName}" at $${data.total.toFixed(2)} (${percentage}%). `;
+    
+    // Category-specific wondering/questioning roasts
+    if (categoryName.toLowerCase().includes('food') || categoryName.toLowerCase().includes('dining') || categoryName.toLowerCase().includes('restaurant')) {
+      analysis += `I'm curious - what exactly are you eating that costs this much? Gold-plated avocado toast? `;
+    } else if (categoryName.toLowerCase().includes('entertainment') || categoryName.toLowerCase().includes('fun')) {
+      analysis += `I wonder what kind of "entertainment" requires hemorrhaging this much cash? `;
+    } else if (categoryName.toLowerCase().includes('travel') || categoryName.toLowerCase().includes('vacation')) {
+      analysis += `Fascinating travel choices - are you buying first-class tickets to Mars? `;
+    } else if (categoryName.toLowerCase().includes('shopping') || categoryName.toLowerCase().includes('retail')) {
+      analysis += `I'm genuinely wondering what you're buying that adds up to this astronomical amount? `;
+    } else if (categoryName.toLowerCase().includes('office') || categoryName.toLowerCase().includes('supplies')) {
+      analysis += `What kind of office supplies cost this much - diamond-encrusted staplers? `;
+    } else if (categoryName.toLowerCase().includes('gas') || categoryName.toLowerCase().includes('fuel')) {
+      analysis += `Are you driving a tank or just really bad at finding gas stations? `;
+    } else if (categoryName.toLowerCase().includes('coffee') || categoryName.toLowerCase().includes('cafe')) {
+      analysis += `I'm dying to know - is this coffee made from unicorn tears? `;
+    } else if (categoryName.toLowerCase().includes('subscription') || categoryName.toLowerCase().includes('streaming')) {
+      analysis += `How many streaming services does one person need? Are you single-handedly funding Netflix? `;
+    } else {
+      analysis += `I'm genuinely baffled by what could possibly cost this much in this category. `;
+    }
+    
+    // Quick jab at runner-up if exists
+    if (sortedByAmount.length > 1) {
+      const runnerUp = sortedByAmount[1];
+      analysis += `Runner-up "${runnerUp[0]}" at $${runnerUp[1].total.toFixed(2)} isn't helping your case either.`;
+    }
   }
   
   return analysis;
