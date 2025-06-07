@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CreateDefaultUserButton } from '@/components/CreateDefaultUserButton';
 import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
@@ -126,18 +124,6 @@ const Auth = () => {
                 Send Magic Link
               </Button>
             </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Development Helper</CardTitle>
-            <CardDescription>
-              Create the default admin user for testing
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CreateDefaultUserButton />
           </CardContent>
         </Card>
       </div>
