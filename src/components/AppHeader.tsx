@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { Settings, CheckCircle, UserCheck, LogOut, Users, FileText, Cog, FileCode } from "lucide-react";
+import { Settings, CheckCircle, UserCheck, LogOut, Users, FileText, Cog, FileCode, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { useAuth } from "@/hooks/useAuth";
@@ -111,6 +111,10 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
                     <DropdownMenuItem onClick={() => navigate("/users")}>
                       <Users className="h-4 w-4 mr-2" />
                       User Management
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/archived")}>
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archived Expenses
                     </DropdownMenuItem>
                   </>
                 )}

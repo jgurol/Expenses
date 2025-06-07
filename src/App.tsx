@@ -15,6 +15,7 @@ import Reconcile from "./pages/Reconcile";
 import Reconciled from "./pages/Reconciled";
 import Classifier from "./pages/Classifier";
 import UserManagement from "./pages/UserManagement";
+import ArchivedExpenses from "./pages/ArchivedExpenses";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,11 @@ const App = () => (
             <Route path="/users" element={
               <ProtectedRoute requiredRoles={['admin']}>
                 <UserManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/archived" element={
+              <ProtectedRoute requiredRoles={['admin']}>
+                <ArchivedExpenses />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
