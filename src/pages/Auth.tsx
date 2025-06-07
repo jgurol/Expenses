@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -314,6 +313,13 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img 
+              src="/lovable-uploads/5ce6f47b-68c9-4fa6-8ab0-fb55f3806ba4.png" 
+              alt="California Telecom" 
+              className="h-10 w-auto"
+            />
+          </div>
           <h1 className="text-3xl font-bold text-slate-900">Expense Manager</h1>
           <p className="text-slate-600 mt-2">Access your business expense management portal</p>
         </div>
