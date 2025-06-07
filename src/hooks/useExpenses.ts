@@ -23,7 +23,7 @@ export const useExpenses = () => {
         description: expense.description,
         category: expense.category,
         spent: Number(expense.spent),
-        sourceAccount: expense.sourceaccount || expense.category || 'Unknown', // Use lowercase field name from database
+        sourceAccount: expense.sourceaccount || 'Unknown', // Only fall back to 'Unknown', not category
         classified: expense.classified
       }));
     },
