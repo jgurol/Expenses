@@ -131,8 +131,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const resetPassword = async (email: string) => {
     try {
+      // Use the current window location as the redirect URL
+      const redirectTo = `${window.location.origin}/auth`;
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?mode=reset`,
+        redirectTo: redirectTo,
       });
       return { error };
     } catch (error) {

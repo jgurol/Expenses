@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,21 +7,60 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, LogIn, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CreateDefaultUserButton } from '@/components/CreateDefaultUserButton';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [showReset, setShowReset] = useState(false);
+  const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   
   const { signIn, resetPassword } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Check if this is a password reset callback
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+    const type = searchParams.get('type');
+
+    if (accessToken && refreshToken && type === 'recovery') {
+      // Set the session from the URL parameters
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      }).then(({ error }) => {
+        if (error) {
+          setError('Invalid or expired reset link. Please request a new password reset.');
+        } else {
+          setShowPasswordUpdate(true);
+          setMessage('Please enter your new password.');
+        }
+      });
+    }
+
+    // Check for error parameters
+    const errorCode = searchParams.get('error_code');
+    const errorDescription = searchParams.get('error_description');
+    
+    if (errorCode === 'otp_expired') {
+      setError('The password reset link has expired. Please request a new one.');
+      setShowReset(true);
+    } else if (errorDescription) {
+      setError(decodeURIComponent(errorDescription));
+    }
+  }, [searchParams]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,12 +92,49 @@ const Auth = () => {
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Password reset email sent! Check your inbox.');
+        setMessage('Password reset email sent! Check your inbox and click the link to reset your password.');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during password reset');
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    setError('');
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Password updated successfully! You can now sign in with your new password.');
+        setShowPasswordUpdate(false);
+        setShowReset(false);
+        // Clear the URL parameters
+        window.history.replaceState({}, '', '/auth');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while updating password');
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -74,12 +150,14 @@ const Auth = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <LogIn className="h-5 w-5" />
-              {showReset ? 'Reset Password' : 'Sign In'}
+              {showPasswordUpdate ? 'Update Password' : showReset ? 'Reset Password' : 'Sign In'}
             </CardTitle>
             <CardDescription>
-              {showReset 
-                ? 'Enter your email to receive a password reset link'
-                : 'Enter your credentials to access the system'
+              {showPasswordUpdate 
+                ? 'Enter your new password below'
+                : showReset 
+                  ? 'Enter your email to receive a password reset link'
+                  : 'Enter your credentials to access the system'
               }
             </CardDescription>
           </CardHeader>
@@ -96,7 +174,40 @@ const Auth = () => {
               </Alert>
             )}
 
-            {!showReset ? (
+            {showPasswordUpdate ? (
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <div>
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter your new password"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm your new password"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isUpdatingPassword}>
+                  {isUpdatingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Update Password
+                </Button>
+              </form>
+            ) : !showReset ? (
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
                   <Label htmlFor="email">Email</Label>
@@ -160,7 +271,11 @@ const Auth = () => {
                   type="button"
                   variant="link"
                   className="w-full"
-                  onClick={() => setShowReset(false)}
+                  onClick={() => {
+                    setShowReset(false);
+                    setError('');
+                    setMessage('');
+                  }}
                 >
                   Back to Sign In
                 </Button>
