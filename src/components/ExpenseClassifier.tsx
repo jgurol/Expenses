@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2 } from "lucide-react";
+import { Trash2, Check } from "lucide-react";
 import { ExpensesTable } from "./ExpensesTable";
 import type { Expense, AccountCode } from "@/pages/Index";
 
@@ -32,6 +32,27 @@ export const ExpenseClassifier = ({
         delete updated[expenseId];
         return updated;
       });
+    }
+  };
+
+  const handleAcceptCategory = (expenseId: string) => {
+    const expense = expenses.find(e => e.id === expenseId);
+    if (expense) {
+      // Find account code that matches the category name
+      const matchingAccountCode = accountCodes.find(ac => 
+        ac.name.toLowerCase() === expense.category.toLowerCase() ||
+        ac.code.toLowerCase() === expense.category.toLowerCase()
+      );
+      
+      if (matchingAccountCode) {
+        onExpenseClassified(expenseId, matchingAccountCode.code);
+      } else {
+        // If no exact match, use the first available account code or create a default
+        const defaultAccountCode = accountCodes.find(ac => ac.type === 'expense') || accountCodes[0];
+        if (defaultAccountCode) {
+          onExpenseClassified(expenseId, defaultAccountCode.code);
+        }
+      }
     }
   };
 
@@ -105,6 +126,16 @@ export const ExpenseClassifier = ({
                 ))}
               </SelectContent>
             </Select>
+            
+            <Button
+              onClick={() => handleAcceptCategory(expense.id)}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Check className="h-4 w-4" />
+              Accept
+            </Button>
             
             <Button
               onClick={() => handleClassifyExpense(expense.id)}
