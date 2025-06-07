@@ -86,7 +86,6 @@ export const BookkeeperDashboard = ({
       </Card>
 
       <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
-        <h2 className="text-xl font-semibold mb-4 text-slate-900">Expenses Overview</h2>
         <ExpensesDashboard 
           expenses={expenses}
           accountCodes={accountCodes}
