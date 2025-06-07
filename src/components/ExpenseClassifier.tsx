@@ -44,9 +44,10 @@ export const ExpenseClassifier = memo(({
     console.log('Accepting category for expense:', { expenseId, expense });
     
     if (expense) {
-      // Find account code that matches the category name
+      // Find account code that matches the category name (not the existing accountCode)
       const matchingAccountCode = accountCodes.find(ac => 
-        ac.name.toLowerCase() === expense.category.toLowerCase() ||
+        ac.name.toLowerCase().includes(expense.category.toLowerCase()) ||
+        expense.category.toLowerCase().includes(ac.name.toLowerCase()) ||
         ac.code.toLowerCase() === expense.category.toLowerCase()
       );
       
@@ -55,7 +56,7 @@ export const ExpenseClassifier = memo(({
       if (matchingAccountCode) {
         onExpenseClassified(expenseId, matchingAccountCode.code);
       } else {
-        // If no exact match, use the first available expense account code or create a default
+        // If no exact match, use the first available expense account code
         const defaultAccountCode = accountCodes.find(ac => ac.type === 'expense') || accountCodes[0];
         console.log('Using default account code:', defaultAccountCode);
         
@@ -97,9 +98,9 @@ export const ExpenseClassifier = memo(({
           <div className="flex-1">
             <div className="grid grid-cols-5 gap-4 items-center">
               <div>
-                <p className="text-sm text-slate-600">Account</p>
+                <p className="text-sm text-slate-600">Source Account</p>
                 <Badge variant="outline" className="text-xs font-mono">
-                  {expense.accountCode || "Unassigned"}
+                  {expense.accountCode || "Unknown"}
                 </Badge>
               </div>
               <div>
@@ -112,7 +113,7 @@ export const ExpenseClassifier = memo(({
               </div>
               <div>
                 <p className="text-sm text-slate-600">Category</p>
-                <p className="font-medium">{expense.category}</p>
+                <p className="font-medium text-blue-600">{expense.category}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-600">Amount</p>
