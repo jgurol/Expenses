@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { useUnreconcileExpenses } from "@/hooks/useUnreconcileExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { useToast } from "@/hooks/use-toast";
 import { exportReconciledExpensesToSpreadsheet } from "@/utils/exportUtils";
+import { ExpenseSummaryByCategory } from "@/components/ExpenseSummaryByCategory";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
@@ -186,6 +188,12 @@ const Reconciled = () => {
               <div className="text-sm text-slate-500">per transaction</div>
             </Card>
           </div>
+
+          {/* Expense Summary by Category */}
+          <ExpenseSummaryByCategory 
+            expenses={reconciledExpenses}
+            accountCodes={accountCodes}
+          />
 
           {/* Reconciled Expenses Table */}
           <ExpensesTable 
