@@ -76,9 +76,15 @@ export const useDeleteAccountCode = () => {
         .eq('id', id);
       
       if (error) {
-        // Check if it's a foreign key constraint error
+        // Check if it's a foreign key constraint error and provide specific guidance
         if (error.message.includes('violates foreign key constraint')) {
-          throw new Error('Cannot delete this account code because it is being used by existing accounts or expenses. Please remove all references first.');
+          if (error.message.includes('accounts_account_code_id_fkey')) {
+            throw new Error('Cannot delete this account code because it is being used by existing accounts. Please delete or reassign all accounts using this code first.');
+          } else if (error.message.includes('expenses_account_code_id_fkey')) {
+            throw new Error('Cannot delete this account code because it is being used by existing expenses. Please delete or reclassify all expenses using this code first.');
+          } else {
+            throw new Error('Cannot delete this account code because it is being used by other records. Please remove all references first.');
+          }
         }
         throw error;
       }
