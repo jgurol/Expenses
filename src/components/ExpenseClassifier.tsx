@@ -24,7 +24,7 @@ export const ExpenseClassifier = memo(({
 
   const handleClassifyExpense = (expenseId: string) => {
     const accountCode = selectedAccountCodes[expenseId];
-    console.log('Classifying expense:', { expenseId, accountCode, selectedAccountCodes });
+    console.log('Classifying expense - changing category:', { expenseId, accountCode, selectedAccountCodes });
     
     if (accountCode) {
       onExpenseClassified(expenseId, accountCode);
@@ -41,24 +41,24 @@ export const ExpenseClassifier = memo(({
 
   const handleAcceptCategory = (expenseId: string) => {
     const expense = expenses.find(e => e.id === expenseId);
-    console.log('Accepting category for expense:', { expenseId, expense });
+    console.log('Accepting current category for expense:', { expenseId, expense });
     
     if (expense) {
-      // Find account code that matches the category name (not the existing accountCode)
+      // Find account code that matches the current category name
       const matchingAccountCode = accountCodes.find(ac => 
         ac.name.toLowerCase().includes(expense.category.toLowerCase()) ||
         expense.category.toLowerCase().includes(ac.name.toLowerCase()) ||
         ac.code.toLowerCase() === expense.category.toLowerCase()
       );
       
-      console.log('Found matching account code:', matchingAccountCode);
+      console.log('Found matching account code for category:', matchingAccountCode);
       
       if (matchingAccountCode) {
         onExpenseClassified(expenseId, matchingAccountCode.code);
       } else {
         // If no exact match, use the first available expense account code
         const defaultAccountCode = accountCodes.find(ac => ac.type === 'expense') || accountCodes[0];
-        console.log('Using default account code:', defaultAccountCode);
+        console.log('Using default account code for category:', defaultAccountCode);
         
         if (defaultAccountCode) {
           onExpenseClassified(expenseId, defaultAccountCode.code);
@@ -80,7 +80,7 @@ export const ExpenseClassifier = memo(({
   };
 
   const handleAccountCodeSelect = (expenseId: string, accountCode: string) => {
-    console.log('Account code selected:', { expenseId, accountCode });
+    console.log('Account code selected for reclassification:', { expenseId, accountCode });
     setSelectedAccountCodes(prev => ({
       ...prev,
       [expenseId]: accountCode
@@ -112,7 +112,7 @@ export const ExpenseClassifier = memo(({
                 <p className="font-medium">{expense.description}</p>
               </div>
               <div>
-                <p className="text-sm text-slate-600">Category</p>
+                <p className="text-sm text-slate-600">AI Category</p>
                 <p className="font-medium text-blue-600">{expense.category}</p>
               </div>
               <div>
@@ -128,7 +128,7 @@ export const ExpenseClassifier = memo(({
               onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
             >
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select account code" />
+                <SelectValue placeholder="Choose different category" />
               </SelectTrigger>
               <SelectContent>
                 {accountCodes.map((code) => (
@@ -144,6 +144,7 @@ export const ExpenseClassifier = memo(({
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
+              title="Accept the AI-suggested category"
             >
               <Check className="h-4 w-4" />
               Accept
@@ -153,8 +154,9 @@ export const ExpenseClassifier = memo(({
               onClick={() => handleClassifyExpense(expense.id)}
               disabled={!selectedAccountCodes[expense.id]}
               size="sm"
+              title="Change to the selected category"
             >
-              Classify
+              Reclassify
             </Button>
 
             {onExpenseDeleted && (
