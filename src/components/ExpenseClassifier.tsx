@@ -1,4 +1,3 @@
-
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,11 +34,11 @@ export const ExpenseClassifier = memo(({
     );
     
     if (matchingAccountCode) {
-      return `${matchingAccountCode.code} - ${matchingAccountCode.name}`;
+      return `${matchingAccountCode.code} - ${matchingAccountCode.name}`.trim();
     }
     
-    // If no match found, just return the original category
-    return category;
+    // If no match found, just return the original category trimmed
+    return category.trim();
   };
 
   const handleAcceptCategory = (expenseId: string) => {
