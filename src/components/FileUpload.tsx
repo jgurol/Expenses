@@ -1,4 +1,5 @@
 
+
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -174,13 +175,17 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       }
 
       // Try to match expense description to existing account codes using AI
-      let finalAccountCode = accountCode; // Default to sheet name account code
+      let finalCategory = category?.toString() || "Uncategorized"; // Default to original category or "Uncategorized"
       
       if (accountCodes.length > 0) {
         const aiMatchedCode = await matchExpenseToAccountCode(description.toString(), accountCodes);
         if (aiMatchedCode) {
-          finalAccountCode = aiMatchedCode;
-          console.log(`AI matched "${description}" to existing account code: ${aiMatchedCode}`);
+          // Find the account code name to use as category
+          const matchedAccountCode = accountCodes.find(ac => ac.code === aiMatchedCode);
+          if (matchedAccountCode) {
+            finalCategory = matchedAccountCode.name;
+            console.log(`AI matched "${description}" to category: ${finalCategory}`);
+          }
         }
       }
 
@@ -188,9 +193,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         id: generateId(),
         date: parsedDate,
         description: description.toString(),
-        category: category?.toString() || "Uncategorized",
+        category: finalCategory,
         spent: parsedAmount,
-        accountCode: finalAccountCode,
+        accountCode: accountCode, // This remains the sheet-based account code
         classified: false,
       } as Expense);
     }
@@ -394,3 +399,4 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     </div>
   );
 };
+
