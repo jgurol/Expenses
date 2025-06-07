@@ -93,11 +93,16 @@ export const useUserManagement = () => {
         .delete()
         .eq('user_id', userId);
 
-      // Then insert new roles
+      // Then insert new roles with proper typing
       if (roles.length > 0) {
+        const roleInserts = roles.map(role => ({ 
+          user_id: userId, 
+          role: role as 'admin' | 'bookkeeper' | 'classifier'
+        }));
+        
         const { error } = await supabase
           .from('user_roles')
-          .insert(roles.map(role => ({ user_id: userId, role })));
+          .insert(roleInserts);
 
         if (error) throw error;
       }
