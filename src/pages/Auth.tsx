@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,8 +43,10 @@ const Auth = () => {
     const errorDescription = errorFromHash.get('error_description') || searchParams.get('error_description');
     const errorType = errorFromHash.get('error') || searchParams.get('error');
     const type = searchParams.get('type');
+    const token = searchParams.get('token');
+    const tokenHash = searchParams.get('token_hash');
     
-    console.log('URL params check:', { errorCode, errorDescription, errorType, type, urlHash });
+    console.log('URL params check:', { errorCode, errorDescription, errorType, type, urlHash, token: !!token, tokenHash: !!tokenHash });
     
     if (errorCode === 'otp_expired' || errorType === 'access_denied') {
       setError('The reset link has expired or is invalid. Please request a new password reset link.');
@@ -56,8 +59,8 @@ const Auth = () => {
       return;
     }
 
-    // Check if this is a password reset callback
-    if (type === 'recovery') {
+    // Check if this is a password reset callback - look for recovery type or specific tokens
+    if (type === 'recovery' || (token && tokenHash)) {
       console.log('Password reset callback detected');
       setMode('update-password');
       setMessage('Please enter your new password below.');
