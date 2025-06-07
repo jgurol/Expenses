@@ -3,8 +3,7 @@ import { useState, memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Check, CheckSquare } from "lucide-react";
+import { Check } from "lucide-react";
 import { ExpensesTable } from "./ExpensesTable";
 import type { Expense, AccountCode } from "@/pages/Index";
 
@@ -22,7 +21,6 @@ export const ExpenseClassifier = memo(({
   accountCodes, 
   onExpenseClassified
 }: ExpenseClassifierProps) => {
-  const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -85,47 +83,6 @@ export const ExpenseClassifier = memo(({
     return trimmedCategory;
   };
 
-  const handleSelectExpense = (expenseId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedExpenses(prev => [...prev, expenseId]);
-    } else {
-      setSelectedExpenses(prev => prev.filter(id => id !== expenseId));
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedExpenses(sortedExpenses.map(e => e.id));
-    } else {
-      setSelectedExpenses([]);
-    }
-  };
-
-  const handleBulkAcceptCategories = () => {
-    selectedExpenses.forEach(expenseId => {
-      const expense = sortedExpenses.find(e => e.id === expenseId);
-      if (expense) {
-        // Find account code that matches the current category name
-        const matchingAccountCode = accountCodes.find(ac => 
-          ac.name.toLowerCase().includes(expense.category.toLowerCase()) ||
-          expense.category.toLowerCase().includes(ac.name.toLowerCase()) ||
-          ac.code.toLowerCase() === expense.category.toLowerCase()
-        );
-        
-        if (matchingAccountCode) {
-          onExpenseClassified(expenseId, matchingAccountCode.code);
-        } else {
-          // If no exact match, use the first available expense account code
-          const defaultAccountCode = accountCodes.find(ac => ac.type === 'expense') || accountCodes[0];
-          if (defaultAccountCode) {
-            onExpenseClassified(expenseId, defaultAccountCode.code);
-          }
-        }
-      }
-    });
-    setSelectedExpenses([]);
-  };
-
   const handleAcceptCategory = (expenseId: string) => {
     const expense = sortedExpenses.find(e => e.id === expenseId);
     console.log('Accepting current category for expense:', { expenseId, expense });
@@ -166,41 +123,8 @@ export const ExpenseClassifier = memo(({
     return <ExpensesTable expenses={expenses} accountCodes={accountCodes} showClassificationStatus={false} />;
   }
 
-  const isAllSelected = selectedExpenses.length === sortedExpenses.length;
-  const isSomeSelected = selectedExpenses.length > 0 && selectedExpenses.length < sortedExpenses.length;
-
   return (
     <div className="space-y-4">
-      {/* Bulk Actions Header */}
-      <div className="flex items-center justify-between p-4 bg-slate-100 rounded-lg border">
-        <div className="flex items-center gap-3">
-          <Checkbox
-            checked={isAllSelected}
-            ref={(el) => {
-              if (el) (el as any).indeterminate = isSomeSelected;
-            }}
-            onCheckedChange={handleSelectAll}
-            aria-label="Select all expenses"
-          />
-          <span className="text-sm font-medium text-slate-700">
-            {selectedExpenses.length > 0 
-              ? `${selectedExpenses.length} expense${selectedExpenses.length === 1 ? '' : 's'} selected`
-              : "Select expenses to accept categories in bulk"
-            }
-          </span>
-        </div>
-        
-        {selectedExpenses.length > 0 && (
-          <Button
-            onClick={handleBulkAcceptCategories}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-          >
-            <CheckSquare className="h-4 w-4" />
-            Accept Selected ({selectedExpenses.length})
-          </Button>
-        )}
-      </div>
-
       {/* Table */}
       <div className="border rounded-lg bg-white">
         <ExpensesTable
@@ -209,7 +133,7 @@ export const ExpenseClassifier = memo(({
           title=""
           showClassificationStatus={false}
           showDeleteButton={false}
-          showMultiSelect={true}
+          showMultiSelect={false}
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={handleSort}
@@ -218,8 +142,6 @@ export const ExpenseClassifier = memo(({
               key={expense.id}
               expense={expense}
               accountCodes={accountCodes}
-              isSelected={isSelected}
-              onSelectExpense={onSelectExpense}
               onAcceptCategory={handleAcceptCategory}
               onAccountCodeSelect={handleAccountCodeSelect}
               getCategoryDisplayText={getCategoryDisplayText}
@@ -235,8 +157,6 @@ export const ExpenseClassifier = memo(({
 interface ClassifierTableRowProps {
   expense: Expense;
   accountCodes: AccountCode[];
-  isSelected: boolean;
-  onSelectExpense: (expenseId: string, checked: boolean) => void;
   onAcceptCategory: (expenseId: string) => void;
   onAccountCodeSelect: (expenseId: string, accountCode: string) => void;
   getCategoryDisplayText: (category: string) => string;
@@ -245,16 +165,10 @@ interface ClassifierTableRowProps {
 const ClassifierTableRow = ({
   expense,
   accountCodes,
-  isSelected,
-  onSelectExpense,
   onAcceptCategory,
   onAccountCodeSelect,
   getCategoryDisplayText
 }: ClassifierTableRowProps) => {
-  const handleCheckboxChange = (checked: boolean | "indeterminate") => {
-    onSelectExpense(expense.id, checked === true);
-  };
-
   // Generate consistent color based on source account
   const getAccountColor = (sourceAccount: string) => {
     const account = sourceAccount || "Unknown";
@@ -283,14 +197,7 @@ const ClassifierTableRow = ({
   };
 
   return (
-    <tr className={`border-b transition-colors ${getAccountColor(expense.sourceAccount)} ${isSelected ? 'ring-2 ring-blue-200' : ''}`}>
-      <td className="p-4">
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={handleCheckboxChange}
-          aria-label={`Select expense ${expense.description}`}
-        />
-      </td>
+    <tr className={`border-b transition-colors ${getAccountColor(expense.sourceAccount)}`}>
       <td className="p-4">
         <Badge variant="outline" className="text-xs font-mono">
           {expense.sourceAccount || "Unknown"}
