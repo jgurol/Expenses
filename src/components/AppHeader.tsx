@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, FileText, CheckCircle } from "lucide-react";
+import { Settings, FileText, CheckCircle, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
 import type { UserRole } from "@/pages/Index";
@@ -26,15 +26,6 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
-              onClick={() => navigate("/reconcile")}
-              className="flex items-center gap-2"
-            >
-              <CheckCircle className="h-4 w-4" />
-              Reconcile
-            </Button>
-
-            <Button
-              variant="outline"
               onClick={() => navigate("/sources")}
               className="flex items-center gap-2"
             >
@@ -49,6 +40,24 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
             >
               <Settings className="h-4 w-4" />
               Categories
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => navigate("/reconcile")}
+              className="flex items-center gap-2"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Reconcile
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => navigate("/reconciled")}
+              className="flex items-center gap-2"
+            >
+              <UserCheck className="h-4 w-4" />
+              Reconciled
             </Button>
 
             <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
