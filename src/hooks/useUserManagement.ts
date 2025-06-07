@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -149,11 +150,11 @@ export const useUserManagement = () => {
     },
   });
 
-  // Reset password mutation
-  const resetPasswordMutation = useMutation({
-    mutationFn: async ({ userId, email }: { userId: string; email: string }) => {
-      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
-        body: { userId, email }
+  // Send temporary password mutation
+  const sendTempPasswordMutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const { data, error } = await supabase.functions.invoke('generate-temp-password', {
+        body: { email }
       });
 
       if (error) throw error;
@@ -162,13 +163,13 @@ export const useUserManagement = () => {
     onSuccess: () => {
       toast({
         title: 'Success',
-        description: 'Password reset email sent successfully',
+        description: 'Temporary password sent successfully',
       });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to send password reset email',
+        description: error.message || 'Failed to send temporary password',
         variant: 'destructive',
       });
     },
@@ -181,10 +182,10 @@ export const useUserManagement = () => {
     createUser: createUserMutation.mutate,
     updateUserRoles: updateUserRolesMutation.mutate,
     deleteUser: deleteUserMutation.mutate,
-    resetPassword: resetPasswordMutation.mutate,
+    sendTempPassword: sendTempPasswordMutation.mutate,
     isCreating: createUserMutation.isPending,
     isUpdating: updateUserRolesMutation.isPending,
     isDeleting: deleteUserMutation.isPending,
-    isResettingPassword: resetPasswordMutation.isPending,
+    isSendingTempPassword: sendTempPasswordMutation.isPending,
   };
 };
