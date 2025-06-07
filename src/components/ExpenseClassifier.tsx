@@ -24,7 +24,7 @@ export const ExpenseClassifier = memo(({
 
   const handleClassifyExpense = (expenseId: string) => {
     const accountCode = selectedAccountCodes[expenseId];
-    console.log('Classifying expense - changing category:', { expenseId, accountCode, selectedAccountCodes });
+    console.log('Reclassifying expense - changing category:', { expenseId, accountCode, selectedAccountCodes });
     
     if (accountCode) {
       onExpenseClassified(expenseId, accountCode);
@@ -54,6 +54,7 @@ export const ExpenseClassifier = memo(({
       console.log('Found matching account code for category:', matchingAccountCode);
       
       if (matchingAccountCode) {
+        // Only classify with the matching account code, don't change source account
         onExpenseClassified(expenseId, matchingAccountCode.code);
       } else {
         // If no exact match, use the first available expense account code
@@ -61,6 +62,7 @@ export const ExpenseClassifier = memo(({
         console.log('Using default account code for category:', defaultAccountCode);
         
         if (defaultAccountCode) {
+          // Only classify with the default account code, don't change source account
           onExpenseClassified(expenseId, defaultAccountCode.code);
         }
       }
@@ -144,7 +146,7 @@ export const ExpenseClassifier = memo(({
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
-              title="Accept the AI-suggested category"
+              title="Accept the AI-suggested category and assign matching account code"
             >
               <Check className="h-4 w-4" />
               Accept
@@ -154,7 +156,7 @@ export const ExpenseClassifier = memo(({
               onClick={() => handleClassifyExpense(expense.id)}
               disabled={!selectedAccountCodes[expense.id]}
               size="sm"
-              title="Change to the selected category"
+              title="Assign the selected account code to this expense"
             >
               Reclassify
             </Button>
