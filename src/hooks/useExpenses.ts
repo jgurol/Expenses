@@ -23,7 +23,7 @@ export const useExpenses = () => {
         description: expense.description,
         category: expense.category,
         spent: Number(expense.spent),
-        sourceAccount: expense.sourceAccount || expense.category || 'Unknown', // Preserve sourceAccount field
+        sourceAccount: expense.sourceaccount || expense.category || 'Unknown', // Use lowercase field name from database
         classified: expense.classified
       }));
     },
@@ -41,6 +41,7 @@ export const useAddExpenses = () => {
         category: expense.category,
         spent: expense.spent,
         classified: expense.classified,
+        sourceaccount: expense.sourceAccount, // Map to lowercase database field
         category_id: null // No longer automatically assigning categories during import
       }));
 

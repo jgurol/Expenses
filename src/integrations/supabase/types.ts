@@ -45,6 +45,7 @@ export type Database = {
           date: string
           description: string
           id: string
+          sourceaccount: string | null
           spent: number
           updated_at: string
         }
@@ -56,6 +57,7 @@ export type Database = {
           date: string
           description: string
           id?: string
+          sourceaccount?: string | null
           spent: number
           updated_at?: string
         }
@@ -67,6 +69,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          sourceaccount?: string | null
           spent?: number
           updated_at?: string
         }
