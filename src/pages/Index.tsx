@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
@@ -220,6 +221,7 @@ const Index = () => {
                 classifiedExpenses={classifiedExpenses}
                 accountCodes={accountCodes}
                 onExpenseClassified={handleExpenseClassified}
+                onExpenseDeleted={handleDeleteUnclassifiedExpense}
               />
             )}
           </div>

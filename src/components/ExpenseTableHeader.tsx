@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
-type SortField = 'sourceAccount' | 'date' | 'code' | 'category';
+type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
 
 interface ExpenseTableHeaderProps {
@@ -87,9 +87,7 @@ export const ExpenseTableHeader = ({
             <SortableHeader field="code">Code</SortableHeader>
           </TableHead>
         )}
-        <TableHead className="w-36">
-          <SortableHeader field="category">Category</SortableHeader>
-        </TableHead>
+        <TableHead className="w-36">Category</TableHead>
         <TableHead className="text-right w-24">Amount</TableHead>
         {showClassificationStatus && <TableHead className="text-center w-20">Status</TableHead>}
         {showDeleteButton && <TableHead className="text-center w-16">Actions</TableHead>}
