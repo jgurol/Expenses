@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
@@ -98,45 +97,47 @@ export const ExpenseSummaryByCategory = ({ expenses, accountCodes }: ExpenseSumm
         </div>
       </div>
       
-      <div className="space-y-4">
+      {/* Category Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedCategories.map(([category, data]) => {
           const percentage = (data.total / expenses.reduce((sum, e) => sum + e.spent, 0)) * 100;
           
           return (
-            <div key={category} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-3">
+            <Card key={category} className="p-4 hover:shadow-md transition-shadow">
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-slate-900">{category}</h4>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium text-slate-900 text-sm">{category}</h4>
                       <Badge variant="outline" className="text-xs">
                         {data.code}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-slate-600 mt-1">
-                      <span>{data.count} transaction{data.count !== 1 ? 's' : ''}</span>
-                      <span>${(data.total / data.count).toFixed(2)} avg</span>
-                      <span>{percentage.toFixed(1)}% of total</span>
+                    <div className="text-2xl font-bold text-slate-900">
+                      ${data.total.toFixed(2)}
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-lg font-semibold text-slate-900">
-                    ${data.total.toFixed(2)}
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-slate-600">
+                    <span>{data.count} transaction{data.count !== 1 ? 's' : ''}</span>
+                    <span>{percentage.toFixed(1)}% of total</span>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    ${(data.total / data.count).toFixed(2)} average
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-200 rounded-full h-1.5">
+                    <div 
+                      className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                    />
                   </div>
                 </div>
               </div>
-              
-              {/* Progress bar */}
-              <div className="mt-3">
-                <div className="w-full bg-slate-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
+            </Card>
           );
         })}
       </div>
