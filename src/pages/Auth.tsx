@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,13 +10,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-type AuthMode = 'signin' | 'signup' | 'magiclink' | 'reset' | 'update-password';
+type AuthMode = 'signin' | 'signup' | 'magiclink' | 'temp-password' | 'update-password';
 
 const Auth = () => {
   const [mode, setMode] = useState<AuthMode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [tempPassword, setTempPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +26,7 @@ const Auth = () => {
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, signInWithPassword, signUpWithPassword, signInWithMagicLink, resetPassword } = useAuth();
+  const { user, signInWithPassword, signUpWithPassword, signInWithMagicLink } = useAuth();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -61,8 +63,8 @@ const Auth = () => {
     });
     
     if (errorCode === 'otp_expired' || errorType === 'access_denied') {
-      setError('The reset link has expired or is invalid. Please request a new password reset link.');
-      setMode('reset');
+      setError('The reset link has expired or is invalid. Please request a new temporary password.');
+      setMode('temp-password');
       // Clear the URL hash to prevent the error from persisting
       window.history.replaceState(null, '', window.location.pathname);
       return;
@@ -172,22 +174,47 @@ const Auth = () => {
     }
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
+  const handleTempPasswordRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     setMessage('');
     
     try {
-      const { error } = await resetPassword(email);
+      const { data, error } = await supabase.functions.invoke('generate-temp-password', {
+        body: { email }
+      });
       
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Password reset email sent! Check your email for instructions.');
+        setMessage('Temporary password sent to your email! Use it to sign in, then you\'ll be prompted to set a new password.');
+        setMode('signin');
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred while sending reset email');
+      setError(err.message || 'An error occurred while generating temporary password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTempPasswordSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setMessage('');
+    
+    try {
+      const { error } = await signInWithPassword(email, tempPassword);
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Signed in with temporary password! Please set a new password.');
+        setMode('update-password');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during sign in');
     } finally {
       setIsLoading(false);
     }
@@ -236,6 +263,7 @@ const Auth = () => {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    setTempPassword('');
     setNewPassword('');
     setConfirmNewPassword('');
     setError('');
@@ -254,7 +282,7 @@ const Auth = () => {
       case 'signin': return 'Sign In';
       case 'signup': return 'Create Account';
       case 'magiclink': return 'Sign In with Magic Link';
-      case 'reset': return 'Reset Password';
+      case 'temp-password': return 'Get Temporary Password';
       case 'update-password': return 'Update Password';
       default: return 'Sign In';
     }
@@ -265,7 +293,7 @@ const Auth = () => {
       case 'signin': return 'Enter your credentials to access your account';
       case 'signup': return 'Create a new account to get started';
       case 'magiclink': return 'Enter your email address and we\'ll send you a magic link to sign in';
-      case 'reset': return 'Enter your email address and we\'ll send you a password reset link';
+      case 'temp-password': return 'Enter your email address and we\'ll send you a temporary password';
       case 'update-password': return 'Enter your new password below';
       default: return 'Enter your credentials to access your account';
     }
@@ -276,7 +304,7 @@ const Auth = () => {
       case 'signin': return <Lock className="h-5 w-5" />;
       case 'signup': return <User className="h-5 w-5" />;
       case 'magiclink': return <Mail className="h-5 w-5" />;
-      case 'reset': return <ArrowLeft className="h-5 w-5" />;
+      case 'temp-password': return <Mail className="h-5 w-5" />;
       case 'update-password': return <Lock className="h-5 w-5" />;
       default: return <Lock className="h-5 w-5" />;
     }
@@ -382,7 +410,7 @@ const Auth = () => {
                 <div className="space-y-2 text-center">
                   <button
                     type="button"
-                    onClick={() => switchMode('reset')}
+                    onClick={() => switchMode('temp-password')}
                     className="text-sm text-blue-600 hover:underline"
                   >
                     Forgot your password?
@@ -500,8 +528,8 @@ const Auth = () => {
               </form>
             )}
 
-            {mode === 'reset' && (
-              <form onSubmit={handlePasswordReset} className="space-y-4">
+            {mode === 'temp-password' && (
+              <form onSubmit={handleTempPasswordRequest} className="space-y-4">
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -517,7 +545,7 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Mail className="mr-2 h-4 w-4" />
-                  Send Reset Link
+                  Send Temporary Password
                 </Button>
 
                 <div className="text-center text-sm text-slate-600">
