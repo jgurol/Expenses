@@ -2,20 +2,17 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Building2, Loader2 } from "lucide-react";
 import { useAccounts, useAddAccount, useUpdateAccount, useDeleteAccount, type Account } from "@/hooks/useAccounts";
-import { useAccountCodes } from "@/hooks/useAccountCodes";
 
 export const Accounts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [formData, setFormData] = useState({
-    account_code_id: "",
     account_number: "",
     name: "",
     description: "",
@@ -24,14 +21,12 @@ export const Accounts = () => {
   });
 
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts();
-  const { data: accountCodes = [], isLoading: accountCodesLoading } = useAccountCodes();
   const addAccount = useAddAccount();
   const updateAccount = useUpdateAccount();
   const deleteAccount = useDeleteAccount();
 
   const resetForm = () => {
     setFormData({
-      account_code_id: "",
       account_number: "",
       name: "",
       description: "",
@@ -44,7 +39,7 @@ export const Accounts = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.account_code_id || !formData.account_number || !formData.name) {
+    if (!formData.account_number || !formData.name) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -96,7 +91,6 @@ export const Accounts = () => {
   const handleEdit = (account: Account) => {
     setEditingAccount(account);
     setFormData({
-      account_code_id: account.account_code_id,
       account_number: account.account_number,
       name: account.name,
       description: account.description || "",
@@ -129,9 +123,7 @@ export const Accounts = () => {
     }).format(amount);
   };
 
-  const isLoading = accountsLoading || accountCodesLoading;
-
-  if (isLoading) {
+  if (accountsLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -161,27 +153,6 @@ export const Accounts = () => {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Account Code *
-                </label>
-                <Select 
-                  value={formData.account_code_id} 
-                  onValueChange={(value) => setFormData({ ...formData, account_code_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select account code" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accountCodes.map((code) => (
-                      <SelectItem key={code.id} value={code.id}>
-                        {code.code} - {code.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Account Number *
@@ -263,7 +234,6 @@ export const Accounts = () => {
               <TableRow>
                 <TableHead>Account #</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Account Code</TableHead>
                 <TableHead>Balance</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-24 text-right">Actions</TableHead>
@@ -279,14 +249,6 @@ export const Accounts = () => {
                     {account.name}
                     {account.description && (
                       <div className="text-sm text-slate-500">{account.description}</div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {account.account_code && (
-                      <div>
-                        <span className="font-mono text-sm">{account.account_code.code}</span>
-                        <div className="text-sm text-slate-500">{account.account_code.name}</div>
-                      </div>
                     )}
                   </TableCell>
                   <TableCell className="font-mono">

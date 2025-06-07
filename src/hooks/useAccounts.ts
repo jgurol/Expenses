@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface Account {
   id: string;
-  account_code_id: string;
   account_number: string;
   name: string;
   description?: string;
@@ -12,11 +11,6 @@ export interface Account {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  account_code?: {
-    code: string;
-    name: string;
-    type: string;
-  };
 }
 
 export const useAccounts = () => {
@@ -25,25 +19,20 @@ export const useAccounts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('accounts')
-        .select(`
-          *,
-          account_codes(code, name, type)
-        `)
+        .select('*')
         .order('account_number');
       
       if (error) throw error;
       
       return data.map(account => ({
         id: account.id,
-        account_code_id: account.account_code_id,
         account_number: account.account_number,
         name: account.name,
         description: account.description,
         balance: Number(account.balance),
         is_active: account.is_active,
         created_at: account.created_at,
-        updated_at: account.updated_at,
-        account_code: account.account_codes
+        updated_at: account.updated_at
       }));
     },
   });
@@ -53,7 +42,7 @@ export const useAddAccount = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (newAccount: Omit<Account, 'id' | 'created_at' | 'updated_at' | 'account_code'>) => {
+    mutationFn: async (newAccount: Omit<Account, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('accounts')
         .insert([newAccount])

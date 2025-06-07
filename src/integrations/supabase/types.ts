@@ -38,7 +38,6 @@ export type Database = {
       }
       accounts: {
         Row: {
-          account_code_id: string
           account_number: string
           balance: number | null
           created_at: string
@@ -49,7 +48,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          account_code_id: string
           account_number: string
           balance?: number | null
           created_at?: string
@@ -60,7 +58,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          account_code_id?: string
           account_number?: string
           balance?: number | null
           created_at?: string
@@ -70,15 +67,7 @@ export type Database = {
           name?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "accounts_account_code_id_fkey"
-            columns: ["account_code_id"]
-            isOneToOne: false
-            referencedRelation: "account_codes"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       expenses: {
         Row: {
