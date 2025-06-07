@@ -23,7 +23,7 @@ export const useExpenses = () => {
         description: expense.description,
         category: expense.category,
         spent: Number(expense.spent),
-        sourceAccount: expense.category || 'Unknown', // Use category as source account for now
+        sourceAccount: expense.sourceAccount || expense.category || 'Unknown', // Preserve sourceAccount field
         classified: expense.classified
       }));
     },
