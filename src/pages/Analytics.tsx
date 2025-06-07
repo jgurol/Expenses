@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -114,6 +113,7 @@ const Analytics = () => {
                     <XAxis 
                       type="number" 
                       tickFormatter={(value) => `$${value}`}
+                      domain={[0, 'dataMax']}
                     />
                     <YAxis 
                       type="category"
