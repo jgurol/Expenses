@@ -4,6 +4,7 @@ import { ImportSection } from "@/components/ImportSection";
 import { BookkeeperDashboard } from "@/components/BookkeeperDashboard";
 import { ClassifierView } from "@/components/ClassifierView";
 import { useAddExpenses } from "@/hooks/useExpenses";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import type { UserRole, Expense, AccountCode } from "@/pages/Index";
 
@@ -37,6 +38,7 @@ export const MainContent = ({
   onBulkDeleteUnclassifiedExpenses,
 }: MainContentProps) => {
   const addExpenses = useAddExpenses();
+  const { isClassifier, isAdmin } = useAuth();
 
   const handleSaveImportedExpenses = async () => {
     if (importedExpenses.length === 0) {
@@ -95,13 +97,23 @@ export const MainContent = ({
           />
         </div>
       ) : (
-        <ClassifierView
-          unclassifiedExpenses={unclassifiedExpenses}
-          classifiedExpenses={classifiedExpenses}
-          accountCodes={accountCodes}
-          onExpenseClassified={onExpenseClassified}
-          onExpenseDeleted={onDeleteUnclassifiedExpense}
-        />
+        // Check if user has classifier or admin permissions before showing ClassifierView
+        (isClassifier || isAdmin) ? (
+          <ClassifierView
+            unclassifiedExpenses={unclassifiedExpenses}
+            classifiedExpenses={classifiedExpenses}
+            accountCodes={accountCodes}
+            onExpenseClassified={onExpenseClassified}
+            onExpenseDeleted={onDeleteUnclassifiedExpense}
+          />
+        ) : (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">Access Denied</h2>
+              <p className="text-slate-600">You don't have permission to access the classifier view.</p>
+            </div>
+          </div>
+        )
       )}
     </div>
   );

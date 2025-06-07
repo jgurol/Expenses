@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExpenseClassifier } from "@/components/ExpenseClassifier";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
+import { useAuth } from "@/hooks/useAuth";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface ClassifierViewProps {
@@ -20,6 +21,20 @@ export const ClassifierView = ({
   onExpenseClassified,
   onExpenseDeleted
 }: ClassifierViewProps) => {
+  const { isClassifier, isAdmin } = useAuth();
+
+  // Only allow classifiers and admins to access this view
+  if (!isClassifier && !isAdmin) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Access Denied</h2>
+          <p className="text-slate-600">You don't have permission to classify expenses.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
