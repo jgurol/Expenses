@@ -67,6 +67,17 @@ const getCategoryCommentary = (categoryName: string): string => {
     return comments[Math.floor(Math.random() * comments.length)];
   }
   
+  if (lowerCategory.includes('legal') || lowerCategory.includes('attorney') || lowerCategory.includes('lawyer')) {
+    const comments = [
+      "what kind of legal drama requires this level of financial bleeding?",
+      "are you hiring the entire Supreme Court as personal counsel?",
+      "I'm genuinely curious - what legal situation costs this astronomical amount?",
+      "are you paying lawyers by the syllable or buying a law firm?",
+      "what exactly did you do that requires this much legal firepower?"
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+  }
+  
   if (lowerCategory.includes('gas') || lowerCategory.includes('fuel')) {
     const comments = [
       "are you driving a tank or just really bad at finding gas stations?",
