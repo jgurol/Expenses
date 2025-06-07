@@ -9,6 +9,7 @@ import { ExpenseClassifier } from "@/components/ExpenseClassifier";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
+import { useSources } from "@/hooks/useSources";
 import { useExpenseOperations } from "@/hooks/useExpenseOperations";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -18,6 +19,7 @@ const Classifier = () => {
   
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
+  const { data: sources = [] } = useSources();
   
   const {
     handleExpenseClassified,
@@ -105,6 +107,7 @@ const Classifier = () => {
             <ExpenseClassifier
               expenses={unclassifiedExpenses}
               accountCodes={accountCodes}
+              sources={sources}
               onExpenseClassified={handleExpenseClassified}
               onExpenseDeleted={handleDeleteUnclassifiedExpense}
             />

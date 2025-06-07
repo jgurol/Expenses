@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Expense, AccountCode } from "@/pages/Index";
+import type { Source } from "@/hooks/useSources";
 
 type SortField = 'sourceAccount' | 'date' | 'description' | 'category';
 type SortDirection = 'asc' | 'desc';
@@ -13,13 +14,15 @@ type SortDirection = 'asc' | 'desc';
 interface ExpenseClassifierProps {
   expenses: Expense[];
   accountCodes: AccountCode[];
+  sources?: Source[];
   onExpenseClassified: (expenseId: string, accountCode: string) => void;
   onExpenseDeleted?: (expenseId: string) => void;
 }
 
 export const ExpenseClassifier = memo(({ 
   expenses, 
-  accountCodes, 
+  accountCodes,
+  sources = [],
   onExpenseClassified,
   onExpenseDeleted 
 }: ExpenseClassifierProps) => {
@@ -92,6 +95,19 @@ export const ExpenseClassifier = memo(({
   // Display the full source account name without any parsing
   const getAccountName = (sourceAccount: string) => {
     return sourceAccount || "Unknown";
+  };
+
+  // Get source description by matching account name or account number
+  const getSourceDescription = (sourceAccount: string) => {
+    if (!sourceAccount || sources.length === 0) return null;
+    
+    // Try to find source by name first, then by account number
+    const source = sources.find(s => 
+      s.name === sourceAccount || 
+      s.account_number === sourceAccount
+    );
+    
+    return source?.description || null;
   };
 
   // Get the formatted category text with code and name
@@ -263,6 +279,8 @@ export const ExpenseClassifier = memo(({
           <TableBody>
             {sortedExpenses.map((expense) => {
               const isSelected = selectedExpenses.includes(expense.id);
+              const sourceDescription = getSourceDescription(expense.sourceAccount);
+              
               return (
                 <TableRow key={expense.id} className={getAccountColor(expense.sourceAccount)}>
                   <TableCell>
@@ -273,9 +291,16 @@ export const ExpenseClassifier = memo(({
                     />
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-xs font-mono">
-                      {getAccountName(expense.sourceAccount || "Unknown")}
-                    </Badge>
+                    <div>
+                      <Badge variant="outline" className="text-xs font-mono">
+                        {getAccountName(expense.sourceAccount || "Unknown")}
+                      </Badge>
+                      {sourceDescription && (
+                        <div className="text-xs text-slate-500 mt-1">
+                          {sourceDescription}
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm">
                     {new Date(expense.date).toLocaleDateString()}

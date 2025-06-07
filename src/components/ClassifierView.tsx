@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExpenseClassifier } from "@/components/ExpenseClassifier";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { useAuth } from "@/hooks/useAuth";
+import { useSources } from "@/hooks/useSources";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface ClassifierViewProps {
@@ -22,6 +23,7 @@ export const ClassifierView = ({
   onExpenseDeleted
 }: ClassifierViewProps) => {
   const { isClassifier, isAdmin } = useAuth();
+  const { data: sources = [] } = useSources();
 
   // Only allow classifiers and admins to access this view
   if (!isClassifier && !isAdmin) {
@@ -47,6 +49,7 @@ export const ClassifierView = ({
         <ExpenseClassifier
           expenses={unclassifiedExpenses}
           accountCodes={accountCodes}
+          sources={sources}
           onExpenseClassified={onExpenseClassified}
           onExpenseDeleted={onExpenseDeleted}
         />
