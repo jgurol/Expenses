@@ -1,13 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Plus, UploadCloud, ArrowRight, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
 import { useExpenses, useAddExpenses } from '@/hooks/useExpenses';
 import { useCategories } from '@/hooks/useCategories';
-import { useClassifyExpense } from '@/hooks/useClassifyExpense';
 import { ExpensesTable } from '@/components/ExpensesTable';
-import { ExpenseForm } from '@/components/ExpenseForm';
-import { CategorySelect } from '@/components/CategorySelect';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,6 +22,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast";
+
+export type UserRole = "bookkeeper" | "classifier";
 
 export interface AccountCode {
   id: string;
@@ -65,7 +65,6 @@ const Index = () => {
   const { data: expenses = [], refetch: refetchExpenses } = useExpenses();
   const { data: accountCodes = [], refetch: refetchAccountCodes } = useCategories();
   const addExpensesMutation = useAddExpenses();
-  const classifyExpenseMutation = useClassifyExpense();
 
   useEffect(() => {
     refetchExpenses();
@@ -189,34 +188,6 @@ const Index = () => {
     }
   };
 
-  const handleClassify = async () => {
-    if (!selectedExpenseId || !selectedAccountCode) {
-      toast({
-        title: "Error",
-        description: "Please select an expense and an account code.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await classifyExpenseMutation.mutateAsync({ expenseId: selectedExpenseId, accountCode: selectedAccountCode });
-      toast({
-        title: "Success",
-        description: "Expense classified successfully.",
-      });
-      setSelectedExpenseId(null);
-      setSelectedAccountCode(null);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to classify expense.",
-        variant: "destructive",
-      });
-      console.error("Error classifying expense:", error);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -296,7 +267,49 @@ const Index = () => {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="grid gap-4 py-4">
-                <ExpenseForm expense={newExpense} onChange={handleInputChange} />
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">Date</Label>
+                  <Input
+                    id="date"
+                    name="date"
+                    type="date"
+                    value={newExpense.date}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">Description</Label>
+                  <Input
+                    id="description"
+                    name="description"
+                    value={newExpense.description}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="amount" className="text-right">Amount</Label>
+                  <Input
+                    id="amount"
+                    name="spent"
+                    type="number"
+                    step="0.01"
+                    value={newExpense.spent}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="sourceAccount" className="text-right">Source Account</Label>
+                  <Input
+                    id="sourceAccount"
+                    name="sourceAccount"
+                    value={newExpense.sourceAccount}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                  />
+                </div>
               </div>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setIsAddingExpense(false)}>Cancel</AlertDialogCancel>
@@ -333,14 +346,22 @@ const Index = () => {
                 </div>
                 <div>
                   <Label htmlFor="accountCode">Select Account Code</Label>
-                  <CategorySelect
-                    accountCodes={accountCodes}
+                  <select
+                    id="accountCode"
+                    className="w-full rounded-md border border-slate-200 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
                     value={selectedAccountCode || ''}
                     onChange={(e) => setSelectedAccountCode(e.target.value)}
-                  />
+                  >
+                    <option value="">Select an account code</option>
+                    {accountCodes.map((code) => (
+                      <option key={code.id} value={code.code}>
+                        {code.code} - {code.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-              <Button onClick={handleClassify} disabled={!selectedExpenseId || !selectedAccountCode}>
+              <Button disabled={!selectedExpenseId || !selectedAccountCode}>
                 Classify Expense
               </Button>
             </CardContent>
