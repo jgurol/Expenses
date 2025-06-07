@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
@@ -33,10 +32,10 @@ const Index = () => {
   const { isBookkeeper, isClassifier, isAdmin } = useAuth();
   
   // Determine initial role based on user permissions
+  // Bookkeepers should NEVER see the classifier view
   const getInitialRole = (): UserRole => {
-    if (isAdmin) return "bookkeeper"; // Admins default to bookkeeper view
-    if (isBookkeeper) return "bookkeeper";
-    if (isClassifier) return "classifier";
+    if (isBookkeeper) return "bookkeeper"; // Bookkeepers always get bookkeeper view
+    if (isClassifier || isAdmin) return "classifier"; // Only pure classifiers or admins get classifier view
     return "bookkeeper"; // fallback
   };
 
@@ -65,8 +64,8 @@ const Index = () => {
   console.log('Imported expenses state:', importedExpenses);
   console.log('Imported expenses count:', importedExpenses.length);
 
-  // Only allow role switching if user has multiple roles or is admin
-  const canSwitchRoles = isAdmin || (isBookkeeper && isClassifier);
+  // Only allow role switching for pure admins (not bookkeepers)
+  const canSwitchRoles = isAdmin && !isBookkeeper && isClassifier;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
