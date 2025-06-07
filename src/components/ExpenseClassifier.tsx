@@ -109,14 +109,14 @@ export const ExpenseClassifier = memo(({
                 <p className="text-sm text-slate-600">Description</p>
                 <p className="font-medium">{expense.description}</p>
               </div>
-              <div>
+              <div className="text-right">
                 <p className="text-sm text-slate-600">Amount</p>
                 <p className="font-semibold text-green-600">${expense.spent.toFixed(2)}</p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3 ml-4">
+          <div className="flex items-center gap-3 ml-6">
             <Select
               value=""
               onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
