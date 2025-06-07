@@ -148,8 +148,7 @@ const Reconciled = () => {
             <div className="flex items-center gap-4">
               <Button
                 onClick={handleExportToSpreadsheet}
-                variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white animate-pulse"
                 disabled={reconciledExpenses.length === 0}
               >
                 <Download className="h-4 w-4" />
