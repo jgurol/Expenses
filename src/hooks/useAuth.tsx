@@ -10,7 +10,10 @@ interface AuthContextType {
   session: Session | null;
   userRoles: UserRole[];
   loading: boolean;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: any }>;
+  signUpWithPassword: (email: string, password: string) => Promise<{ error: any }>;
   signInWithMagicLink: (email: string) => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
   isAdmin: boolean;
@@ -107,6 +110,51 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
+  const signInWithPassword = async (email: string, password: string) => {
+    try {
+      console.log('Signing in with password:', email);
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('Sign in error:', error);
+      }
+      
+      return { error };
+    } catch (error) {
+      console.error('Sign in exception:', error);
+      return { error };
+    }
+  };
+
+  const signUpWithPassword = async (email: string, password: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/auth`;
+      
+      console.log('Signing up with password:', email, 'with redirect:', redirectUrl);
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
+      });
+      
+      if (error) {
+        console.error('Sign up error:', error);
+      }
+      
+      return { error };
+    } catch (error) {
+      console.error('Sign up exception:', error);
+      return { error };
+    }
+  };
+
   const signInWithMagicLink = async (email: string) => {
     try {
       const redirectUrl = `${window.location.origin}/auth`;
@@ -127,6 +175,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return { error };
     } catch (error) {
       console.error('Magic link exception:', error);
+      return { error };
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/auth`;
+      
+      console.log('Sending password reset to:', email, 'with redirect:', redirectUrl);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+      
+      if (error) {
+        console.error('Password reset error:', error);
+      }
+      
+      return { error };
+    } catch (error) {
+      console.error('Password reset exception:', error);
       return { error };
     }
   };
@@ -156,7 +225,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     session,
     userRoles,
     loading,
+    signInWithPassword,
+    signUpWithPassword,
     signInWithMagicLink,
+    resetPassword,
     signOut,
     hasRole,
     isAdmin,

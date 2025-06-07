@@ -1,22 +1,28 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail } from 'lucide-react';
+import { Loader2, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
+type AuthMode = 'signin' | 'signup' | 'magiclink' | 'reset';
+
 const Auth = () => {
+  const [mode, setMode] = useState<AuthMode>('signin');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, signInWithMagicLink } = useAuth();
+  const { user, signInWithPassword, signUpWithPassword, signInWithMagicLink, resetPassword } = useAuth();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -43,15 +49,67 @@ const Auth = () => {
     if (accessToken && refreshToken) {
       setMessage('Magic link verified! Signing you in...');
       // The useAuth hook will handle the session automatically
-      // Just wait a moment for the auth state to update
       setTimeout(() => {
         if (!user) {
-          // If user is still not set after a delay, there might be an issue
           setError('Authentication successful but there was an issue loading your profile. Please try refreshing the page.');
         }
       }, 2000);
     }
   }, [searchParams, user]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setMessage('');
+    
+    try {
+      const { error } = await signInWithPassword(email, password);
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Signed in successfully!');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during sign in');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setMessage('');
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      const { error } = await signUpWithPassword(email, password);
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Account created successfully! Check your email to verify your account.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during sign up');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +132,70 @@ const Auth = () => {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setMessage('');
+    
+    try {
+      const { error } = await resetPassword(email);
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Password reset email sent! Check your email for instructions.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while sending reset email');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setError('');
+    setMessage('');
+  };
+
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    resetForm();
+  };
+
+  const getTitle = () => {
+    switch (mode) {
+      case 'signin': return 'Sign In';
+      case 'signup': return 'Create Account';
+      case 'magiclink': return 'Sign In with Magic Link';
+      case 'reset': return 'Reset Password';
+      default: return 'Sign In';
+    }
+  };
+
+  const getDescription = () => {
+    switch (mode) {
+      case 'signin': return 'Enter your credentials to access your account';
+      case 'signup': return 'Create a new account to get started';
+      case 'magiclink': return 'Enter your email address and we\'ll send you a magic link to sign in';
+      case 'reset': return 'Enter your email address and we\'ll send you a password reset link';
+      default: return 'Enter your credentials to access your account';
+    }
+  };
+
+  const getIcon = () => {
+    switch (mode) {
+      case 'signin': return <Lock className="h-5 w-5" />;
+      case 'signup': return <User className="h-5 w-5" />;
+      case 'magiclink': return <Mail className="h-5 w-5" />;
+      case 'reset': return <ArrowLeft className="h-5 w-5" />;
+      default: return <Lock className="h-5 w-5" />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
@@ -85,11 +207,11 @@ const Auth = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Sign In with Magic Link
+              {getIcon()}
+              {getTitle()}
             </CardTitle>
             <CardDescription>
-              Enter your email address and we'll send you a magic link to sign in
+              {getDescription()}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -105,25 +227,190 @@ const Auth = () => {
               </Alert>
             )}
 
-            <form onSubmit={handleMagicLink} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-              
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Mail className="mr-2 h-4 w-4" />
-                Send Magic Link
-              </Button>
-            </form>
+            {mode === 'signin' && (
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Lock className="mr-2 h-4 w-4" />
+                  Sign In
+                </Button>
+
+                <div className="space-y-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => switchMode('reset')}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
+                  <div className="text-sm text-slate-600">
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => switchMode('signup')}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Sign up
+                    </button>
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    Or{' '}
+                    <button
+                      type="button"
+                      onClick={() => switchMode('magiclink')}
+                      className="text-blue-600 hover:underline"
+                    >
+                      use magic link
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {mode === 'signup' && (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm your password"
+                    required
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <User className="mr-2 h-4 w-4" />
+                  Create Account
+                </Button>
+
+                <div className="text-center text-sm text-slate-600">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => switchMode('signin')}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {mode === 'magiclink' && (
+              <form onSubmit={handleMagicLink} className="space-y-4">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Magic Link
+                </Button>
+
+                <div className="text-center text-sm text-slate-600">
+                  <button
+                    type="button"
+                    onClick={() => switchMode('signin')}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Back to sign in
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {mode === 'reset' && (
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Reset Link
+                </Button>
+
+                <div className="text-center text-sm text-slate-600">
+                  <button
+                    type="button"
+                    onClick={() => switchMode('signin')}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Back to sign in
+                  </button>
+                </div>
+              </form>
+            )}
           </CardContent>
         </Card>
       </div>
