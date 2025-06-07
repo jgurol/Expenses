@@ -75,7 +75,13 @@ export const useDeleteAccountCode = () => {
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        // Check if it's a foreign key constraint error
+        if (error.message.includes('violates foreign key constraint')) {
+          throw new Error('Cannot delete this account code because it is being used by existing accounts or expenses. Please remove all references first.');
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accountCodes'] });

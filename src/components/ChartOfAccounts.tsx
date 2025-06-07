@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,9 +99,10 @@ export const ChartOfAccounts = () => {
         description: "Account code deleted successfully",
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete account code";
       toast({
         title: "Error",
-        description: "Failed to delete account code",
+        description: errorMessage,
         variant: "destructive",
       });
     }
