@@ -69,10 +69,17 @@ export const MainContent = ({
   const unclassifiedExpenses = expenses.filter(e => !e.classified);
   const classifiedExpenses = expenses.filter(e => e.classified);
 
+  // Determine the display role based on user's actual permissions
+  const getDisplayRole = () => {
+    if (isAdmin) return "Admin";
+    if (isClassifier) return "Classifier";
+    return "Bookkeeper";
+  };
+
   return (
     <div className="mb-8">
       <Badge variant="outline" className="mb-4">
-        {currentRole === "bookkeeper" ? "Bookkeeper View" : "Expense Classifier View"}
+        {getDisplayRole()} View
       </Badge>
       
       {currentRole === "bookkeeper" ? (
