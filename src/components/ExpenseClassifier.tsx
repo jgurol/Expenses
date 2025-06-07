@@ -26,7 +26,6 @@ export const ExpenseClassifier = memo(({
 
   // Get the formatted category text with code and name
   const getCategoryDisplayText = (category: string) => {
-    // Trim the input category first
     const trimmedCategory = category.trim();
     
     // Find account code that matches the current category name
@@ -123,7 +122,7 @@ export const ExpenseClassifier = memo(({
               onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
             >
               <SelectTrigger className="w-64">
-                <SelectValue placeholder={getCategoryDisplayText(expense.category)} />
+                <SelectValue placeholder={expense.category.trim()} />
               </SelectTrigger>
               <SelectContent>
                 {accountCodes.map((code) => (
