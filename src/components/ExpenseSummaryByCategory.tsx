@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
@@ -18,10 +19,43 @@ const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: numb
   
   if (totalCategories === 0) return "Well, at least you managed to avoid spending money entirely. That's... something.";
   
-  let analysis = `Oh wonderful, you've managed to scatter ${totalSpent.toFixed(2)} across ${totalCategories} different categories. `;
+  let analysis = `Oh wonderful, you've managed to scatter $${totalSpent.toFixed(2)} across ${totalCategories} different categories. `;
+  
+  // Get crazy specific about top categories
+  if (sortedByAmount.length > 0) {
+    const top3 = sortedByAmount.slice(0, 3);
+    analysis += `Let's talk about your questionable life choices: `;
+    
+    top3.forEach(([categoryName, data], index) => {
+      const percentage = ((data.total / totalSpent) * 100).toFixed(1);
+      
+      if (index === 0) {
+        analysis += `Your #1 money pit is "${categoryName}" where you've hemorrhaged $${data.total.toFixed(2)} (${percentage}% of everything!). `;
+        
+        // Category-specific roasts
+        if (categoryName.toLowerCase().includes('food') || categoryName.toLowerCase().includes('dining') || categoryName.toLowerCase().includes('restaurant')) {
+          analysis += `Because apparently cooking at home is for peasants. `;
+        } else if (categoryName.toLowerCase().includes('entertainment') || categoryName.toLowerCase().includes('fun')) {
+          analysis += `Nothing says "financial responsibility" like blowing money on fun. `;
+        } else if (categoryName.toLowerCase().includes('travel') || categoryName.toLowerCase().includes('vacation')) {
+          analysis += `Living your best life while your wallet cries. `;
+        } else if (categoryName.toLowerCase().includes('shopping') || categoryName.toLowerCase().includes('retail')) {
+          analysis += `Retail therapy isn't actual therapy, you know. `;
+        } else if (categoryName.toLowerCase().includes('office') || categoryName.toLowerCase().includes('supplies')) {
+          analysis += `Because you definitely needed THAT much office stuff. `;
+        } else {
+          analysis += `What an absolutely stellar use of money. `;
+        }
+      } else if (index === 1) {
+        analysis += `Your runner-up disaster is "${categoryName}" at $${data.total.toFixed(2)} (${percentage}%). `;
+      } else if (index === 2) {
+        analysis += `And rounding out your top 3 financial failures: "${categoryName}" with $${data.total.toFixed(2)} (${percentage}%). `;
+      }
+    });
+  }
   
   if (topCategory && topCategory[1].total > totalSpent * 0.4) {
-    analysis += `And look at that - you've dumped a whopping ${((topCategory[1].total / totalSpent) * 100).toFixed(1)}% into ${topCategory[0]}. Clearly someone has their priorities straight. `;
+    analysis += `Clearly someone has their priorities straight. `;
   } else {
     analysis += `At least you're consistently wasteful across all categories instead of just one. How balanced of you. `;
   }
