@@ -1,4 +1,3 @@
-
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -122,8 +121,8 @@ export const ExpenseClassifier = memo(({
               value=""
               onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
             >
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder={getCategoryDisplayText(expense.category)} />
+              <SelectTrigger className="w-64 text-left">
+                <SelectValue placeholder={getCategoryDisplayText(expense.category)} className="text-left" />
               </SelectTrigger>
               <SelectContent>
                 {accountCodes.map((code) => (
