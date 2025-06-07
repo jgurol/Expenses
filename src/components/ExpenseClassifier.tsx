@@ -3,6 +3,7 @@ import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Check } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Expense, AccountCode } from "@/pages/Index";
@@ -20,6 +21,8 @@ export const ExpenseClassifier = memo(({
   onExpenseClassified,
   onExpenseDeleted 
 }: ExpenseClassifierProps) => {
+  const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
+
   // Display the full source account name without any parsing
   const getAccountName = (sourceAccount: string) => {
     return sourceAccount || "Unknown";
@@ -80,6 +83,36 @@ export const ExpenseClassifier = memo(({
     onExpenseClassified(expenseId, accountCode);
   };
 
+  const handleSelectExpense = (expenseId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedExpenses(prev => [...prev, expenseId]);
+    } else {
+      setSelectedExpenses(prev => prev.filter(id => id !== expenseId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedExpenses(expenses.map(expense => expense.id));
+    } else {
+      setSelectedExpenses([]);
+    }
+  };
+
+  const handleBulkAccept = () => {
+    console.log('Bulk accepting selected expenses:', selectedExpenses);
+    
+    selectedExpenses.forEach(expenseId => {
+      handleAcceptCategory(expenseId);
+    });
+    
+    // Clear selection after bulk action
+    setSelectedExpenses([]);
+  };
+
+  const isAllSelected = selectedExpenses.length === expenses.length && expenses.length > 0;
+  const isSomeSelected = selectedExpenses.length > 0 && selectedExpenses.length < expenses.length;
+
   // Generate consistent color based on source account
   const getAccountColor = (sourceAccount: string) => {
     const account = sourceAccount || "Unknown";
@@ -116,68 +149,104 @@ export const ExpenseClassifier = memo(({
   }
 
   return (
-    <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-32">Source Account</TableHead>
-            <TableHead className="w-24">Date</TableHead>
-            <TableHead className="min-w-0 flex-1">Description</TableHead>
-            <TableHead className="w-64">Assign Account Code</TableHead>
-            <TableHead className="text-right w-24">Amount</TableHead>
-            <TableHead className="text-center w-20">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {expenses.map((expense) => (
-            <TableRow key={expense.id} className={getAccountColor(expense.sourceAccount)}>
-              <TableCell>
-                <Badge variant="outline" className="text-xs font-mono">
-                  {getAccountName(expense.sourceAccount || "Unknown")}
-                </Badge>
-              </TableCell>
-              <TableCell className="font-mono text-sm">
-                {new Date(expense.date).toLocaleDateString()}
-              </TableCell>
-              <TableCell className="font-medium">
-                {expense.description}
-              </TableCell>
-              <TableCell>
-                <Select
-                  value=""
-                  onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
-                >
-                  <SelectTrigger className="w-full text-left">
-                    <SelectValue placeholder={getCategoryDisplayText(expense.category)} className="text-left" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accountCodes.map((code) => (
-                      <SelectItem key={code.id} value={code.code}>
-                        {code.code} - {code.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="text-right font-semibold">
-                ${expense.spent.toFixed(2)}
-              </TableCell>
-              <TableCell className="text-center">
-                <Button
-                  onClick={() => handleAcceptCategory(expense.id)}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  title="Accept the current category and assign matching account code"
-                >
-                  <Check className="h-4 w-4" />
-                  Accept
-                </Button>
-              </TableCell>
+    <div className="space-y-4">
+      {selectedExpenses.length > 0 && (
+        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border">
+          <span className="text-sm font-medium text-blue-900">
+            {selectedExpenses.length} expense{selectedExpenses.length > 1 ? 's' : ''} selected
+          </span>
+          <Button
+            onClick={handleBulkAccept}
+            variant="default"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Check className="h-4 w-4" />
+            Accept Selected ({selectedExpenses.length})
+          </Button>
+        </div>
+      )}
+
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={isAllSelected ? true : isSomeSelected ? "indeterminate" : false}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all expenses"
+                />
+              </TableHead>
+              <TableHead className="w-32">Source Account</TableHead>
+              <TableHead className="w-24">Date</TableHead>
+              <TableHead className="min-w-0 flex-1">Description</TableHead>
+              <TableHead className="w-64">Assign Account Code</TableHead>
+              <TableHead className="text-right w-24">Amount</TableHead>
+              <TableHead className="text-center w-20">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {expenses.map((expense) => {
+              const isSelected = selectedExpenses.includes(expense.id);
+              return (
+                <TableRow key={expense.id} className={getAccountColor(expense.sourceAccount)}>
+                  <TableCell>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) => handleSelectExpense(expense.id, checked === true)}
+                      aria-label={`Select expense ${expense.description}`}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs font-mono">
+                      {getAccountName(expense.sourceAccount || "Unknown")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {new Date(expense.date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {expense.description}
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value=""
+                      onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
+                    >
+                      <SelectTrigger className="w-full text-left">
+                        <SelectValue placeholder={getCategoryDisplayText(expense.category)} className="text-left" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accountCodes.map((code) => (
+                          <SelectItem key={code.id} value={code.code}>
+                            {code.code} - {code.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    ${expense.spent.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      onClick={() => handleAcceptCategory(expense.id)}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      title="Accept the current category and assign matching account code"
+                    >
+                      <Check className="h-4 w-4" />
+                      Accept
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 });
