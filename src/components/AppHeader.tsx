@@ -36,9 +36,16 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
     <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Expense Manager</h1>
-            <p className="text-slate-600">Streamline your business expense classification</p>
+          <div className="flex items-center gap-4">
+            <img 
+              src="/lovable-uploads/5ce6f47b-68c9-4fa6-8ab0-fb55f3806ba4.png" 
+              alt="California Telecom" 
+              className="h-8 w-auto"
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Expense Manager</h1>
+              <p className="text-slate-600">Streamline your business expense classification</p>
+            </div>
           </div>
           
           <div className="flex items-center gap-4">
