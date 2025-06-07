@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,14 +7,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
-type AuthMode = 'signin' | 'signup' | 'magiclink' | 'reset';
+type AuthMode = 'signin' | 'signup' | 'magiclink' | 'reset' | 'update-password';
 
 const Auth = () => {
   const [mode, setMode] = useState<AuthMode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -26,27 +28,36 @@ const Auth = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (user) {
+    if (user && mode !== 'update-password') {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, navigate, mode]);
 
   useEffect(() => {
     // Check for error parameters from Supabase
     const errorCode = searchParams.get('error_code');
     const errorDescription = searchParams.get('error_description');
+    const type = searchParams.get('type');
     
     if (errorCode === 'otp_expired') {
-      setError('The magic link has expired. Please request a new one.');
+      setError('The reset link has expired. Please request a new one.');
     } else if (errorDescription) {
       setError(decodeURIComponent(errorDescription));
+    }
+
+    // Check if this is a password reset callback
+    if (type === 'recovery') {
+      console.log('Password reset callback detected');
+      setMode('update-password');
+      setMessage('Please enter your new password below.');
+      return;
     }
 
     // Check if this is a successful magic link callback
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     
-    if (accessToken && refreshToken) {
+    if (accessToken && refreshToken && type !== 'recovery') {
       setMessage('Magic link verified! Signing you in...');
       // The useAuth hook will handle the session automatically
       setTimeout(() => {
@@ -153,10 +164,51 @@ const Auth = () => {
     }
   };
 
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setMessage('');
+    
+    if (newPassword !== confirmNewPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Password updated successfully! You are now signed in.');
+        // Redirect to main page after successful password update
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while updating password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
     setError('');
     setMessage('');
   };
@@ -172,6 +224,7 @@ const Auth = () => {
       case 'signup': return 'Create Account';
       case 'magiclink': return 'Sign In with Magic Link';
       case 'reset': return 'Reset Password';
+      case 'update-password': return 'Update Password';
       default: return 'Sign In';
     }
   };
@@ -182,6 +235,7 @@ const Auth = () => {
       case 'signup': return 'Create a new account to get started';
       case 'magiclink': return 'Enter your email address and we\'ll send you a magic link to sign in';
       case 'reset': return 'Enter your email address and we\'ll send you a password reset link';
+      case 'update-password': return 'Enter your new password below';
       default: return 'Enter your credentials to access your account';
     }
   };
@@ -192,6 +246,7 @@ const Auth = () => {
       case 'signup': return <User className="h-5 w-5" />;
       case 'magiclink': return <Mail className="h-5 w-5" />;
       case 'reset': return <ArrowLeft className="h-5 w-5" />;
+      case 'update-password': return <Lock className="h-5 w-5" />;
       default: return <Lock className="h-5 w-5" />;
     }
   };
@@ -225,6 +280,40 @@ const Auth = () => {
               <Alert className="mb-4">
                 <AlertDescription>{message}</AlertDescription>
               </Alert>
+            )}
+
+            {mode === 'update-password' && (
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <div>
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter your new password"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                  <Input
+                    id="confirmNewPassword"
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="Confirm your new password"
+                    required
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Lock className="mr-2 h-4 w-4" />
+                  Update Password
+                </Button>
+              </form>
             )}
 
             {mode === 'signin' && (
