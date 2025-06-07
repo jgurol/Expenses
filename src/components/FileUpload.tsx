@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -33,8 +32,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           const headers = lines[0].split(',').map(h => sanitizeInput(h.toLowerCase().trim()));
           const expenses: Expense[] = [];
 
-          // Validate required headers
-          const requiredHeaders = ['date', 'description', 'amount', 'category'];
+          // Validate required headers - updated to new requirements
+          const requiredHeaders = ['date', 'description', 'categories', 'spent'];
           const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
           
           if (missingHeaders.length > 0) {
@@ -55,15 +54,15 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               row[header] = values[index] || '';
             });
 
-            // Validate and parse the row
+            // Validate and parse the row - updated to use new column names
             const dateStr = row.date;
             const description = row.description;
-            const amountStr = row.amount || row.spent;
-            const category = row.category || 'Unclassified';
+            const spentStr = row.spent;
+            const category = row.categories || 'Unclassified';
             const sourceAccount = row.sourceaccount || row['source account'] || 'Unknown';
 
             // Security: Validate required fields
-            if (!dateStr || !description || !amountStr) {
+            if (!dateStr || !description || !spentStr) {
               console.warn(`Skipping row ${i + 1}: missing required data`);
               continue;
             }
@@ -75,10 +74,10 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               continue;
             }
 
-            // Security: Validate amount is a number
-            const amount = parseFloat(amountStr.replace(/[^0-9.-]/g, ''));
-            if (isNaN(amount)) {
-              console.warn(`Skipping row ${i + 1}: invalid amount`);
+            // Security: Validate spent is a number
+            const spent = parseFloat(spentStr.replace(/[^0-9.-]/g, ''));
+            if (isNaN(spent)) {
+              console.warn(`Skipping row ${i + 1}: invalid spent amount`);
               continue;
             }
 
@@ -87,7 +86,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               date: date.toISOString().split('T')[0],
               description: description.substring(0, 500), // Limit description length
               category: category.substring(0, 100), // Limit category length
-              spent: Math.abs(amount), // Ensure positive amount
+              spent: Math.abs(spent), // Ensure positive amount
               sourceAccount: sourceAccount.substring(0, 100), // Limit source account length
               classified: false,
               reconciled: false
@@ -202,7 +201,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       )}
 
       <div className="text-xs text-slate-500 space-y-1">
-        <p><strong>Required columns:</strong> date, description, amount, category</p>
+        <p><strong>Required columns:</strong> date, description, categories, spent</p>
         <p><strong>Optional columns:</strong> sourceaccount (or "source account")</p>
         <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
       </div>
