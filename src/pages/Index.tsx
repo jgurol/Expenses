@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
@@ -8,7 +9,7 @@ import { ClassifierView } from "@/components/ClassifierView";
 import { useExpenses, useAddExpenses, useClassifyExpense } from "@/hooks/useExpenses";
 import { useDeleteExpense } from "@/hooks/useDeleteExpense";
 import { useBulkDeleteExpenses } from "@/hooks/useBulkDeleteExpenses";
-import { useAccountCodes } from "@/hooks/useAccountCodes";
+import { useCategories } from "@/hooks/useCategories";
 import { toast } from "@/hooks/use-toast";
 
 export type UserRole = "bookkeeper" | "classifier";
@@ -35,7 +36,7 @@ const Index = () => {
   const [importedExpenses, setImportedExpenses] = useState<Expense[]>([]);
   
   const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
-  const { data: accountCodes = [], isLoading: accountCodesLoading } = useAccountCodes();
+  const { data: accountCodes = [], isLoading: accountCodesLoading } = useCategories();
   const addExpenses = useAddExpenses();
   const classifyExpense = useClassifyExpense();
   const deleteExpense = useDeleteExpense();
