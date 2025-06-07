@@ -38,6 +38,7 @@ export type Database = {
       }
       expenses: {
         Row: {
+          archived: boolean
           category: string
           category_id: string | null
           classified: boolean
@@ -51,6 +52,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived?: boolean
           category: string
           category_id?: string | null
           classified?: boolean
@@ -64,6 +66,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived?: boolean
           category?: string
           category_id?: string | null
           classified?: boolean

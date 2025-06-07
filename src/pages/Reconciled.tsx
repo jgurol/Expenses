@@ -3,12 +3,13 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Undo2, Download, Home } from "lucide-react";
+import { CheckCircle, Undo2, Download, Home, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { useSources } from "@/hooks/useSources";
 import { useUnreconcileExpenses } from "@/hooks/useUnreconcileExpenses";
+import { useArchiveExpenses } from "@/hooks/useArchiveExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { useToast } from "@/hooks/use-toast";
 import { exportReconciledExpensesToSpreadsheet } from "@/utils/exportUtils";
@@ -27,8 +28,9 @@ const Reconciled = () => {
   const { data: accountCodes = [] } = useCategories();
   const { data: sources = [] } = useSources();
   const unreconcileExpensesMutation = useUnreconcileExpenses();
+  const archiveExpensesMutation = useArchiveExpenses();
   
-  // Get reconciled expenses from database
+  // Get reconciled expenses from database (archived expenses are already filtered out by useExpenses)
   const reconciledExpenses = expenses.filter(e => e.reconciled);
   
   // Sort expenses based on current sort state
@@ -97,6 +99,23 @@ const Reconciled = () => {
       toast({
         title: "Error",
         description: "Failed to unreconcile expenses. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleArchiveExpenses = async (expenseIds: string[]) => {
+    try {
+      await archiveExpensesMutation.mutateAsync(expenseIds);
+      toast({
+        title: "Success",
+        description: `${expenseIds.length} expense${expenseIds.length === 1 ? '' : 's'} archived successfully`,
+      });
+    } catch (error) {
+      console.error('Error archiving expenses:', error);
+      toast({
+        title: "Error",
+        description: "Failed to archive expenses. Please try again.",
         variant: "destructive",
       });
     }
@@ -197,22 +216,46 @@ const Reconciled = () => {
           />
 
           {/* Reconciled Expenses Table */}
-          <ExpensesTable 
-            expenses={sortedExpenses}
-            accountCodes={accountCodes}
-            sources={sources}
-            title="Reconciled Expenses"
-            showClassificationStatus={false}
-            showDeleteButton={false}
-            showMultiSelect={true}
-            showCodeColumn={true}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-            onBulkDeleteExpenses={handleUnreconcileExpenses}
-            bulkActionLabel="Unreconcile Selected"
-            bulkActionIcon={Undo2}
-          />
+          <div className="space-y-4">
+            <ExpensesTable 
+              expenses={sortedExpenses}
+              accountCodes={accountCodes}
+              sources={sources}
+              title="Reconciled Expenses"
+              showClassificationStatus={false}
+              showDeleteButton={false}
+              showMultiSelect={true}
+              showCodeColumn={true}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              onBulkDeleteExpenses={handleUnreconcileExpenses}
+              bulkActionLabel="Unreconcile Selected"
+              bulkActionIcon={Undo2}
+            />
+            
+            {/* Archive Button */}
+            {reconciledExpenses.length > 0 && (
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Archive Reconciled Expenses</h3>
+                    <p className="text-sm text-slate-600">
+                      Archive all reconciled expenses to process a new batch. Archived expenses won't appear in reports or exports.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleArchiveExpenses(reconciledExpenses.map(e => e.id))}
+                    className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                    disabled={archiveExpensesMutation.isPending}
+                  >
+                    <Archive className="h-4 w-4" />
+                    Archive All ({reconciledExpenses.length})
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </div>
         </div>
       </main>
     </div>

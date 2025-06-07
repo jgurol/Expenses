@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Expense } from '@/pages/Index';
@@ -12,6 +13,7 @@ export const useExpenses = () => {
           *,
           categories(code)
         `)
+        .eq('archived', false) // Filter out archived expenses
         .order('date', { ascending: false });
       
       if (error) throw error;
