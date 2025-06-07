@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Expense } from '@/pages/Index';
@@ -22,7 +23,7 @@ export const useExpenses = () => {
         description: expense.description,
         category: expense.category,
         spent: Number(expense.spent),
-        sourceAccount: expense.source_account || 'Unknown', // Handle null values
+        sourceAccount: expense.category || 'Unknown', // Use category as source account for now
         classified: expense.classified
       }));
     },

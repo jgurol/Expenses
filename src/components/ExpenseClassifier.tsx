@@ -1,4 +1,3 @@
-
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +20,14 @@ export const ExpenseClassifier = memo(({
   onExpenseDeleted 
 }: ExpenseClassifierProps) => {
   const [selectedAccountCodes, setSelectedAccountCodes] = useState<Record<string, string>>({});
+
+  // Extract just the account name without account number
+  const getAccountName = (sourceAccount: string) => {
+    if (!sourceAccount || sourceAccount === "Unknown") return "Unknown";
+    // If it contains a dash or space followed by account number, extract just the name part
+    const parts = sourceAccount.split(/[-\s]+/);
+    return parts[0] || sourceAccount;
+  };
 
   const handleClassifyExpense = (expenseId: string) => {
     const accountCode = selectedAccountCodes[expenseId];
@@ -102,7 +109,7 @@ export const ExpenseClassifier = memo(({
               <div>
                 <p className="text-sm text-slate-600">Source Account</p>
                 <Badge variant="outline" className="text-xs font-mono">
-                  {expense.sourceAccount || "Unknown"}
+                  {getAccountName(expense.sourceAccount || "Unknown")}
                 </Badge>
               </div>
               <div>
