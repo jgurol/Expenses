@@ -1,16 +1,12 @@
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
-import { ImportSection } from "@/components/ImportSection";
-import { BookkeeperDashboard } from "@/components/BookkeeperDashboard";
-import { ClassifierView } from "@/components/ClassifierView";
-import { useExpenses, useAddExpenses, useClassifyExpense } from "@/hooks/useExpenses";
-import { useDeleteExpense } from "@/hooks/useDeleteExpense";
-import { useBulkDeleteExpenses } from "@/hooks/useBulkDeleteExpenses";
+import { MainContent } from "@/components/MainContent";
+import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
-import { toast } from "@/hooks/use-toast";
+import { useImportedExpenses } from "@/hooks/useImportedExpenses";
+import { useExpenseOperations } from "@/hooks/useExpenseOperations";
 
 export type UserRole = "bookkeeper" | "classifier";
 
@@ -33,146 +29,25 @@ export interface AccountCode {
 
 const Index = () => {
   const [currentRole, setCurrentRole] = useState<UserRole>("bookkeeper");
-  const [importedExpenses, setImportedExpenses] = useState<Expense[]>([]);
   
   const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
   const { data: accountCodes = [], isLoading: accountCodesLoading } = useCategories();
-  const addExpenses = useAddExpenses();
-  const classifyExpense = useClassifyExpense();
-  const deleteExpense = useDeleteExpense();
-  const bulkDeleteExpenses = useBulkDeleteExpenses();
+  
+  const {
+    importedExpenses,
+    setImportedExpenses,
+    handleExpensesUploaded,
+    handleDeleteImportedExpense,
+    handleBulkDeleteImportedExpenses,
+    handleClearImportedExpenses,
+  } = useImportedExpenses();
 
-  const handleExpensesUploaded = (newExpenses: Expense[]) => {
-    console.log('New expenses uploaded:', newExpenses);
-    setImportedExpenses(newExpenses);
-    toast({
-      title: "File Processed",
-      description: `${newExpenses.length} expenses ready for review`,
-    });
-  };
+  const {
+    handleExpenseClassified,
+    handleDeleteUnclassifiedExpense,
+    handleBulkDeleteUnclassifiedExpenses,
+  } = useExpenseOperations();
 
-  const handleDeleteImportedExpense = (expenseId: string) => {
-    console.log('Deleting imported expense with ID:', expenseId);
-    setImportedExpenses(prev => {
-      const filtered = prev.filter(expense => expense.id !== expenseId);
-      console.log('Remaining expenses after deletion:', filtered.length);
-      return filtered;
-    });
-    toast({
-      title: "Expense Removed",
-      description: "Expense removed from import",
-    });
-  };
-
-  const handleBulkDeleteImportedExpenses = (expenseIds: string[]) => {
-    console.log('Bulk deleting imported expenses with IDs:', expenseIds);
-    setImportedExpenses(prev => {
-      const filtered = prev.filter(expense => !expenseIds.includes(expense.id));
-      console.log('Remaining expenses after bulk deletion:', filtered.length);
-      return filtered;
-    });
-    toast({
-      title: "Expenses Removed",
-      description: `${expenseIds.length} expenses removed from import`,
-    });
-  };
-
-  const handleClearImportedExpenses = () => {
-    console.log('Clearing all imported expenses');
-    setImportedExpenses([]);
-    toast({
-      title: "Cleared",
-      description: "All imported expenses cleared",
-    });
-  };
-
-  const handleSaveImportedExpenses = async () => {
-    if (importedExpenses.length === 0) {
-      toast({
-        title: "No Data",
-        description: "No expenses to save",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await addExpenses.mutateAsync(importedExpenses);
-      toast({
-        title: "Success",
-        description: `${importedExpenses.length} expenses saved successfully`,
-      });
-      setImportedExpenses([]);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save expenses",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleExpenseClassified = async (expenseId: string, accountCode: string) => {
-    console.log('Classifying expense with account code:', { expenseId, accountCode });
-
-    try {
-      await classifyExpense.mutateAsync({ 
-        expenseId, 
-        accountCode 
-      });
-      toast({
-        title: "Success",
-        description: "Expense classified successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to classify expense",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteUnclassifiedExpense = async (expenseId: string) => {
-    console.log('Deleting unclassified expense:', expenseId);
-    
-    try {
-      await deleteExpense.mutateAsync(expenseId);
-      toast({
-        title: "Success",
-        description: "Expense deleted successfully",
-      });
-    } catch (error) {
-      console.error('Error deleting expense:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete expense",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleBulkDeleteUnclassifiedExpenses = async (expenseIds: string[]) => {
-    console.log('Bulk deleting unclassified expenses:', expenseIds);
-    
-    try {
-      await bulkDeleteExpenses.mutateAsync(expenseIds);
-      toast({
-        title: "Success",
-        description: `${expenseIds.length} expenses deleted successfully`,
-      });
-    } catch (error) {
-      console.error('Error bulk deleting expenses:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete expenses",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const unclassifiedExpenses = expenses.filter(e => !e.classified);
-  const classifiedExpenses = expenses.filter(e => e.classified);
   const isLoading = expensesLoading || accountCodesLoading;
 
   console.log('Imported expenses state:', importedExpenses);
@@ -189,42 +64,20 @@ const Index = () => {
             <span className="text-slate-600">Loading...</span>
           </div>
         ) : (
-          <div className="mb-8">
-            <Badge variant="outline" className="mb-4">
-              {currentRole === "bookkeeper" ? "Bookkeeper View" : "Expense Classifier View"}
-            </Badge>
-            
-            {currentRole === "bookkeeper" ? (
-              <div className="space-y-8">
-                <ImportSection
-                  importedExpenses={importedExpenses}
-                  accountCodes={accountCodes}
-                  onExpensesUploaded={handleExpensesUploaded}
-                  onDeleteImportedExpense={handleDeleteImportedExpense}
-                  onBulkDeleteImportedExpenses={handleBulkDeleteImportedExpenses}
-                  onSaveImportedExpenses={handleSaveImportedExpenses}
-                  onClearImportedExpenses={handleClearImportedExpenses}
-                  isSaving={addExpenses.isPending}
-                />
-                
-                <BookkeeperDashboard
-                  expenses={expenses}
-                  accountCodes={accountCodes}
-                  unclassifiedExpenses={unclassifiedExpenses}
-                  onDeleteUnclassifiedExpense={handleDeleteUnclassifiedExpense}
-                  onBulkDeleteUnclassifiedExpenses={handleBulkDeleteUnclassifiedExpenses}
-                />
-              </div>
-            ) : (
-              <ClassifierView
-                unclassifiedExpenses={unclassifiedExpenses}
-                classifiedExpenses={classifiedExpenses}
-                accountCodes={accountCodes}
-                onExpenseClassified={handleExpenseClassified}
-                onExpenseDeleted={handleDeleteUnclassifiedExpense}
-              />
-            )}
-          </div>
+          <MainContent
+            currentRole={currentRole}
+            expenses={expenses}
+            accountCodes={accountCodes}
+            importedExpenses={importedExpenses}
+            onExpensesUploaded={handleExpensesUploaded}
+            onDeleteImportedExpense={handleDeleteImportedExpense}
+            onBulkDeleteImportedExpenses={handleBulkDeleteImportedExpenses}
+            onClearImportedExpenses={handleClearImportedExpenses}
+            setImportedExpenses={setImportedExpenses}
+            onExpenseClassified={handleExpenseClassified}
+            onDeleteUnclassifiedExpense={handleDeleteUnclassifiedExpense}
+            onBulkDeleteUnclassifiedExpenses={handleBulkDeleteUnclassifiedExpenses}
+          />
         )}
       </main>
     </div>
