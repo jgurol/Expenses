@@ -29,7 +29,7 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
 
   // Only show classifier button if user has classifier role or is admin
   // Don't show it for bookkeeper-only users
-  const showClassifierButton = isClassifier && !(!isClassifier && isBookkeeper);
+  const showClassifierButton = isClassifier || isAdmin;
 
   return (
     <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
