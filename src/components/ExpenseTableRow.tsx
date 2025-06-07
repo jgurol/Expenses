@@ -1,3 +1,4 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,9 @@ export const ExpenseTableRow = ({
     onSelectExpense(expense.id, checked === true);
   };
 
-  // Extract just the account name without account number
-  const getAccountName = (sourceAccount: string) => {
-    if (!sourceAccount || sourceAccount === "Unknown") return "Unknown";
-    // If it contains a dash or space followed by account number, extract just the name part
-    const parts = sourceAccount.split(/[-\s]+/);
-    return parts[0] || sourceAccount;
+  // Display source account name directly (no parsing needed since we now store the sheet name)
+  const getSourceAccountName = (sourceAccount: string) => {
+    return sourceAccount || "Unknown";
   };
 
   console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton, 'showMultiSelect:', showMultiSelect, 'isSelected:', isSelected);
@@ -53,7 +51,7 @@ export const ExpenseTableRow = ({
       )}
       <TableCell>
         <Badge variant="outline" className="text-xs font-mono">
-          {getAccountName(expense.sourceAccount || "Unknown")}
+          {getSourceAccountName(expense.sourceAccount || "Unknown")}
         </Badge>
       </TableCell>
       <TableCell className="font-mono text-sm">
@@ -102,3 +100,4 @@ export const ExpenseTableRow = ({
     </TableRow>
   );
 };
+

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     // Check if source account already exists
     const existingAccount = accounts.find(acc => acc.name === sheetName);
     if (existingAccount) {
-      return existingAccount.account_number;
+      return sheetName; // Return the sheet name for display
     }
 
     // Create new source account - we need a default account code for this
@@ -89,7 +88,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       
       await addAccount.mutateAsync(newAccount);
       console.log(`Created new source account: ${accountNumber} for sheet: ${sheetName}`);
-      return accountNumber;
+      return sheetName; // Return the sheet name for display
     } catch (error) {
       console.error('Error creating source account:', error);
       // Return sheet name as fallback
@@ -185,7 +184,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         description: description.toString(),
         category: finalCategory,
         spent: parsedAmount,
-        sourceAccount: sourceAccount, // This is now the source account from the sheet
+        sourceAccount: sourceAccount, // This is now the sheet name for display
         classified: false,
       } as Expense);
     }
