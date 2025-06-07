@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { validateFileUpload, sanitizeInput } from '@/utils/authCleanup';
+import { useSources } from '@/hooks/useSources';
 import type { Expense } from '@/pages/Index';
 
 interface FileUploadProps {
@@ -14,6 +15,32 @@ interface FileUploadProps {
 export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [error, setError] = React.useState<string>('');
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const { data: sources = [] } = useSources();
+
+  // Function to match sheet tab name with source account
+  const matchSourceAccount = (tabName: string) => {
+    if (!tabName) return 'Unknown';
+    
+    const normalizedTabName = tabName.toLowerCase().trim();
+    
+    // Try to find exact match first
+    let matchedSource = sources.find(source => 
+      source.name.toLowerCase() === normalizedTabName ||
+      source.account_number.toLowerCase() === normalizedTabName
+    );
+    
+    // If no exact match, try partial matching
+    if (!matchedSource) {
+      matchedSource = sources.find(source =>
+        normalizedTabName.includes(source.name.toLowerCase()) ||
+        source.name.toLowerCase().includes(normalizedTabName) ||
+        normalizedTabName.includes(source.account_number.toLowerCase()) ||
+        source.account_number.toLowerCase().includes(normalizedTabName)
+      );
+    }
+    
+    return matchedSource ? matchedSource.name : 'Unknown';
+  };
 
   // Column mapping for loose matching
   const getColumnMapping = (headers: string[]) => {
@@ -61,6 +88,12 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           const columnMapping = getColumnMapping(rawHeaders);
           
           console.log('Column mapping:', columnMapping);
+          console.log('Available sources:', sources);
+          
+          // Try to determine source account from file name or sheet tab
+          const fileName = file.name.replace(/\.(csv|xlsx?)$/i, '');
+          const detectedSourceAccount = matchSourceAccount(fileName);
+          console.log('Detected source account from file name:', detectedSourceAccount);
           
           const expenses: Expense[] = [];
 
@@ -97,7 +130,12 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             const description = rowData.description;
             const amountStr = rowData.amount;
             const category = rowData.category || 'Unclassified';
-            const sourceAccount = rowData.sourceaccount || 'Unknown';
+            
+            // Use detected source account or try to match from row data
+            let sourceAccount = detectedSourceAccount;
+            if (rowData.sourceaccount) {
+              sourceAccount = matchSourceAccount(rowData.sourceaccount);
+            }
 
             // Security: Validate required fields
             if (!dateStr || !description || !amountStr) {
@@ -136,6 +174,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             return;
           }
 
+          console.log('Processed expenses with source accounts:', expenses.map(e => ({ description: e.description, sourceAccount: e.sourceAccount })));
           resolve(expenses);
         } catch (error) {
           reject(new Error('Failed to parse CSV file: ' + (error as Error).message));
@@ -179,7 +218,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [onExpensesUploaded]);
+  }, [onExpensesUploaded, sources]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -240,6 +279,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
 
       <div className="text-xs text-slate-500 space-y-1">
         <p><strong>Flexible column matching:</strong> Headers like "spent", "amount", "cost" will be recognized as amount fields</p>
+        <p><strong>Source account matching:</strong> File names and sheet tabs will be matched to your configured sources</p>
         <p><strong>Required data:</strong> date, description, and amount (with flexible column names)</p>
         <p><strong>Optional:</strong> category, source account (will use defaults if not found)</p>
         <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
