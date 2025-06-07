@@ -1,5 +1,4 @@
 
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, FileCheck, Archive, ArrowRight } from "lucide-react";
@@ -38,9 +37,10 @@ export const BookkeeperDashboard = ({
       <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
         <h2 className="text-xl font-semibold mb-6 text-slate-900">Expense Workflow Summary</h2>
         
-        {/* Workflow Stage Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 mb-8">
-          <div className="lg:col-span-2">
+        {/* Single line workflow with arrows */}
+        <div className="grid grid-cols-1 lg:grid-cols-13 gap-4 mb-8">
+          {/* Unclassified */}
+          <div className="lg:col-span-3">
             <Card className="p-6 border-orange-200 bg-orange-50/50 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-orange-100 rounded-lg">
@@ -58,12 +58,13 @@ export const BookkeeperDashboard = ({
             </Card>
           </div>
 
-          {/* Arrow 1: Unclassified → Classified */}
+          {/* Arrow 1 */}
           <div className="hidden lg:flex items-center justify-center">
             <ArrowRight className="h-6 w-6 text-slate-400" />
           </div>
           
-          <div className="lg:col-span-2">
+          {/* To Be Reconciled */}
+          <div className="lg:col-span-3">
             <Card className="p-6 border-blue-200 bg-blue-50/50 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -81,12 +82,13 @@ export const BookkeeperDashboard = ({
             </Card>
           </div>
 
-          {/* Arrow 2: Classified → Reconciled */}
+          {/* Arrow 2 */}
           <div className="hidden lg:flex items-center justify-center">
             <ArrowRight className="h-6 w-6 text-slate-400" />
           </div>
           
-          <div className="lg:col-span-2">
+          {/* Reconciled */}
+          <div className="lg:col-span-3">
             <Card className="p-6 border-green-200 bg-green-50/50 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -103,33 +105,29 @@ export const BookkeeperDashboard = ({
               </div>
             </Card>
           </div>
-        </div>
 
-        {/* Second Row for Archived */}
-        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-          <div className="lg:col-span-2 lg:col-start-6">
-            <div className="flex flex-col items-center gap-4">
-              {/* Arrow 3: Reconciled → Archived */}
-              <div className="hidden lg:flex">
-                <ArrowRight className="h-6 w-6 text-slate-400 rotate-90" />
+          {/* Arrow 3 */}
+          <div className="hidden lg:flex items-center justify-center">
+            <ArrowRight className="h-6 w-6 text-slate-400" />
+          </div>
+          
+          {/* Archived */}
+          <div className="lg:col-span-3">
+            <Card className="p-6 border-purple-200 bg-purple-50/50 h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Archive className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-slate-600">Archived</h3>
+                  <p className="text-xs text-slate-500">Historical expenses</p>
+                </div>
               </div>
-              
-              <Card className="p-6 border-purple-200 bg-purple-50/50 w-full">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Archive className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-slate-600">Archived</h3>
-                    <p className="text-xs text-slate-500">Historical expenses</p>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-2xl font-bold text-purple-600">{archivedExpenses.length}</div>
-                  <div className="text-sm text-slate-600">${archivedAmount.toFixed(2)}</div>
-                </div>
-              </Card>
-            </div>
+              <div className="space-y-1">
+                <div className="text-2xl font-bold text-purple-600">{archivedExpenses.length}</div>
+                <div className="text-sm text-slate-600">${archivedAmount.toFixed(2)}</div>
+              </div>
+            </Card>
           </div>
         </div>
       </Card>
@@ -145,4 +143,3 @@ export const BookkeeperDashboard = ({
     </div>
   );
 };
-
