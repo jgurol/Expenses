@@ -13,7 +13,7 @@ export const useArchivedExpenses = () => {
           categories(code)
         `)
         .eq('archived', true) // Only get archived expenses
-        .order('date', { ascending: false });
+        .order('archived_at', { ascending: false });
       
       if (error) throw error;
       
@@ -25,7 +25,8 @@ export const useArchivedExpenses = () => {
         spent: Number(expense.spent),
         sourceAccount: expense.sourceaccount || 'Unknown',
         classified: expense.classified,
-        reconciled: expense.reconciled
+        reconciled: expense.reconciled,
+        archivedAt: expense.archived_at
       }));
     },
   });

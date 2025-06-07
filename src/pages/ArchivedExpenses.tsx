@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Archive, Home, Undo2 } from "lucide-react";
+import { Archive, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useArchivedExpenses } from "@/hooks/useArchivedExpenses";
 import { useCategories } from "@/hooks/useCategories";
@@ -23,48 +23,60 @@ const ArchivedExpenses = () => {
   const { data: accountCodes = [] } = useCategories();
   const { data: sources = [] } = useSources();
   
-  // Sort expenses based on current sort state
-  const sortedExpenses = [...archivedExpenses].sort((a, b) => {
-    let aValue: string | number;
-    let bValue: string | number;
-    
-    switch (sortField) {
-      case 'sourceAccount':
-        aValue = a.sourceAccount || 'Unknown';
-        bValue = b.sourceAccount || 'Unknown';
-        break;
-      case 'date':
-        aValue = new Date(a.date).getTime();
-        bValue = new Date(b.date).getTime();
-        break;
-      case 'code':
-        const aCode = accountCodes.find(code => code.name === a.category)?.code || 'ZZZ';
-        const bCode = accountCodes.find(code => code.name === b.category)?.code || 'ZZZ';
-        aValue = aCode;
-        bValue = bCode;
-        break;
-      default:
-        aValue = a.sourceAccount || 'Unknown';
-        bValue = b.sourceAccount || 'Unknown';
+  // Group expenses by archived date
+  const groupedExpenses = archivedExpenses.reduce((groups, expense) => {
+    const archivedDate = expense.archivedAt ? new Date(expense.archivedAt).toDateString() : 'Unknown Date';
+    if (!groups[archivedDate]) {
+      groups[archivedDate] = [];
     }
-    
-    if (sortDirection === 'asc') {
-      if (aValue < bValue) return -1;
-      if (aValue > bValue) return 1;
-      if (sortField !== 'date') {
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
+    groups[archivedDate].push(expense);
+    return groups;
+  }, {} as Record<string, typeof archivedExpenses>);
+
+  // Sort each group
+  Object.keys(groupedExpenses).forEach(date => {
+    groupedExpenses[date] = [...groupedExpenses[date]].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+      
+      switch (sortField) {
+        case 'sourceAccount':
+          aValue = a.sourceAccount || 'Unknown';
+          bValue = b.sourceAccount || 'Unknown';
+          break;
+        case 'date':
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
+          break;
+        case 'code':
+          const aCode = accountCodes.find(code => code.name === a.category)?.code || 'ZZZ';
+          const bCode = accountCodes.find(code => code.name === b.category)?.code || 'ZZZ';
+          aValue = aCode;
+          bValue = bCode;
+          break;
+        default:
+          aValue = a.sourceAccount || 'Unknown';
+          bValue = b.sourceAccount || 'Unknown';
       }
-      return 0;
-    } else {
-      if (aValue > bValue) return -1;
-      if (aValue < bValue) return 1;
-      if (sortField !== 'date') {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      
+      if (sortDirection === 'asc') {
+        if (aValue < bValue) return -1;
+        if (aValue > bValue) return 1;
+        if (sortField !== 'date') {
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        }
+        return 0;
+      } else {
+        if (aValue > bValue) return -1;
+        if (aValue < bValue) return 1;
+        if (sortField !== 'date') {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        }
+        return 0;
       }
-      return 0;
-    }
+    });
   });
-  
+
   const totalAmount = archivedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
   const averageExpense = archivedExpenses.length > 0 ? totalAmount / archivedExpenses.length : 0;
 
@@ -94,7 +106,7 @@ const ArchivedExpenses = () => {
                 </Button>
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900">Archived Expenses</h1>
-                  <p className="text-slate-600">View all archived expenses</p>
+                  <p className="text-slate-600">View all archived expenses grouped by archive date</p>
                 </div>
               </div>
               
@@ -131,21 +143,47 @@ const ArchivedExpenses = () => {
               </Card>
             </div>
 
-            {/* Archived Expenses Table */}
-            <div className="space-y-4">
-              <ExpensesTable 
-                expenses={sortedExpenses}
-                accountCodes={accountCodes}
-                sources={sources}
-                title="Archived Expenses"
-                showClassificationStatus={false}
-                showDeleteButton={false}
-                showMultiSelect={false}
-                showCodeColumn={true}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
+            {/* Grouped Archived Expenses */}
+            <div className="space-y-6">
+              {Object.entries(groupedExpenses)
+                .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+                .map(([archivedDate, expenses]) => (
+                <div key={archivedDate} className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-semibold text-slate-900">
+                      Archived on {archivedDate}
+                    </h2>
+                    <Badge variant="secondary">
+                      {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
+                    </Badge>
+                    <Badge variant="outline">
+                      ${expenses.reduce((sum, exp) => sum + exp.spent, 0).toFixed(2)}
+                    </Badge>
+                  </div>
+                  
+                  <ExpensesTable 
+                    expenses={expenses}
+                    accountCodes={accountCodes}
+                    sources={sources}
+                    title={`Expenses archived on ${archivedDate}`}
+                    showClassificationStatus={false}
+                    showDeleteButton={false}
+                    showMultiSelect={false}
+                    showCodeColumn={true}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                </div>
+              ))}
+              
+              {Object.keys(groupedExpenses).length === 0 && (
+                <Card className="p-12 text-center">
+                  <Archive className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">No Archived Expenses</h3>
+                  <p className="text-slate-600">No expenses have been archived yet.</p>
+                </Card>
+              )}
             </div>
           </div>
         </main>

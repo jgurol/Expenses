@@ -9,7 +9,10 @@ export const useArchiveExpenses = () => {
     mutationFn: async (expenseIds: string[]) => {
       const { data, error } = await supabase
         .from('expenses')
-        .update({ archived: true })
+        .update({ 
+          archived: true,
+          archived_at: new Date().toISOString()
+        })
         .in('id', expenseIds)
         .select();
       
@@ -18,6 +21,7 @@ export const useArchiveExpenses = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['archivedExpenses'] });
     },
   });
 };
