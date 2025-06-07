@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +7,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Users, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Loader2, KeyRound } from 'lucide-react';
 import { useUserManagement, UserProfile } from '@/hooks/useUserManagement';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const UserManagement = () => {
-  const { users, isLoading, createUser, updateUserRoles, deleteUser, isCreating, isUpdating, isDeleting } = useUserManagement();
+  const { users, isLoading, createUser, updateUserRoles, deleteUser, resetPassword, isCreating, isUpdating, isDeleting, isResettingPassword } = useUserManagement();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -56,6 +55,12 @@ const UserManagement = () => {
   const handleDeleteUser = (userId: string) => {
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       deleteUser(userId);
+    }
+  };
+
+  const handleResetPassword = (user: UserProfile) => {
+    if (confirm(`Are you sure you want to send a password reset email to ${user.email}?`)) {
+      resetPassword({ userId: user.id, email: user.email });
     }
   };
 
@@ -235,14 +240,25 @@ const UserManagement = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleEditUser(user)}
+                              title="Edit roles"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => handleResetPassword(user)}
+                              disabled={isResettingPassword}
+                              title="Send password reset email"
+                            >
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleDeleteUser(user.id)}
                               disabled={isDeleting}
+                              title="Delete user"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
