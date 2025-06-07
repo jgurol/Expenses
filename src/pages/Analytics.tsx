@@ -9,6 +9,13 @@ import { useCategories } from "@/hooks/useCategories";
 import { useReconcileExpense, useBulkReconcileExpenses } from "@/hooks/useReconcileExpense";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
@@ -18,6 +25,7 @@ const Analytics = () => {
   const { toast } = useToast();
   const [sortField, setSortField] = useState<SortField>('sourceAccount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [selectedAccount, setSelectedAccount] = useState<string>("");
   
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
@@ -25,6 +33,9 @@ const Analytics = () => {
   const bulkReconcileMutation = useBulkReconcileExpenses();
   
   const classifiedExpenses = expenses.filter(e => e.classified);
+  
+  // Get unique source accounts
+  const uniqueAccounts = [...new Set(expenses.map(e => e.sourceAccount).filter(Boolean))];
   
   // Sort expenses based on current sort state
   const sortedExpenses = [...classifiedExpenses].sort((a, b) => {
@@ -171,6 +182,43 @@ const Analytics = () => {
     }
   };
 
+  const handleReconcileAccount = async () => {
+    if (!selectedAccount) {
+      toast({
+        title: "Error",
+        description: "Please select an account first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const accountExpenseIds = classifiedExpenses
+        .filter(e => e.sourceAccount === selectedAccount && !e.reconciled)
+        .map(e => e.id);
+      
+      if (accountExpenseIds.length === 0) {
+        toast({
+          title: "Info",
+          description: "No unreconciled expenses found for this account.",
+        });
+        return;
+      }
+
+      await bulkReconcileMutation.mutateAsync(accountExpenseIds);
+      toast({
+        title: "Success",
+        description: `${accountExpenseIds.length} expenses from ${selectedAccount} have been reconciled.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reconcile account expenses.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -192,6 +240,29 @@ const Analytics = () => {
             </div>
             
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueAccounts.map((account) => (
+                      <SelectItem key={account} value={account}>
+                        {account}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleReconcileAccount}
+                  disabled={!selectedAccount}
+                  className="flex items-center gap-2"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Reconcile
+                </Button>
+              </div>
+              
               <Button
                 onClick={handleBulkReconcile}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
