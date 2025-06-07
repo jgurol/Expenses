@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,13 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, DollarSign, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, DollarSign, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import type { AccountCode } from "@/pages/Index";
 import { useCategories, useAddCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/useCategories";
+
+type SortField = 'code' | 'name' | 'type';
+type SortDirection = 'asc' | 'desc';
 
 export const Categories = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AccountCode | null>(null);
+  const [sortField, setSortField] = useState<SortField>('code');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [formData, setFormData] = useState({
     code: "",
     name: "",
@@ -23,6 +29,65 @@ export const Categories = () => {
   const addCategory = useAddCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
+
+  // Sort categories based on current sort field and direction
+  const sortedCategories = [...categories].sort((a, b) => {
+    let aValue: string;
+    let bValue: string;
+    
+    switch (sortField) {
+      case 'code':
+        aValue = a.code;
+        bValue = b.code;
+        break;
+      case 'name':
+        aValue = a.name;
+        bValue = b.name;
+        break;
+      case 'type':
+        aValue = a.type;
+        bValue = b.type;
+        break;
+      default:
+        aValue = a.code;
+        bValue = b.code;
+    }
+    
+    if (sortDirection === 'asc') {
+      return aValue.localeCompare(bValue);
+    } else {
+      return bValue.localeCompare(aValue);
+    }
+  });
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4" />;
+    }
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => {
+    return (
+      <Button
+        variant="ghost"
+        onClick={() => handleSort(field)}
+        className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground flex items-center gap-1"
+      >
+        {children}
+        {getSortIcon(field)}
+      </Button>
+    );
+  };
 
   const resetForm = () => {
     setFormData({ code: "", name: "", type: "expense" });
@@ -228,14 +293,20 @@ export const Categories = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-32">Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-32">Type</TableHead>
+                <TableHead className="w-32">
+                  <SortableHeader field="code">Code</SortableHeader>
+                </TableHead>
+                <TableHead>
+                  <SortableHeader field="name">Name</SortableHeader>
+                </TableHead>
+                <TableHead className="w-32">
+                  <SortableHeader field="type">Type</SortableHeader>
+                </TableHead>
                 <TableHead className="w-24 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((category) => (
+              {sortedCategories.map((category) => (
                 <TableRow key={category.id} className="hover:bg-slate-50">
                   <TableCell className="font-mono text-sm font-medium">
                     {category.code}
