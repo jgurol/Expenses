@@ -1,423 +1,211 @@
-import { useState, useCallback } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { toast } from "@/hooks/use-toast";
-import { Upload, FileSpreadsheet, X } from "lucide-react";
-import * as XLSX from "xlsx";
-import Papa from "papaparse";
-import { useCategories } from "@/hooks/useCategories";
-import { useSources, useAddSource } from "@/hooks/useSources";
-import type { Expense, AccountCode } from "@/pages/Index";
-import { useAIAccountMatching } from "@/hooks/useAIAccountMatching";
+
+import React, { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Upload, FileText, AlertCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { validateFileUpload, sanitizeInput } from '@/utils/authCleanup';
+import type { Expense } from '@/pages/Index';
 
 interface FileUploadProps {
   onExpensesUploaded: (expenses: Expense[]) => void;
 }
 
 export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [progressText, setProgressText] = useState("");
+  const [error, setError] = React.useState<string>('');
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
-  const { data: accountCodes = [] } = useCategories();
-  const { data: accounts = [] } = useSources();
-  const addAccount = useAddSource();
-  const aiMatching = useAIAccountMatching();
-
-  const generateId = () => Math.random().toString(36).substr(2, 9);
-
-  // Helper function to find column name variations
-  const findColumn = (row: any, possibleNames: string[]) => {
-    for (const name of possibleNames) {
-      if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
-        return row[name];
-      }
-    }
-    return null;
-  };
-
-  const matchExpenseToAccountCode = async (description: string, accountCodes: AccountCode[]) => {
-    try {
-      const result = await aiMatching.mutateAsync({ description, accountCodes });
-      if (result.suggestedAccountCode && result.confidence === 'high') {
-        console.log(`AI matched "${description}" to account code: ${result.suggestedAccountCode}`);
-        return result.suggestedAccountCode;
-      }
-    } catch (error) {
-      console.error('AI matching failed:', error);
-    }
-    return null;
-  };
-
-  const ensureSourceAccountExists = async (sheetName: string) => {
-    // Check if source account already exists
-    const existingAccount = accounts.find(acc => acc.name === sheetName);
-    if (existingAccount) {
-      return sheetName; // Return the sheet name for display
-    }
-
-    // Create new source account - we need a default account code for this
-    try {
-      // Find or use a default account code (preferably an asset or expense type)
-      let defaultAccountCode = accountCodes.find(ac => ac.type === "asset");
-      if (!defaultAccountCode) {
-        defaultAccountCode = accountCodes.find(ac => ac.type === "expense");
-      }
-      if (!defaultAccountCode && accountCodes.length > 0) {
-        defaultAccountCode = accountCodes[0]; // Use first available if no asset/expense found
-      }
-
-      if (!defaultAccountCode) {
-        console.error('No account codes available to create source account');
-        return sheetName; // Return sheet name as fallback
-      }
-
-      // Generate a unique account number
-      const accountNumber = `SRC-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
+  const processCSVFile = async (file: File): Promise<Expense[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
       
-      const newAccount = {
-        account_number: accountNumber,
-        name: sheetName,
-        description: `Source account created from spreadsheet tab: ${sheetName}`,
-        balance: 0,
-        is_active: true
-      };
-      
-      await addAccount.mutateAsync(newAccount);
-      console.log(`Created new source account: ${accountNumber} for sheet: ${sheetName}`);
-      return sheetName; // Return the sheet name for display
-    } catch (error) {
-      console.error('Error creating source account:', error);
-      // Return sheet name as fallback
-      return sheetName;
-    }
-  };
-
-  const processFileData = async (data: any[], sheetName: string, currentSheet: number, totalSheets: number) => {
-    console.log(`Processing sheet: ${sheetName}`);
-    console.log(`Raw data length: ${data.length}`);
-    
-    setProgressText(`Processing sheet ${currentSheet}/${totalSheets}: ${sheetName}`);
-    
-    if (data.length > 0) {
-      console.log('First row keys:', Object.keys(data[0]));
-      console.log('First row sample:', data[0]);
-    }
-
-    // Ensure source account exists for this sheet
-    const sourceAccount = await ensureSourceAccountExists(sheetName);
-
-    const expenses: Expense[] = [];
-    
-    for (let index = 0; index < data.length; index++) {
-      const row = data[index];
-      
-      // Update progress for individual rows
-      const rowProgress = ((currentSheet - 1) / totalSheets + (index + 1) / (data.length * totalSheets)) * 100;
-      setProgress(rowProgress);
-      setProgressText(`Processing sheet ${currentSheet}/${totalSheets}: ${sheetName} (${index + 1}/${data.length} rows)`);
-      
-      // More flexible column name matching
-      const date = findColumn(row, ['date', 'Date', 'DATE', 'Transaction Date', 'Post Date', 'Posted Date']);
-      const description = findColumn(row, ['description', 'Description', 'DESCRIPTION', 'Merchant', 'Payee', 'Details', 'Transaction']);
-      const amount = findColumn(row, ['spent', 'Spent', 'SPENT', 'amount', 'Amount', 'AMOUNT', 'Debit', 'Credit', 'Transaction Amount']);
-      const category = findColumn(row, ['category', 'Category', 'CATEGORY', 'Type', 'Expense Type']);
-
-      console.log(`Row ${index}:`, { date, description, amount, category });
-
-      // Check if we have the minimum required data
-      if (!date || !description || (!amount && amount !== 0)) {
-        console.log(`Skipping row ${index} - missing required data`);
-        continue;
-      }
-
-      // Parse amount - handle negative values and currency symbols
-      let parsedAmount = 0;
-      if (typeof amount === 'string') {
-        // Remove currency symbols and commas, handle negative values
-        const cleanAmount = amount.replace(/[$,\s]/g, '').replace(/[()]/g, '-');
-        parsedAmount = Math.abs(parseFloat(cleanAmount)) || 0;
-      } else {
-        parsedAmount = Math.abs(parseFloat(amount)) || 0;
-      }
-
-      // Parse date
-      let parsedDate = '';
-      if (date instanceof Date) {
-        parsedDate = date.toISOString().split('T')[0];
-      } else if (typeof date === 'string') {
-        const dateObj = new Date(date);
-        if (!isNaN(dateObj.getTime())) {
-          parsedDate = dateObj.toISOString().split('T')[0];
-        } else {
-          console.log(`Invalid date format: ${date}`);
-          continue;
-        }
-      } else if (typeof date === 'number') {
-        // Excel date number
-        const excelDate = new Date((date - 25569) * 86400 * 1000);
-        parsedDate = excelDate.toISOString().split('T')[0];
-      }
-
-      // Try to match expense description to existing account codes using AI for classification
-      let finalCategory = category?.toString() || "Uncategorized"; // Default to original category or "Uncategorized"
-      
-      if (accountCodes.length > 0) {
-        setProgressText(`AI matching for "${description?.toString().substring(0, 30)}..."`);
-        const aiMatchedCode = await matchExpenseToAccountCode(description.toString(), accountCodes);
-        if (aiMatchedCode) {
-          // Find the account code name to use as category
-          const matchedAccountCode = accountCodes.find(ac => ac.code === aiMatchedCode);
-          if (matchedAccountCode) {
-            finalCategory = matchedAccountCode.name;
-            console.log(`AI matched "${description}" to category: ${finalCategory}`);
-          }
-        }
-      }
-
-      expenses.push({
-        id: generateId(),
-        date: parsedDate,
-        description: description.toString(),
-        category: finalCategory,
-        spent: parsedAmount,
-        sourceAccount: sourceAccount, // This is now the sheet name for display
-        classified: false,
-      } as Expense);
-    }
-
-    console.log(`Processed ${expenses.length} valid expenses from ${sheetName}`);
-    return expenses;
-  };
-
-  const handleFile = useCallback(async (file: File) => {
-    setIsProcessing(true);
-    setUploadedFile(file);
-    setProgress(0);
-    setProgressText("Starting file processing...");
-
-    try {
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      
-      if (fileExtension === 'csv') {
-        setProgressText("Parsing CSV file...");
-        Papa.parse(file, {
-          header: true,
-          complete: async (results) => {
-            console.log('CSV parsing complete:', results);
-            setProgress(50);
-            const expenses = await processFileData(results.data, "CSV Import", 1, 1);
-            setProgress(100);
-            setProgressText("Import complete!");
-            onExpensesUploaded(expenses);
-            toast({
-              title: "Success!",
-              description: `Uploaded ${expenses.length} expenses from CSV`,
-            });
-          },
-          error: (error) => {
-            console.error('CSV parsing error:', error);
-            toast({
-              title: "Error",
-              description: "Failed to parse CSV file",
-              variant: "destructive",
-            });
-          }
-        });
-      } else if (['xlsx', 'xls'].includes(fileExtension || '')) {
-        setProgressText("Reading Excel file...");
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer);
-        
-        console.log('Available sheets:', workbook.SheetNames);
-        setProgress(20);
-        
-        let allExpenses: Expense[] = [];
-        let totalProcessed = 0;
-        const totalSheets = workbook.SheetNames.length;
-        
-        // Process each sheet/tab as a separate source account
-        for (let sheetIndex = 0; sheetIndex < workbook.SheetNames.length; sheetIndex++) {
-          const sheetName = workbook.SheetNames[sheetIndex];
-          console.log(`Processing sheet: ${sheetName}`);
-          const worksheet = workbook.Sheets[sheetName];
-          const data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string;
+          const lines = text.split('\n').filter(line => line.trim());
           
-          console.log(`Sheet ${sheetName} raw data:`, data.slice(0, 3)); // Log first 3 rows
+          if (lines.length < 2) {
+            reject(new Error('CSV file must contain at least a header and one data row'));
+            return;
+          }
+
+          const headers = lines[0].split(',').map(h => sanitizeInput(h.toLowerCase().trim()));
+          const expenses: Expense[] = [];
+
+          // Validate required headers
+          const requiredHeaders = ['date', 'description', 'amount', 'category'];
+          const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
           
-          if (data.length > 0) {
-            const expenses = await processFileData(data, sheetName, sheetIndex + 1, totalSheets);
-            allExpenses = [...allExpenses, ...expenses];
-            totalProcessed += expenses.length;
+          if (missingHeaders.length > 0) {
+            reject(new Error(`Missing required columns: ${missingHeaders.join(', ')}`));
+            return;
+          }
+
+          for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => sanitizeInput(v.trim()));
             
-            console.log(`Processed ${expenses.length} expenses from sheet: ${sheetName}`);
-          } else {
-            console.log(`No data found in sheet: ${sheetName}`);
+            if (values.length !== headers.length) {
+              console.warn(`Skipping row ${i + 1}: column count mismatch`);
+              continue;
+            }
+
+            const row: { [key: string]: string } = {};
+            headers.forEach((header, index) => {
+              row[header] = values[index] || '';
+            });
+
+            // Validate and parse the row
+            const dateStr = row.date;
+            const description = row.description;
+            const amountStr = row.amount || row.spent;
+            const category = row.category || 'Unclassified';
+            const sourceAccount = row.sourceaccount || row['source account'] || 'Unknown';
+
+            // Security: Validate required fields
+            if (!dateStr || !description || !amountStr) {
+              console.warn(`Skipping row ${i + 1}: missing required data`);
+              continue;
+            }
+
+            // Security: Validate date format
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) {
+              console.warn(`Skipping row ${i + 1}: invalid date format`);
+              continue;
+            }
+
+            // Security: Validate amount is a number
+            const amount = parseFloat(amountStr.replace(/[^0-9.-]/g, ''));
+            if (isNaN(amount)) {
+              console.warn(`Skipping row ${i + 1}: invalid amount`);
+              continue;
+            }
+
+            expenses.push({
+              id: `temp-${Date.now()}-${i}`,
+              date: date.toISOString().split('T')[0],
+              description: description.substring(0, 500), // Limit description length
+              category: category.substring(0, 100), // Limit category length
+              spent: Math.abs(amount), // Ensure positive amount
+              sourceAccount: sourceAccount.substring(0, 100), // Limit source account length
+              classified: false,
+              reconciled: false
+            });
           }
+
+          if (expenses.length === 0) {
+            reject(new Error('No valid expense records found in the file'));
+            return;
+          }
+
+          resolve(expenses);
+        } catch (error) {
+          reject(new Error('Failed to parse CSV file: ' + (error as Error).message));
         }
-        
-        setProgress(100);
-        setProgressText(`Import complete! Processed ${totalProcessed} expenses from ${totalSheets} sheets`);
-        
-        if (allExpenses.length > 0) {
-          onExpensesUploaded(allExpenses);
-          toast({
-            title: "Success!",
-            description: `Uploaded ${totalProcessed} expenses from ${workbook.SheetNames.length} source accounts`,
-          });
-        } else {
-          console.log('No valid expenses found. Check console for details.');
-          toast({
-            title: "No Data Found",
-            description: `No valid expense data found. Expected columns: date, description, amount/spent. Check console for details.`,
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({
-          title: "Error",
-          description: "Please upload a CSV or Excel file",
-          variant: "destructive",
-        });
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+
+      reader.readAsText(file);
+    });
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+
+    const file = acceptedFiles[0];
+    setError('');
+    setIsProcessing(true);
+
+    try {
+      // Security: Validate file upload
+      const validation = validateFileUpload(file);
+      if (!validation.isValid) {
+        setError(validation.error || 'Invalid file');
+        return;
       }
+
+      const expenses = await processCSVFile(file);
+      
+      // Security: Limit the number of expenses that can be uploaded at once
+      if (expenses.length > 1000) {
+        setError('File contains too many records. Maximum 1000 expenses per upload.');
+        return;
+      }
+
+      onExpensesUploaded(expenses);
     } catch (error) {
-      console.error("File processing error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to process file",
-        variant: "destructive",
-      });
+      setError((error as Error).message);
     } finally {
       setIsProcessing(false);
-      // Keep progress and text visible for a moment
-      setTimeout(() => {
-        setProgress(0);
-        setProgressText("");
-      }, 3000);
     }
-  }, [onExpensesUploaded, accountCodes, accounts, addAccount]);
+  }, [onExpensesUploaded]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFile(files[0]);
-    }
-  }, [handleFile]);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  }, []);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFile(files[0]);
-    }
-  };
-
-  const clearFile = () => {
-    setUploadedFile(null);
-  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+    },
+    maxFiles: 1,
+    disabled: isProcessing
+  });
 
   return (
     <div className="space-y-4">
-      <Card
-        className={`border-2 border-dashed transition-all duration-200 ${
-          isDragOver
-            ? "border-blue-400 bg-blue-50 scale-105"
-            : "border-slate-300 bg-slate-50 hover:border-slate-400"
-        } ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+      <Card 
+        {...getRootProps()} 
+        className={`p-8 border-2 border-dashed cursor-pointer transition-colors ${
+          isDragActive 
+            ? 'border-blue-400 bg-blue-50' 
+            : 'border-slate-300 hover:border-slate-400'
+        } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <div className="p-8 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className={`p-4 rounded-full ${isDragOver ? "bg-blue-100" : "bg-slate-100"} transition-colors`}>
-              <Upload className={`h-8 w-8 ${isDragOver ? "text-blue-600" : "text-slate-600"}`} />
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium text-slate-900 mb-2">
-                {isProcessing ? "Processing..." : "Drop your spreadsheet here"}
-              </h3>
-              <p className="text-slate-600 mb-4">
-                Supports CSV, Excel (.xlsx, .xls) files
-              </p>
-              <p className="text-sm text-slate-500 mb-4">
-                Expected columns: date, description, amount/spent (any variation of these names)
-              </p>
-              <p className="text-sm text-blue-600 font-medium">
-                Excel files: Each tab represents a different source account and will auto-create source accounts
-              </p>
-            </div>
-
-            <div className="flex gap-4">
-              <Button
-                variant="outline"
-                onClick={() => document.getElementById('file-input')?.click()}
-                disabled={isProcessing}
-              >
+        <input {...getInputProps()} />
+        <div className="flex flex-col items-center justify-center space-y-4">
+          {isProcessing ? (
+            <>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="text-sm text-slate-600">Processing file...</p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center space-x-2">
+                <Upload className="h-8 w-8 text-slate-400" />
+                <FileText className="h-8 w-8 text-slate-400" />
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-medium text-slate-900">
+                  {isDragActive ? 'Drop the file here' : 'Upload CSV File'}
+                </p>
+                <p className="text-sm text-slate-500 mt-1">
+                  Drag and drop or click to select a CSV file (max 10MB)
+                </p>
+              </div>
+              <Button variant="outline" disabled={isProcessing}>
                 Choose File
               </Button>
-            </div>
-
-            <input
-              id="file-input"
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
+            </>
+          )}
         </div>
       </Card>
 
-      {isProcessing && progress > 0 && (
-        <Card className="p-4 bg-blue-50 border-blue-200">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-blue-900">Import Progress</span>
-              <span className="text-sm text-blue-700">{Math.round(progress)}%</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-            {progressText && (
-              <p className="text-xs text-blue-600 truncate">{progressText}</p>
-            )}
-          </div>
-        </Card>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      {uploadedFile && (
-        <Card className="p-4 bg-green-50 border-green-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FileSpreadsheet className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="font-medium text-green-900">{uploadedFile.name}</p>
-                <p className="text-sm text-green-700">
-                  {(uploadedFile.size / 1024).toFixed(1)} KB
-                </p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={clearFile}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </Card>
-      )}
+      <div className="text-xs text-slate-500 space-y-1">
+        <p><strong>Required columns:</strong> date, description, amount, category</p>
+        <p><strong>Optional columns:</strong> sourceaccount (or "source account")</p>
+        <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
+      </div>
     </div>
   );
 };

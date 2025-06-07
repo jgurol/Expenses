@@ -183,7 +183,7 @@ export type Database = {
         Returns: Json
       }
       get_user_roles: {
-        Args: { _user_id: string }
+        Args: Record<PropertyKey, never> | { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
       }
       has_role: {
@@ -191,6 +191,10 @@ export type Database = {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: boolean
+      }
+      is_authenticated: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
     }

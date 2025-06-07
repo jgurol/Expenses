@@ -2,6 +2,7 @@
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState } from '@/utils/authCleanup';
 
 export type UserRole = 'admin' | 'bookkeeper' | 'classifier';
 
@@ -65,6 +66,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Error getting session:', error);
+        // Clean up on error
+        cleanupAuthState();
       }
       
       console.log('Initial session:', session ? 'Found' : 'None');
@@ -98,6 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }, 100);
         } else if (event === 'SIGNED_OUT') {
           setUserRoles([]);
+          cleanupAuthState(); // Security: Clean up on sign out
           setLoading(false);
         } else {
           setLoading(false);
@@ -114,6 +118,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log('Signing in with password:', email);
       
+      // Security: Clean up before sign in
+      cleanupAuthState();
+      
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log('Global signout attempt:', err);
+      }
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -121,11 +136,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (error) {
         console.error('Sign in error:', error);
+        cleanupAuthState(); // Clean up on error
       }
       
       return { error };
     } catch (error) {
       console.error('Sign in exception:', error);
+      cleanupAuthState(); // Clean up on exception
       return { error };
     }
   };
@@ -135,6 +152,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const redirectUrl = `${window.location.origin}/auth`;
       
       console.log('Signing up with password:', email, 'with redirect:', redirectUrl);
+      
+      // Security: Clean up before sign up
+      cleanupAuthState();
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -146,11 +166,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (error) {
         console.error('Sign up error:', error);
+        cleanupAuthState(); // Clean up on error
       }
       
       return { error };
     } catch (error) {
       console.error('Sign up exception:', error);
+      cleanupAuthState(); // Clean up on exception
       return { error };
     }
   };
@@ -160,6 +182,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const redirectUrl = `${window.location.origin}/auth`;
       
       console.log('Sending magic link to:', email, 'with redirect:', redirectUrl);
+      
+      // Security: Clean up before magic link
+      cleanupAuthState();
       
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -203,12 +228,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     try {
       console.log('Signing out...');
-      await supabase.auth.signOut();
+      
+      // Security: Clean up auth state first
+      cleanupAuthState();
+      
+      // Attempt global sign out
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Global signout error (ignoring):', err);
+      }
+      
       setUser(null);
       setSession(null);
       setUserRoles([]);
+      
+      // Security: Force page reload for clean state
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Error signing out:', error);
+      // Force cleanup and redirect even on error
+      cleanupAuthState();
+      window.location.href = '/auth';
     }
   };
 
