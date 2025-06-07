@@ -1,7 +1,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, FileText, CheckCircle, UserCheck, Users, LogOut } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { Settings, CheckCircle, UserCheck, LogOut, Users, FileText, Cog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,24 +40,6 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
-              onClick={() => navigate("/sources")}
-              className="flex items-center gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              Sources
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => navigate("/categories")}
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Categories
-            </Button>
-
-            <Button
-              variant="outline"
               onClick={() => navigate("/reconcile")}
               className="flex items-center gap-2"
             >
@@ -67,16 +56,33 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
               Reconciled
             </Button>
 
-            {isAdmin && (
-              <Button
-                variant="outline"
-                onClick={() => navigate("/users")}
-                className="flex items-center gap-2"
-              >
-                <Users className="h-4 w-4" />
-                Users
-              </Button>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Cog className="h-4 w-4" />
+                  Settings
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => navigate("/sources")}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Sources
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/categories")}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Categories
+                </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/users")}>
+                      <Users className="h-4 w-4 mr-2" />
+                      User Management
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {onRoleChange && (
               <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
