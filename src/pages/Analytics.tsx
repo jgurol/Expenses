@@ -39,6 +39,15 @@ const Analytics = () => {
     }))
     .sort((a, b) => b.total - a.total);
 
+  // Generate emoji based on spending percentage
+  const getSpendingEmoji = (percentage: number) => {
+    if (percentage >= 30) return "😡"; // Very angry for high spending
+    if (percentage >= 20) return "😠"; // Angry for moderate-high spending
+    if (percentage >= 15) return "😐"; // Neutral for moderate spending
+    if (percentage >= 10) return "🙂"; // Slightly happy for low-moderate spending
+    return "😊"; // Happy for low spending
+  };
+
   // Generate AI complaint about spending
   const generateSpendingComplaint = () => {
     if (categorySummary.length === 0) return "No spending data to analyze yet.";
@@ -111,9 +120,12 @@ const Analytics = () => {
                 {categorySummary.map((item, index) => (
                   <div key={item.category} className="p-4 border rounded-lg bg-slate-50">
                     <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline" className={index === 0 ? "bg-red-100 text-red-800" : ""}>
-                        {item.category}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{getSpendingEmoji(item.percentage)}</span>
+                        <Badge variant="outline" className={index === 0 ? "bg-red-100 text-red-800" : ""}>
+                          {item.category}
+                        </Badge>
+                      </div>
                       <span className="text-sm text-slate-500">{item.count} expenses</span>
                     </div>
                     <div className="text-2xl font-bold text-slate-900">${item.total.toFixed(2)}</div>
