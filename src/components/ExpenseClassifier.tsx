@@ -21,12 +21,9 @@ export const ExpenseClassifier = memo(({
 }: ExpenseClassifierProps) => {
   const [selectedAccountCodes, setSelectedAccountCodes] = useState<Record<string, string>>({});
 
-  // Extract just the account name without account number
+  // Display the full source account name without any parsing
   const getAccountName = (sourceAccount: string) => {
-    if (!sourceAccount || sourceAccount === "Unknown") return "Unknown";
-    // If it contains a dash or space followed by account number, extract just the name part
-    const parts = sourceAccount.split(/[-\s]+/);
-    return parts[0] || sourceAccount;
+    return sourceAccount || "Unknown";
   };
 
   const handleClassifyExpense = (expenseId: string) => {

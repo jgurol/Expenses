@@ -1,4 +1,3 @@
-
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,7 @@ export const ExpenseTableRow = ({
     onSelectExpense(expense.id, checked === true);
   };
 
-  // Display source account name directly (no parsing needed since we now store the sheet name)
+  // Display the full source account name without any parsing
   const getSourceAccountName = (sourceAccount: string) => {
     return sourceAccount || "Unknown";
   };
@@ -100,4 +99,3 @@ export const ExpenseTableRow = ({
     </TableRow>
   );
 };
-
