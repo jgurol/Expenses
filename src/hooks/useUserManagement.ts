@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -175,6 +174,31 @@ export const useUserManagement = () => {
     },
   });
 
+  // Set user password mutation
+  const setUserPasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const { data, error } = await supabase.functions.invoke('set-user-password', {
+        body: { userId, password }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Password updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update password',
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     users,
     isLoading,
@@ -183,9 +207,11 @@ export const useUserManagement = () => {
     updateUserRoles: updateUserRolesMutation.mutate,
     deleteUser: deleteUserMutation.mutate,
     sendTempPassword: sendTempPasswordMutation.mutate,
+    setUserPassword: setUserPasswordMutation.mutate,
     isCreating: createUserMutation.isPending,
     isUpdating: updateUserRolesMutation.isPending,
     isDeleting: deleteUserMutation.isPending,
     isSendingTempPassword: sendTempPasswordMutation.isPending,
+    isSettingPassword: setUserPasswordMutation.isPending,
   };
 };

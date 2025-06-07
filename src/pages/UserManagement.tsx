@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,16 +7,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Users, Loader2, Mail, Home } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Loader2, Mail, Home, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserManagement, UserProfile } from '@/hooks/useUserManagement';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const UserManagement = () => {
   const navigate = useNavigate();
-  const { users, isLoading, createUser, updateUserRoles, deleteUser, sendTempPassword, isCreating, isUpdating, isDeleting, isSendingTempPassword } = useUserManagement();
+  const { users, isLoading, createUser, updateUserRoles, deleteUser, sendTempPassword, setUserPassword, isCreating, isUpdating, isDeleting, isSendingTempPassword, isSettingPassword } = useUserManagement();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
   // Create user form state
@@ -31,6 +31,9 @@ const UserManagement = () => {
 
   // Edit user roles state
   const [editRoles, setEditRoles] = useState<string[]>([]);
+
+  // Set password state
+  const [newPassword, setNewPassword] = useState('');
 
   const roleOptions = ['admin', 'bookkeeper', 'classifier'];
 
@@ -64,6 +67,21 @@ const UserManagement = () => {
   const handleSendTempPassword = (user: UserProfile) => {
     if (confirm(`Are you sure you want to send a temporary password to ${user.email}?`)) {
       sendTempPassword({ email: user.email });
+    }
+  };
+
+  const handleSetPassword = (user: UserProfile) => {
+    setSelectedUser(user);
+    setNewPassword('');
+    setPasswordDialogOpen(true);
+  };
+
+  const handleUpdatePassword = () => {
+    if (selectedUser && newPassword) {
+      setUserPassword({ userId: selectedUser.id, password: newPassword });
+      setPasswordDialogOpen(false);
+      setSelectedUser(null);
+      setNewPassword('');
     }
   };
 
@@ -260,6 +278,14 @@ const UserManagement = () => {
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => handleSetPassword(user)}
+                              title="Set password"
+                            >
+                              <Key className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleSendTempPassword(user)}
                               disabled={isSendingTempPassword}
                               title="Send temporary password"
@@ -317,6 +343,44 @@ const UserManagement = () => {
                     Update Roles
                   </Button>
                   <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Set Password Dialog */}
+          <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Set User Password</DialogTitle>
+                <DialogDescription>
+                  Set a new password for {selectedUser?.first_name} {selectedUser?.last_name}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleUpdatePassword} 
+                    disabled={isSettingPassword || !newPassword} 
+                    className="flex-1"
+                  >
+                    {isSettingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Set Password
+                  </Button>
+                  <Button variant="outline" onClick={() => setPasswordDialogOpen(false)} className="flex-1">
                     Cancel
                   </Button>
                 </div>
