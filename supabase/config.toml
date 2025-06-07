@@ -54,14 +54,6 @@ enable_anonymous_sign_ins = false
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
-template = {}
-
-[auth.email.template]
-invite = ""
-confirmation = ""
-recovery = ""
-magic_link = ""
-email_change = ""
 
 [auth.external.email]
 enabled = true
