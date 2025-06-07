@@ -26,19 +26,22 @@ export const ExpenseClassifier = memo(({
 
   // Get the formatted category text with code and name
   const getCategoryDisplayText = (category: string) => {
+    // Trim the input category first
+    const trimmedCategory = category.trim();
+    
     // Find account code that matches the current category name
     const matchingAccountCode = accountCodes.find(ac => 
-      ac.name.toLowerCase().includes(category.toLowerCase()) ||
-      category.toLowerCase().includes(ac.name.toLowerCase()) ||
-      ac.code.toLowerCase() === category.toLowerCase()
+      ac.name.toLowerCase().includes(trimmedCategory.toLowerCase()) ||
+      trimmedCategory.toLowerCase().includes(ac.name.toLowerCase()) ||
+      ac.code.toLowerCase() === trimmedCategory.toLowerCase()
     );
     
     if (matchingAccountCode) {
-      return `${matchingAccountCode.code} - ${matchingAccountCode.name}`.trim();
+      return `${matchingAccountCode.code.trim()} - ${matchingAccountCode.name.trim()}`;
     }
     
     // If no match found, just return the original category trimmed
-    return category.trim();
+    return trimmedCategory;
   };
 
   const handleAcceptCategory = (expenseId: string) => {
