@@ -1,9 +1,10 @@
+
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Check } from "lucide-react";
-import { ExpensesTable } from "./ExpensesTable";
+import { Check } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface ExpenseClassifierProps {
@@ -73,90 +74,116 @@ export const ExpenseClassifier = memo(({
     }
   };
 
-  const handleDeleteExpense = (expenseId: string) => {
-    if (onExpenseDeleted) {
-      onExpenseDeleted(expenseId);
-    }
-  };
-
   const handleAccountCodeSelect = (expenseId: string, accountCode: string) => {
     console.log('Account code selected - automatically reclassifying:', { expenseId, accountCode });
     // Automatically reclassify when dropdown selection changes
     onExpenseClassified(expenseId, accountCode);
   };
 
+  // Generate consistent color based on source account
+  const getAccountColor = (sourceAccount: string) => {
+    const account = sourceAccount || "Unknown";
+    const colors = [
+      "bg-blue-50 hover:bg-blue-100",
+      "bg-green-50 hover:bg-green-100", 
+      "bg-purple-50 hover:bg-purple-100",
+      "bg-orange-50 hover:bg-orange-100",
+      "bg-pink-50 hover:bg-pink-100",
+      "bg-cyan-50 hover:bg-cyan-100",
+      "bg-yellow-50 hover:bg-yellow-100",
+      "bg-indigo-50 hover:bg-indigo-100",
+      "bg-red-50 hover:bg-red-100",
+      "bg-teal-50 hover:bg-teal-100"
+    ];
+    
+    // Generate a consistent hash from the account name
+    let hash = 0;
+    for (let i = 0; i < account.length; i++) {
+      const char = account.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   if (expenses.length === 0) {
-    return <ExpensesTable expenses={expenses} accountCodes={accountCodes} showClassificationStatus={false} />;
+    return (
+      <div className="text-center py-8 text-slate-500">
+        No expenses to classify
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      {expenses.map((expense) => (
-        <div key={expense.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
-          <div className="flex-1">
-            <div className="grid grid-cols-4 gap-4 items-center">
-              <div>
-                <p className="text-sm text-slate-600">Source Account</p>
+    <div className="border rounded-lg">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-32">Source Account</TableHead>
+            <TableHead className="w-24">Date</TableHead>
+            <TableHead className="min-w-0 flex-1">Description</TableHead>
+            <TableHead className="w-36">Suggested Category</TableHead>
+            <TableHead className="w-64">Assign Account Code</TableHead>
+            <TableHead className="text-right w-24">Amount</TableHead>
+            <TableHead className="text-center w-20">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {expenses.map((expense) => (
+            <TableRow key={expense.id} className={getAccountColor(expense.sourceAccount)}>
+              <TableCell>
                 <Badge variant="outline" className="text-xs font-mono">
                   {getAccountName(expense.sourceAccount || "Unknown")}
                 </Badge>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Date</p>
-                <p className="font-medium">{new Date(expense.date).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Description</p>
-                <p className="font-medium">{expense.description}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-slate-600">Amount</p>
-                <p className="font-semibold text-green-600">${expense.spent.toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3 ml-6">
-            <Select
-              value=""
-              onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
-            >
-              <SelectTrigger className="w-64 text-left">
-                <SelectValue placeholder={getCategoryDisplayText(expense.category)} className="text-left" />
-              </SelectTrigger>
-              <SelectContent>
-                {accountCodes.map((code) => (
-                  <SelectItem key={code.id} value={code.code}>
-                    {code.code} - {code.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Button
-              onClick={() => handleAcceptCategory(expense.id)}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              title="Accept the current category and assign matching account code"
-            >
-              <Check className="h-4 w-4" />
-              Accept
-            </Button>
-
-            {onExpenseDeleted && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteExpense(expense.id)}
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      ))}
+              </TableCell>
+              <TableCell className="font-mono text-sm">
+                {new Date(expense.date).toLocaleDateString()}
+              </TableCell>
+              <TableCell className="font-medium">
+                {expense.description}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="text-xs">
+                  {expense.category}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Select
+                  value=""
+                  onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
+                >
+                  <SelectTrigger className="w-full text-left">
+                    <SelectValue placeholder={getCategoryDisplayText(expense.category)} className="text-left" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accountCodes.map((code) => (
+                      <SelectItem key={code.id} value={code.code}>
+                        {code.code} - {code.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell className="text-right font-semibold">
+                ${expense.spent.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-center">
+                <Button
+                  onClick={() => handleAcceptCategory(expense.id)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  title="Accept the current category and assign matching account code"
+                >
+                  <Check className="h-4 w-4" />
+                  Accept
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 });
