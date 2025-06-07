@@ -126,6 +126,11 @@ const Reconciled = () => {
     }
   };
 
+  const handleBackToDashboard = () => {
+    console.log('Navigating back to dashboard');
+    navigate('/', { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -134,7 +139,7 @@ const Reconciled = () => {
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
-                onClick={() => navigate("/")}
+                onClick={handleBackToDashboard}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
