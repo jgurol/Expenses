@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -45,7 +46,7 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
               <Button
                 variant="outline"
                 onClick={() => navigate("/classifier")}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-blue-100 border-blue-200 text-blue-700 hover:bg-blue-200 hover:border-blue-300"
               >
                 <FileCode className="h-4 w-4" />
                 Classifier
@@ -55,7 +56,7 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
             <Button
               variant="outline"
               onClick={() => navigate("/reconcile")}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-blue-100 border-blue-200 text-blue-700 hover:bg-blue-200 hover:border-blue-300"
             >
               <CheckCircle className="h-4 w-4" />
               Reconcile
@@ -64,7 +65,7 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
             <Button
               variant="outline"
               onClick={() => navigate("/reconciled")}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-blue-100 border-blue-200 text-blue-700 hover:bg-blue-200 hover:border-blue-300"
             >
               <UserCheck className="h-4 w-4" />
               Reconciled
@@ -80,7 +81,10 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 bg-blue-100 border-blue-200 text-blue-700 hover:bg-blue-200 hover:border-blue-300"
+                >
                   <Cog className="h-4 w-4" />
                   Settings
                 </Button>
