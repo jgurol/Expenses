@@ -2,9 +2,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { Resend } from "npm:resend@4.0.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string);
 const hookSecret = Deno.env.get('SUPABASE_AUTH_EXTERNAL_EMAIL_HOOK_SECRET') as string;
+
+// Initialize Supabase client for edge function
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
 interface AuthWebhookPayload {
   user: {
