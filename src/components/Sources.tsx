@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Building2, Loader2 } from "lucide-react";
-import { useAccounts, useAddAccount, useUpdateAccount, useDeleteAccount, type Account } from "@/hooks/useAccounts";
+import { useSources, useAddSource, useUpdateSource, useDeleteSource, type Source } from "@/hooks/useSources";
 
 export const Sources = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSource, setEditingSource] = useState<Account | null>(null);
+  const [editingSource, setEditingSource] = useState<Source | null>(null);
   const [formData, setFormData] = useState({
     account_number: "",
     name: "",
@@ -20,10 +19,10 @@ export const Sources = () => {
     is_active: true,
   });
 
-  const { data: sources = [], isLoading: sourcesLoading } = useAccounts();
-  const addSource = useAddAccount();
-  const updateSource = useUpdateAccount();
-  const deleteSource = useDeleteAccount();
+  const { data: sources = [], isLoading: sourcesLoading } = useSources();
+  const addSource = useAddSource();
+  const updateSource = useUpdateSource();
+  const deleteSource = useDeleteSource();
 
   const resetForm = () => {
     setFormData({
@@ -88,7 +87,7 @@ export const Sources = () => {
     }
   };
 
-  const handleEdit = (source: Account) => {
+  const handleEdit = (source: Source) => {
     setEditingSource(source);
     setFormData({
       account_number: source.account_number,

@@ -9,7 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      account_codes: {
+      categories: {
         Row: {
           code: string
           created_at: string
@@ -36,7 +36,51 @@ export type Database = {
         }
         Relationships: []
       }
-      accounts: {
+      expenses: {
+        Row: {
+          category: string
+          category_id: string | null
+          classified: boolean
+          created_at: string
+          date: string
+          description: string
+          id: string
+          spent: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          category_id?: string | null
+          classified?: boolean
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          spent: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          category_id?: string | null
+          classified?: boolean
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          spent?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_account_code_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sources: {
         Row: {
           account_number: string
           balance: number | null
@@ -68,50 +112,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      expenses: {
-        Row: {
-          account_code_id: string | null
-          category: string
-          classified: boolean
-          created_at: string
-          date: string
-          description: string
-          id: string
-          spent: number
-          updated_at: string
-        }
-        Insert: {
-          account_code_id?: string | null
-          category: string
-          classified?: boolean
-          created_at?: string
-          date: string
-          description: string
-          id?: string
-          spent: number
-          updated_at?: string
-        }
-        Update: {
-          account_code_id?: string | null
-          category?: string
-          classified?: boolean
-          created_at?: string
-          date?: string
-          description?: string
-          id?: string
-          spent?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "expenses_account_code_id_fkey"
-            columns: ["account_code_id"]
-            isOneToOne: false
-            referencedRelation: "account_codes"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {

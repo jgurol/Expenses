@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, DollarSign, Loader2 } from "lucide-react";
 import type { AccountCode } from "@/pages/Index";
-import { useAccountCodes, useAddAccountCode, useUpdateAccountCode, useDeleteAccountCode } from "@/hooks/useAccountCodes";
+import { useCategories, useAddCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/useCategories";
 
 export const Categories = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -20,10 +19,10 @@ export const Categories = () => {
     type: "expense" as AccountCode["type"],
   });
 
-  const { data: categories = [], isLoading } = useAccountCodes();
-  const addCategory = useAddAccountCode();
-  const updateCategory = useUpdateAccountCode();
-  const deleteCategory = useDeleteAccountCode();
+  const { data: categories = [], isLoading } = useCategories();
+  const addCategory = useAddCategory();
+  const updateCategory = useUpdateCategory();
+  const deleteCategory = useDeleteCategory();
 
   const resetForm = () => {
     setFormData({ code: "", name: "", type: "expense" });

@@ -11,7 +11,7 @@ export const useExpenses = () => {
         .from('expenses')
         .select(`
           *,
-          account_codes(code)
+          categories(code)
         `)
         .order('date', { ascending: false });
       
@@ -41,7 +41,7 @@ export const useAddExpenses = () => {
         category: expense.category,
         spent: expense.spent,
         classified: expense.classified,
-        account_code_id: null // No longer automatically assigning account codes during import
+        category_id: null // No longer automatically assigning categories during import
       }));
 
       const { data, error } = await supabase
@@ -63,20 +63,20 @@ export const useClassifyExpense = () => {
   
   return useMutation({
     mutationFn: async ({ expenseId, accountCode }: { expenseId: string; accountCode: string }) => {
-      // Get the account code details to update the category
-      const { data: accountCodeData, error: accountCodeError } = await supabase
-        .from('account_codes')
+      // Get the category details to update the category
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('categories')
         .select('id, name')
         .eq('code', accountCode)
         .single();
       
-      if (accountCodeError) throw accountCodeError;
+      if (categoryError) throw categoryError;
 
       const { data, error } = await supabase
         .from('expenses')
         .update({ 
-          category: accountCodeData.name,
-          account_code_id: accountCodeData.id, // Set the account code ID for classification
+          category: categoryData.name,
+          category_id: categoryData.id, // Set the category ID for classification
           classified: true 
         })
         .eq('id', expenseId)
