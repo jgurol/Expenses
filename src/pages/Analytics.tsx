@@ -1,21 +1,17 @@
 
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingUp, PieChart, BarChart3 } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { PieChart as RechartsPieChart, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C'];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 const Analytics = () => {
   const navigate = useNavigate();
-  const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
   
   const { data: expenses = [] } = useExpenses();
   const { data: accountCodes = [] } = useCategories();
@@ -37,10 +33,7 @@ const Analytics = () => {
     return acc;
   }, {} as Record<string, { name: string; amount: number; count: number }>);
 
-  const chartData = Object.values(categoryData).map((item, index) => ({
-    ...item,
-    fill: COLORS[index % COLORS.length]
-  }));
+  const chartData = Object.values(categoryData);
 
   const totalAmount = classifiedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
   const averageExpense = classifiedExpenses.length > 0 ? totalAmount / classifiedExpenses.length : 0;
@@ -107,77 +100,30 @@ const Analytics = () => {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-slate-900">Expense Distribution by Category</h3>
-                <div className="flex gap-2">
-                  <Button
-                    variant={chartType === 'pie' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setChartType('pie')}
-                    className="flex items-center gap-2"
-                  >
-                    <PieChart className="h-4 w-4" />
-                    Pie Chart
-                  </Button>
-                  <Button
-                    variant={chartType === 'bar' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setChartType('bar')}
-                    className="flex items-center gap-2"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    Bar Chart
-                  </Button>
-                </div>
               </div>
               
               <ChartContainer config={chartConfig} className="h-[400px]">
-                {chartType === 'pie' ? (
-                  <RechartsPieChart>
-                    <RechartsPieChart
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={120}
-                      dataKey="amount"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </RechartsPieChart>
-                    <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          formatter={(value, name) => [
-                            `$${Number(value).toFixed(2)}`,
-                            "Amount"
-                          ]}
-                        />
-                      }
-                    />
-                  </RechartsPieChart>
-                ) : (
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                      interval={0}
-                    />
-                    <YAxis />
-                    <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          formatter={(value, name) => [
-                            `$${Number(value).toFixed(2)}`,
-                            "Amount"
-                          ]}
-                        />
-                      }
-                    />
-                    <Bar dataKey="amount" fill="#0088FE" />
-                  </BarChart>
-                )}
+                <BarChart data={chartData} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis 
+                    type="category"
+                    dataKey="name" 
+                    width={120}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => [
+                          `$${Number(value).toFixed(2)}`,
+                          "Amount"
+                        ]}
+                      />
+                    }
+                  />
+                  <Bar dataKey="amount" fill="#0088FE" />
+                </BarChart>
               </ChartContainer>
             </Card>
           )}
