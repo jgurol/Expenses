@@ -47,11 +47,12 @@ export const ExpensesDashboard = memo(({
         </Card>
       </div>
 
-      {expenses.length > 0 && (
+      {/* Only show unclassified expenses on the main dashboard */}
+      {unclassifiedExpenses.length > 0 && (
         <ExpensesTable 
-          expenses={expenses}
+          expenses={unclassifiedExpenses}
           accountCodes={accountCodes}
-          title="All Expenses"
+          title="Unclassified Expenses"
           showClassificationStatus={true}
           showDeleteButton={true}
           showMultiSelect={true}
