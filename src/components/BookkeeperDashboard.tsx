@@ -1,6 +1,7 @@
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, FileCheck, Receipt, Archive, ArrowRight } from "lucide-react";
+import { CheckCircle, Clock, FileCheck, Archive, ArrowRight } from "lucide-react";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { useArchivedExpenses } from "@/hooks/useArchivedExpenses";
 import type { Expense, AccountCode } from "@/pages/Index";
@@ -31,16 +32,13 @@ export const BookkeeperDashboard = ({
   const reconciledAmount = reconciledExpenses.reduce((sum, expense) => sum + expense.spent, 0);
   const archivedAmount = archivedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
 
-  // Calculate total expenses statistics
-  const totalAmount = expenses.reduce((sum, expense) => sum + expense.spent, 0);
-
   return (
     <div className="space-y-6">
       <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
         <h2 className="text-xl font-semibold mb-6 text-slate-900">Expense Workflow Summary</h2>
         
         {/* Workflow Stage Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-6 mb-8">
           <Card className="p-4 border-orange-200 bg-orange-50/50">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-orange-100 rounded-lg">
@@ -98,27 +96,8 @@ export const BookkeeperDashboard = ({
               <div className="text-sm text-slate-600">${reconciledAmount.toFixed(2)}</div>
             </div>
           </Card>
-        </div>
 
-        {/* Additional Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-4 border-slate-200 bg-slate-50/50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-slate-100 rounded-lg">
-                <Receipt className="h-5 w-5 text-slate-600" />
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-slate-600">Total Expenses</h3>
-                <p className="text-xs text-slate-500">All expenses overview</p>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-slate-600">{expenses.length}</div>
-              <div className="text-sm text-slate-600">${totalAmount.toFixed(2)}</div>
-            </div>
-          </Card>
-
-          {/* Arrow 3: Total → Archived */}
+          {/* Arrow 3: Reconciled → Archived */}
           <div className="hidden md:flex items-center justify-center">
             <ArrowRight className="h-6 w-6 text-slate-400" />
           </div>
