@@ -44,10 +44,32 @@ export const ExpenseTableRow = ({
     return accountCode?.code || "N/A";
   };
 
+  // Get color for source account
+  const getAccountRowColor = (sourceAccount: string) => {
+    const colors = [
+      "bg-blue-50/50 hover:bg-blue-100/50",
+      "bg-green-50/50 hover:bg-green-100/50", 
+      "bg-purple-50/50 hover:bg-purple-100/50",
+      "bg-orange-50/50 hover:bg-orange-100/50",
+      "bg-pink-50/50 hover:bg-pink-100/50",
+      "bg-indigo-50/50 hover:bg-indigo-100/50",
+      "bg-yellow-50/50 hover:bg-yellow-100/50",
+      "bg-red-50/50 hover:bg-red-100/50"
+    ];
+    
+    // Create a simple hash of the account name to get consistent colors
+    const hash = sourceAccount.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   console.log('Rendering expense row:', expense.id, 'showDeleteButton:', showDeleteButton, 'showMultiSelect:', showMultiSelect, 'showCodeColumn:', showCodeColumn, 'isSelected:', isSelected);
 
   return (
-    <TableRow className="hover:bg-slate-50">
+    <TableRow className={`${getAccountRowColor(expense.sourceAccount || "Unknown")}`}>
       {showMultiSelect && (
         <TableCell>
           <Checkbox
@@ -115,4 +137,3 @@ export const ExpenseTableRow = ({
     </TableRow>
   );
 };
-
