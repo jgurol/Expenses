@@ -1,4 +1,5 @@
 
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, FileCheck, Receipt, Archive } from "lucide-react";
@@ -90,22 +91,6 @@ export const BookkeeperDashboard = ({
             </div>
           </Card>
 
-          <Card className="p-4 border-purple-200 bg-purple-50/50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Archive className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-slate-600">Archived</h3>
-                <p className="text-xs text-slate-500">Historical expenses</p>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-purple-600">{archivedExpenses.length}</div>
-              <div className="text-sm text-slate-600">${archivedAmount.toFixed(2)}</div>
-            </div>
-          </Card>
-
           <Card className="p-4 border-slate-200 bg-slate-50/50">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-slate-100 rounded-lg">
@@ -119,6 +104,22 @@ export const BookkeeperDashboard = ({
             <div className="space-y-1">
               <div className="text-2xl font-bold text-slate-600">{expenses.length}</div>
               <div className="text-sm text-slate-600">${totalAmount.toFixed(2)}</div>
+            </div>
+          </Card>
+
+          <Card className="p-4 border-purple-200 bg-purple-50/50">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Archive className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-slate-600">Archived</h3>
+                <p className="text-xs text-slate-500">Historical expenses</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-purple-600">{archivedExpenses.length}</div>
+              <div className="text-sm text-slate-600">${archivedAmount.toFixed(2)}</div>
             </div>
           </Card>
         </div>
@@ -135,3 +136,4 @@ export const BookkeeperDashboard = ({
     </div>
   );
 };
+
