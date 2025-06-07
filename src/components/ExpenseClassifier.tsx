@@ -1,12 +1,14 @@
-
-import { useState, memo } from "react";
+import { useState, memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Check } from "lucide-react";
+import { Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Expense, AccountCode } from "@/pages/Index";
+
+type SortField = 'sourceAccount' | 'date' | 'description' | 'category';
+type SortDirection = 'asc' | 'desc';
 
 interface ExpenseClassifierProps {
   expenses: Expense[];
@@ -22,6 +24,70 @@ export const ExpenseClassifier = memo(({
   onExpenseDeleted 
 }: ExpenseClassifierProps) => {
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Sort expenses based on current sort field and direction
+  const sortedExpenses = useMemo(() => {
+    return [...expenses].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (sortField) {
+        case 'sourceAccount':
+          aValue = a.sourceAccount || 'Unknown';
+          bValue = b.sourceAccount || 'Unknown';
+          break;
+        case 'date':
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
+          break;
+        case 'description':
+          aValue = a.description.toLowerCase();
+          bValue = b.description.toLowerCase();
+          break;
+        case 'category':
+          aValue = a.category.toLowerCase();
+          bValue = b.category.toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [expenses, sortField, sortDirection]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4" />;
+    }
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => {
+    return (
+      <Button
+        variant="ghost"
+        onClick={() => handleSort(field)}
+        className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground flex items-center gap-1"
+      >
+        {children}
+        {getSortIcon(field)}
+      </Button>
+    );
+  };
 
   // Display the full source account name without any parsing
   const getAccountName = (sourceAccount: string) => {
@@ -140,7 +206,7 @@ export const ExpenseClassifier = memo(({
     return colors[Math.abs(hash) % colors.length];
   };
 
-  if (expenses.length === 0) {
+  if (sortedExpenses.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500">
         No expenses to classify
@@ -178,16 +244,24 @@ export const ExpenseClassifier = memo(({
                   aria-label="Select all expenses"
                 />
               </TableHead>
-              <TableHead className="w-32">Source Account</TableHead>
-              <TableHead className="w-24">Date</TableHead>
-              <TableHead className="min-w-0 flex-1">Description</TableHead>
-              <TableHead className="w-64">Assign Account Code</TableHead>
+              <TableHead className="w-32">
+                <SortableHeader field="sourceAccount">Source Account</SortableHeader>
+              </TableHead>
+              <TableHead className="w-24">
+                <SortableHeader field="date">Date</SortableHeader>
+              </TableHead>
+              <TableHead className="min-w-0 flex-1">
+                <SortableHeader field="description">Description</SortableHeader>
+              </TableHead>
+              <TableHead className="w-64">
+                <SortableHeader field="category">Assign Account Code</SortableHeader>
+              </TableHead>
               <TableHead className="text-right w-24">Amount</TableHead>
               <TableHead className="text-center w-20">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {expenses.map((expense) => {
+            {sortedExpenses.map((expense) => {
               const isSelected = selectedExpenses.includes(expense.id);
               return (
                 <TableRow key={expense.id} className={getAccountColor(expense.sourceAccount)}>
