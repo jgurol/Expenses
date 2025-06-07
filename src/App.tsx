@@ -13,6 +13,7 @@ import CategoriesPage from "./pages/Categories";
 import SourcePage from "./pages/Source";
 import Reconcile from "./pages/Reconcile";
 import Reconciled from "./pages/Reconciled";
+import Classifier from "./pages/Classifier";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
@@ -50,6 +51,11 @@ const App = () => (
             <Route path="/reconciled" element={
               <ProtectedRoute>
                 <Reconciled />
+              </ProtectedRoute>
+            } />
+            <Route path="/classifier" element={
+              <ProtectedRoute>
+                <Classifier />
               </ProtectedRoute>
             } />
             <Route path="/users" element={

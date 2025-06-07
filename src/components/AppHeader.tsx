@@ -1,5 +1,4 @@
 
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -9,7 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { Settings, CheckCircle, UserCheck, LogOut, Users, FileText, Cog } from "lucide-react";
+import { Settings, CheckCircle, UserCheck, LogOut, Users, FileText, Cog, FileCode } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,7 +21,7 @@ interface AppHeaderProps {
 
 export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
   const navigate = useNavigate();
-  const { signOut, user, isAdmin } = useAuth();
+  const { signOut, user, isAdmin, isClassifier } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -39,6 +38,17 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
           </div>
           
           <div className="flex items-center gap-4">
+            {(isClassifier || isAdmin) && (
+              <Button
+                variant="outline"
+                onClick={() => navigate("/classifier")}
+                className="flex items-center gap-2"
+              >
+                <FileCode className="h-4 w-4" />
+                Classifier
+              </Button>
+            )}
+
             <Button
               variant="outline"
               onClick={() => navigate("/reconcile")}
@@ -103,4 +113,3 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
     </header>
   );
 };
-

@@ -16,9 +16,9 @@ export interface Expense {
   description: string;
   category: string;
   spent: number;
-  sourceAccount?: string; // Changed from accountCode to sourceAccount
+  sourceAccount?: string;
   classified: boolean;
-  reconciled: boolean; // Added missing reconciled property
+  reconciled: boolean;
 }
 
 export interface AccountCode {
@@ -31,15 +31,8 @@ export interface AccountCode {
 const Index = () => {
   const { isBookkeeper, isClassifier, isAdmin } = useAuth();
   
-  // Always default to bookkeeper view which shows upload functionality
-  // Only switch to classifier view if user is ONLY a classifier (not a bookkeeper)
-  const getInitialRole = (): UserRole => {
-    if (isBookkeeper || isAdmin) return "bookkeeper"; // Show upload functionality
-    if (isClassifier) return "classifier"; // Pure classifiers get classifier view
-    return "bookkeeper"; // Default to bookkeeper (upload) view
-  };
-
-  const [currentRole, setCurrentRole] = useState<UserRole>(getInitialRole());
+  // Home page always shows bookkeeper (upload) view
+  const [currentRole] = useState<UserRole>("bookkeeper");
   
   const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
   const { data: accountCodes = [], isLoading: accountCodesLoading } = useCategories();
@@ -64,14 +57,10 @@ const Index = () => {
   console.log('Imported expenses state:', importedExpenses);
   console.log('Imported expenses count:', importedExpenses.length);
 
-  // Only allow role switching for pure admins (not bookkeepers with admin privileges)
-  const canSwitchRoles = isAdmin && isClassifier;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <AppHeader 
         currentRole={currentRole} 
-        onRoleChange={canSwitchRoles ? setCurrentRole : undefined}
       />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
