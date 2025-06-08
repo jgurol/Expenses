@@ -392,37 +392,37 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Card 
         {...getRootProps()} 
-        className={`p-8 border-2 border-dashed cursor-pointer transition-colors ${
+        className={`p-4 border-2 border-dashed cursor-pointer transition-colors ${
           isDragActive 
             ? 'border-blue-400 bg-blue-50' 
             : 'border-slate-300 hover:border-slate-400'
         } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <input {...getInputProps()} />
-        <div className="flex flex-col items-center justify-center space-y-4">
+        <div className="flex flex-col items-center justify-center space-y-3">
           {isProcessing ? (
             <>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               <p className="text-sm text-slate-600">Processing file...</p>
             </>
           ) : (
             <>
               <div className="flex items-center space-x-2">
-                <Upload className="h-8 w-8 text-slate-400" />
-                <FileText className="h-8 w-8 text-slate-400" />
+                <Upload className="h-6 w-6 text-slate-400" />
+                <FileText className="h-6 w-6 text-slate-400" />
               </div>
               <div className="text-center">
-                <p className="text-lg font-medium text-slate-900">
+                <p className="text-base font-medium text-slate-900">
                   {isDragActive ? 'Drop the file here' : 'Upload CSV or Excel File'}
                 </p>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Drag and drop or click to select a file (max 10MB)
                 </p>
               </div>
-              <Button variant="outline" disabled={isProcessing}>
+              <Button variant="outline" size="sm" disabled={isProcessing}>
                 Choose File
               </Button>
             </>
@@ -437,7 +437,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         </Alert>
       )}
 
-      <div className="text-xs text-slate-500 space-y-1">
+      <div className="text-xs text-slate-500 space-y-0.5">
         <p><strong>Excel files:</strong> Each sheet/tab name becomes the source account</p>
         <p><strong>CSV files:</strong> Filename becomes the source account</p>
         <p><strong>Expected columns:</strong> Date, Description, Categories, Amount/Spent, Received/Credit</p>

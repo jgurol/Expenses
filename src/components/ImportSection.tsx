@@ -29,9 +29,9 @@ export const ImportSection = ({
   isSaving
 }: ImportSectionProps) => {
   return (
-    <div className="space-y-8">
-      <Card className="p-6 bg-white/60 backdrop-blur-sm border-slate-200">
-        <h2 className="text-xl font-semibold mb-4 text-slate-900">Upload Expenses</h2>
+    <div className="space-y-6">
+      <Card className="p-4 bg-white/60 backdrop-blur-sm border-slate-200">
+        <h2 className="text-lg font-semibold mb-3 text-slate-900">Upload Expenses</h2>
         <FileUpload onExpensesUploaded={onExpensesUploaded} />
       </Card>
 
