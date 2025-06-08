@@ -20,9 +20,9 @@ interface ExpenseCommentaryProps {
   expenses: Expense[];
 }
 
-// Generate sarcastic commentary about spending patterns
+// Generate concise 3-sentence commentary about spending patterns
 const generateSpendingCommentary = (expenses: Expense[]): string[] => {
-  if (expenses.length === 0) return ["Well, at least you're not spending money on anything. That's... economical."];
+  if (expenses.length === 0) return ["No expenses to analyze.", "Consider adding some expenses to get insights.", "Your wallet is safe for now."];
   
   const totalSpent = expenses.reduce((sum, exp) => sum + exp.spent, 0);
   const avgTransaction = totalSpent / expenses.length;
@@ -37,70 +37,40 @@ const generateSpendingCommentary = (expenses: Expense[]): string[] => {
   
   const commentary: string[] = [];
   
-  // Opening statement
-  commentary.push(`You've managed to spend ${formatCurrency(totalSpent)} across ${expenses.length} transactions. Impressive financial dedication.`);
+  // Sentence 1: Overview
+  commentary.push(`You've spent ${formatCurrency(totalSpent)} across ${expenses.length} transactions with an average of ${formatCurrency(avgTransaction)} per expense.`);
   
-  // Category analysis
+  // Sentence 2: Top category insight
   if (topCategory) {
     const [categoryName, amount] = topCategory;
     const percentage = ((amount / totalSpent) * 100).toFixed(1);
     
-    let categoryComment = `Your biggest money pit is "${categoryName}" at ${formatCurrency(amount)} (${percentage}% of total spending). `;
+    let categoryInsight = `Your biggest spending category is "${categoryName}" at ${formatCurrency(amount)} (${percentage}% of total)`;
     
-    // Category-specific commentary
+    // Add category-specific comment
     const lowerCategory = categoryName.toLowerCase();
     if (lowerCategory.includes('food') || lowerCategory.includes('dining')) {
-      categoryComment += "What are you eating, gold-plated avocado toast?";
+      categoryInsight += " - quite the foodie, aren't you?";
     } else if (lowerCategory.includes('entertainment')) {
-      categoryComment += "Are you personally funding Hollywood?";
+      categoryInsight += " - living your best life!";
     } else if (lowerCategory.includes('travel')) {
-      categoryComment += "Flying first-class to the corner store?";
+      categoryInsight += " - wanderlust is expensive.";
     } else if (lowerCategory.includes('shopping')) {
-      categoryComment += "Shopping therapy is getting expensive.";
-    } else if (lowerCategory.includes('office')) {
-      categoryComment += "Are those diamond-encrusted staplers?";
+      categoryInsight += " - retail therapy in action.";
     } else {
-      categoryComment += "That's a lot of money for... whatever this is.";
+      categoryInsight += " - that's where the money goes.";
     }
     
-    commentary.push(categoryComment);
+    commentary.push(categoryInsight);
   }
   
-  // Average transaction commentary
-  if (avgTransaction > 500) {
-    commentary.push(`Your average transaction of ${formatCurrency(avgTransaction)} suggests you're not familiar with the concept of "small purchases."`);
-  } else if (avgTransaction < 10) {
-    commentary.push(`With an average transaction of ${formatCurrency(avgTransaction)}, you're either very budget-conscious or buying everything one penny at a time.`);
+  // Sentence 3: Notable pattern or recommendation
+  if (largestExpense > avgTransaction * 3) {
+    commentary.push(`Your largest single expense of ${formatCurrency(largestExpense)} is significantly above average - consider setting spending alerts for large transactions.`);
+  } else if (Object.keys(categoryTotals).length > 10) {
+    commentary.push(`With spending across ${Object.keys(categoryTotals).length} categories, you might benefit from consolidating similar expense types for better budget tracking.`);
   } else {
-    commentary.push(`Your average transaction of ${formatCurrency(avgTransaction)} is... surprisingly reasonable. Who are you and what did you do with the spendthrift?`);
-  }
-  
-  // Largest expense commentary
-  if (largestExpense > 1000) {
-    commentary.push(`Your largest single expense of ${formatCurrency(largestExpense)} makes me wonder if you bought a small country or just really expensive coffee.`);
-  }
-  
-  // Category diversity commentary
-  const numCategories = Object.keys(categoryTotals).length;
-  if (numCategories > 10) {
-    commentary.push(`You've spread your spending across ${numCategories} categories. Congratulations on being thoroughly comprehensive in your financial destruction.`);
-  } else if (numCategories < 3) {
-    commentary.push(`Only ${numCategories} spending categories? Either you're incredibly focused or just getting started on your spending journey.`);
-  }
-  
-  // Monthly pattern analysis
-  const monthlySpending = expenses.reduce((acc, exp) => {
-    const month = new Date(exp.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-    acc[month] = (acc[month] || 0) + exp.spent;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const monthlyAmounts = Object.values(monthlySpending);
-  const maxMonth = Math.max(...monthlyAmounts);
-  const minMonth = Math.min(...monthlyAmounts);
-  
-  if (maxMonth > minMonth * 2) {
-    commentary.push("Your monthly spending varies wildly. Either you have seasonal shopping disorders or your self-control comes and goes like the weather.");
+    commentary.push("Your spending patterns show good category focus - keep monitoring trends to maintain financial awareness.");
   }
   
   return commentary;
@@ -115,7 +85,7 @@ export const ExpenseCommentary = ({ expenses }: ExpenseCommentaryProps) => {
         <MessageSquare className="h-5 w-5 text-purple-600" />
         <h3 className="text-lg font-semibold text-slate-900">Expense Commentary</h3>
         <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-          Brutally Honest Analysis
+          Quick Insights
         </Badge>
       </div>
       
@@ -126,7 +96,7 @@ export const ExpenseCommentary = ({ expenses }: ExpenseCommentaryProps) => {
               {index === 0 ? (
                 <AlertTriangle className="h-5 w-5 text-orange-500" />
               ) : (
-                <TrendingDown className="h-5 w-5 text-red-500" />
+                <TrendingDown className="h-5 w-5 text-blue-500" />
               )}
             </div>
             <p className="text-slate-700 leading-relaxed">{comment}</p>
@@ -136,8 +106,8 @@ export const ExpenseCommentary = ({ expenses }: ExpenseCommentaryProps) => {
       
       <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-800 font-medium">
-          💡 Pro Tip: This commentary is generated based on your actual spending patterns. 
-          The sarcasm is free, the insights are priceless.
+          💡 Pro Tip: This concise analysis highlights your key spending patterns. 
+          Monitor these trends regularly for better financial insights.
         </p>
       </div>
     </Card>
