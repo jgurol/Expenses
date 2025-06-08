@@ -1,4 +1,5 @@
 
+
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -42,6 +43,10 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           // Note: JavaScript months are 0-based, but Excel months are 1-based
           const date = new Date(excelDateObj.y, excelDateObj.m - 1, excelDateObj.d);
           console.log('Using XLSX parsed date:', date.toISOString().split('T')[0]);
+          console.log('Date object created:', date);
+          console.log('Date getFullYear:', date.getFullYear());
+          console.log('Date getMonth (0-based):', date.getMonth());
+          console.log('Date getDate:', date.getDate());
           return date;
         }
       } catch (e) {
@@ -172,20 +177,28 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
 
               // Parse date with improved handling
               const date = parseDate(dateValue);
+              const dateString = date.toISOString().split('T')[0];
+              
+              console.log(`Row ${i}: Original date value:`, dateValue);
+              console.log(`Row ${i}: Parsed date object:`, date);
+              console.log(`Row ${i}: Final date string:`, dateString);
 
               // Parse spent amount with fallback
               const spent = parseFloat(String(spentStr).replace(/[^0-9.-]/g, '')) || 0;
 
-              allExpenses.push({
+              const expense = {
                 id: `temp-${Date.now()}-${sheetIndex}-${i}`,
-                date: date.toISOString().split('T')[0],
+                date: dateString,
                 description: description.substring(0, 500),
                 category: category.substring(0, 100),
                 spent: Math.abs(spent),
                 sourceAccount: sourceAccount.substring(0, 100),
                 classified: false,
                 reconciled: false
-              });
+              };
+
+              console.log(`Created expense for row ${i}:`, expense);
+              allExpenses.push(expense);
             }
           });
 
@@ -194,6 +207,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             return;
           }
 
+          console.log('All processed expenses:', allExpenses);
           resolve(allExpenses);
         } catch (error) {
           reject(new Error('Failed to parse Excel file: ' + (error as Error).message));
@@ -324,6 +338,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       }
 
       console.log(`Processed ${expenses.length} expenses from file`);
+      console.log('Final expenses being passed to onExpensesUploaded:', expenses);
       onExpensesUploaded(expenses);
     } catch (error) {
       console.error('File processing error:', error);
@@ -399,3 +414,4 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     </div>
   );
 };
+
