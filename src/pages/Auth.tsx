@@ -422,16 +422,6 @@ const Auth = () => {
                     Forgot your password?
                   </button>
                   <div className="text-sm text-slate-600">
-                    Don't have an account?{' '}
-                    <button
-                      type="button"
-                      onClick={() => switchMode('signup')}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Sign up
-                    </button>
-                  </div>
-                  <div className="text-sm text-slate-600">
                     Or{' '}
                     <button
                       type="button"
