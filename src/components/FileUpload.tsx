@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -29,14 +28,13 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     // Handle Excel serial date numbers
     if (typeof dateValue === 'number' && dateValue > 1) {
       // Excel serial date: days since January 1, 1900
-      // Excel incorrectly treats 1900 as a leap year, so we need to account for that
-      const excelEpoch = new Date(Date.UTC(1899, 11, 30)); // December 30, 1899 in UTC
-      const days = dateValue - 1; // Adjust for Excel's 1-based indexing
+      // Excel incorrectly treats 1900 as a leap year, so we subtract 2 days total
+      const excelEpoch = new Date(1900, 0, 1); // January 1, 1900
+      const days = dateValue - 2; // Subtract 2: 1 for Excel's 1-based indexing + 1 for the leap year bug
       const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
       
       if (!isNaN(date.getTime())) {
-        // Return date in local timezone to avoid day shifts
-        return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+        return date;
       }
     }
 
