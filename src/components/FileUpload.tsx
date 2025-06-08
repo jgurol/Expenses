@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { validateFileUpload, sanitizeInput } from '@/utils/authCleanup';
+import { formatDateInTimezone } from '@/utils/timezone';
+import { useAuth } from '@/hooks/useAuth';
 import * as XLSX from 'xlsx';
 import type { Expense } from '@/pages/Index';
 
@@ -15,9 +17,10 @@ interface FileUploadProps {
 export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [error, setError] = React.useState<string>('');
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const { userTimezone } = useAuth();
 
   const parseDate = (dateValue: any): Date => {
-    console.log('parseDate input:', dateValue, 'type:', typeof dateValue);
+    console.log('parseDate input:', dateValue, 'type:', typeof dateValue, 'userTimezone:', userTimezone);
     
     // Handle empty or null values
     if (!dateValue) {
@@ -37,10 +40,18 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         console.log('XLSX.SSF.parse_date_code result:', excelDateObj);
         
         if (excelDateObj && excelDateObj.y && excelDateObj.m && excelDateObj.d) {
-          // Create date in UTC to avoid timezone issues
-          const date = new Date(Date.UTC(excelDateObj.y, excelDateObj.m - 1, excelDateObj.d));
-          console.log('Using XLSX parsed date (UTC):', date.toISOString().split('T')[0]);
-          console.log('Date object created (UTC):', date);
+          // Create date in the user's timezone to avoid timezone shifting
+          // We want the date to be interpreted as a local date in the user's timezone
+          const dateString = `${excelDateObj.y}-${String(excelDateObj.m).padStart(2, '0')}-${String(excelDateObj.d).padStart(2, '0')}`;
+          console.log('Formatted date string:', dateString);
+          
+          // Create a date that represents this date in the user's timezone
+          // We'll use a simple Date constructor that treats this as a local date
+          const date = new Date(excelDateObj.y, excelDateObj.m - 1, excelDateObj.d);
+          console.log('Date created in local timezone:', date);
+          console.log('Date ISO string:', date.toISOString());
+          console.log('Date local date string:', date.toDateString());
+          
           return date;
         }
       } catch (e) {
@@ -50,13 +61,12 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       // Fallback manual calculation if XLSX parsing fails
       console.log('Using fallback manual calculation for:', dateValue);
       
-      // For Excel serial dates, we need to be more precise about the calculation
-      // Excel epoch is December 30, 1899 (not January 1, 1900)
-      const excelEpoch = new Date(Date.UTC(1899, 11, 30)); // December 30, 1899 UTC
+      // For Excel serial dates, calculate the date and create it in local timezone
+      const excelEpoch = new Date(1899, 11, 30); // December 30, 1899 in local timezone
       const days = Math.floor(dateValue); // Get whole days only
       const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
       
-      console.log('Manual calculation result (UTC):', date.toISOString().split('T')[0]);
+      console.log('Manual calculation result:', date.toDateString());
       
       if (!isNaN(date.getTime())) {
         return date;
@@ -66,11 +76,11 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     // Try parsing as a regular date string
     const parsedDate = new Date(dateStr);
     if (!isNaN(parsedDate.getTime())) {
-      console.log('Parsed as regular date string:', parsedDate.toISOString().split('T')[0]);
+      console.log('Parsed as regular date string:', parsedDate.toDateString());
       return parsedDate;
     }
 
-    // Try common date formats
+    // Try common date formats - create in local timezone
     const formats = [
       /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // MM/DD/YYYY or M/D/YYYY
       /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/, // MM/DD/YY or M/D/YY
@@ -103,8 +113,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           year = shortYear <= 29 ? 2000 + shortYear : 1900 + shortYear;
         }
 
-        // Create date in UTC to avoid timezone issues
-        const constructedDate = new Date(Date.UTC(year, month, day));
+        // Create date in local timezone
+        const constructedDate = new Date(year, month, day);
         if (!isNaN(constructedDate.getTime()) && year >= 1900 && year <= 2100) {
           return constructedDate;
         }
@@ -172,11 +182,17 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
 
               // Parse date with improved handling
               const date = parseDate(dateValue);
-              const dateString = date.toISOString().split('T')[0];
+              
+              // Format the date to YYYY-MM-DD in the user's local timezone
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              const dateString = `${year}-${month}-${day}`;
               
               console.log(`Row ${i}: Original date value:`, dateValue);
               console.log(`Row ${i}: Parsed date object:`, date);
               console.log(`Row ${i}: Final date string:`, dateString);
+              console.log(`Row ${i}: Date components - Year: ${year}, Month: ${month}, Day: ${day}`);
 
               // Parse spent amount with fallback
               const spent = parseFloat(String(spentStr).replace(/[^0-9.-]/g, '')) || 0;
@@ -271,9 +287,15 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             // Parse spent amount with fallback
             const spent = parseFloat(spentStr.replace(/[^0-9.-]/g, '')) || 0;
 
+            // Format the date to YYYY-MM-DD in the user's local timezone
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${day}`;
+
             expenses.push({
               id: `temp-${Date.now()}-${i}`,
-              date: date.toISOString().split('T')[0],
+              date: dateString,
               description: description.substring(0, 500),
               category: category.substring(0, 100),
               spent: Math.abs(spent),
