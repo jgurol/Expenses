@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -15,6 +16,13 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [error, setError] = React.useState<string>('');
   const [isProcessing, setIsProcessing] = React.useState(false);
 
+  const extractSourceAccountFromFilename = (filename: string): string => {
+    // Remove file extension and clean up the name
+    const nameWithoutExtension = filename.replace(/\.(csv|xlsx?|xls)$/i, '');
+    // Clean up common prefixes/suffixes and return as source account
+    return nameWithoutExtension.trim() || 'Unknown';
+  };
+
   const processCSVFile = async (file: File): Promise<Expense[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -31,6 +39,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
 
           const headers = lines[0].split(',').map(h => sanitizeInput(h.toLowerCase().trim()));
           const expenses: Expense[] = [];
+          
+          // Extract source account from filename
+          const sourceAccount = extractSourceAccountFromFilename(file.name);
 
           for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(',').map(v => sanitizeInput(v.trim()));
@@ -45,12 +56,14 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               row[header] = values[index] || '';
             });
 
-            // Extract data from available columns with fallbacks
-            const dateStr = row.date;
-            const description = row.description || row.desc || row.transaction || 'Unknown';
-            const spentStr = row.spent || row.amount || row.value || '0';
-            const category = row.categories || row.category || 'Unclassified';
-            const sourceAccount = row.sourceaccount || row['source account'] || 'Unknown';
+            // Flexible column mapping - handle various header names
+            const dateStr = row.date || row.a || '';
+            const description = row.description || row.desc || row.transaction || row.b || 'Unknown';
+            const spentStr = row.spent || row.amount || row.value || row.d || '0';
+            
+            // Handle category column - look for "categorize", "match", "category", or column C
+            const category = row.categories || row.category || row.categorize || row.match || 
+                           row['categorize or match'] || row.c || 'Unclassified';
 
             // Skip rows without essential data
             if (!dateStr && !description) {
@@ -76,7 +89,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               description: description.substring(0, 500), // Limit description length
               category: category.substring(0, 100), // Limit category length
               spent: Math.abs(spent), // Ensure positive amount
-              sourceAccount: sourceAccount.substring(0, 100), // Limit source account length
+              sourceAccount: sourceAccount.substring(0, 100), // Use filename as source account
               classified: false,
               reconciled: false
             });
@@ -190,8 +203,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       )}
 
       <div className="text-xs text-slate-500 space-y-1">
-        <p><strong>Flexible import:</strong> Automatically detects and maps common column names</p>
-        <p><strong>Supported columns:</strong> date, description, amount/spent, category/categories, source account</p>
+        <p><strong>Flexible import:</strong> Automatically detects column structure and maps data</p>
+        <p><strong>Expected columns:</strong> Date, Description, Category/Categorize, Amount/Spent</p>
+        <p><strong>Source account:</strong> Automatically extracted from filename</p>
         <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
       </div>
     </div>
