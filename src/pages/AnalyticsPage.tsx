@@ -231,6 +231,81 @@ const AnalyticsPage = () => {
 
         <main className="max-w-7xl mx-auto px-6 py-8">
           <div className="space-y-8">
+            {/* AI Analysis Report - Moved to top */}
+            {analysisReport && (
+              <div className="space-y-6">
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Brain className="h-5 w-5 text-purple-600" />
+                    <h2 className="text-xl font-semibold">AI Executive Summary</h2>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed">{analysisReport.summary}</p>
+                </Card>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="h-5 w-5 text-blue-600" />
+                      <h3 className="text-lg font-semibold">Key Trends</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {analysisReport.trends.map((trend, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                          <span className="text-slate-700">{trend}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <AlertTriangle className="h-5 w-5 text-red-600" />
+                      <h3 className="text-lg font-semibold">Red Flags</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {analysisReport.redFlags.map((flag, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-red-600 rounded-full mt-2 flex-shrink-0" />
+                          <span className="text-slate-700">{flag}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText className="h-5 w-5 text-green-600" />
+                      <h3 className="text-lg font-semibold">Recommendations</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {analysisReport.recommendations.map((rec, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0" />
+                          <span className="text-slate-700">{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <BarChart3 className="h-5 w-5 text-purple-600" />
+                      <h3 className="text-lg font-semibold">Spending Habits</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {analysisReport.spendingHabits.map((habit, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 flex-shrink-0" />
+                          <span className="text-slate-700">{habit}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                </div>
+              </div>
+            )}
+
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card className="p-6">
@@ -344,81 +419,6 @@ const AnalyticsPage = () => {
                 </ChartContainer>
               </Card>
             </div>
-
-            {/* AI Analysis Report */}
-            {analysisReport && (
-              <div className="space-y-6">
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Brain className="h-5 w-5 text-purple-600" />
-                    <h2 className="text-xl font-semibold">AI Executive Summary</h2>
-                  </div>
-                  <p className="text-slate-700 leading-relaxed">{analysisReport.summary}</p>
-                </Card>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                      <h3 className="text-lg font-semibold">Key Trends</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {analysisReport.trends.map((trend, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-                          <span className="text-slate-700">{trend}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-
-                  <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <AlertTriangle className="h-5 w-5 text-red-600" />
-                      <h3 className="text-lg font-semibold">Red Flags</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {analysisReport.redFlags.map((flag, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <div className="w-2 h-2 bg-red-600 rounded-full mt-2 flex-shrink-0" />
-                          <span className="text-slate-700">{flag}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-
-                  <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <FileText className="h-5 w-5 text-green-600" />
-                      <h3 className="text-lg font-semibold">Recommendations</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {analysisReport.recommendations.map((rec, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0" />
-                          <span className="text-slate-700">{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-
-                  <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <BarChart3 className="h-5 w-5 text-purple-600" />
-                      <h3 className="text-lg font-semibold">Spending Habits</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {analysisReport.spendingHabits.map((habit, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 flex-shrink-0" />
-                          <span className="text-slate-700">{habit}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                </div>
-              </div>
-            )}
 
             {filteredExpenses.length === 0 && (
               <Card className="p-12 text-center">
