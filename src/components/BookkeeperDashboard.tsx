@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, FileCheck, Archive, ArrowRight } from "lucide-react";
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { useArchivedExpenses } from "@/hooks/useArchivedExpenses";
+import { useNavigate } from "react-router-dom";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface BookkeeperDashboardProps {
@@ -22,6 +23,7 @@ export const BookkeeperDashboard = ({
   onBulkDeleteUnclassifiedExpenses
 }: BookkeeperDashboardProps) => {
   const { data: archivedExpenses = [] } = useArchivedExpenses();
+  const navigate = useNavigate();
   
   // Calculate workflow stage statistics
   const classifiedExpenses = expenses.filter(e => e.classified && !e.reconciled);
@@ -41,7 +43,10 @@ export const BookkeeperDashboard = ({
         <div className="flex items-center gap-2 mb-8 overflow-x-auto">
           {/* Unclassified */}
           <div className="flex-1 min-w-0">
-            <Card className="p-4 border-orange-200 bg-orange-50/50 h-full">
+            <Card 
+              className="p-4 border-orange-200 bg-orange-50/50 h-full cursor-pointer hover:bg-orange-100/50 transition-colors"
+              onClick={() => navigate('/classifier')}
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className="p-2 bg-orange-100 rounded-lg">
                   <FileCheck className="h-4 w-4 text-orange-600" />
@@ -65,7 +70,10 @@ export const BookkeeperDashboard = ({
           
           {/* To Be Reconciled */}
           <div className="flex-1 min-w-0">
-            <Card className="p-4 border-blue-200 bg-blue-50/50 h-full">
+            <Card 
+              className="p-4 border-blue-200 bg-blue-50/50 h-full cursor-pointer hover:bg-blue-100/50 transition-colors"
+              onClick={() => navigate('/reconcile')}
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <Clock className="h-4 w-4 text-blue-600" />
@@ -89,7 +97,10 @@ export const BookkeeperDashboard = ({
           
           {/* Reconciled */}
           <div className="flex-1 min-w-0">
-            <Card className="p-4 border-green-200 bg-green-50/50 h-full">
+            <Card 
+              className="p-4 border-green-200 bg-green-50/50 h-full cursor-pointer hover:bg-green-100/50 transition-colors"
+              onClick={() => navigate('/reconciled')}
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className="p-2 bg-green-100 rounded-lg">
                   <CheckCircle className="h-4 w-4 text-green-600" />
@@ -113,7 +124,10 @@ export const BookkeeperDashboard = ({
           
           {/* Archived */}
           <div className="flex-1 min-w-0">
-            <Card className="p-4 border-purple-200 bg-purple-50/50 h-full">
+            <Card 
+              className="p-4 border-purple-200 bg-purple-50/50 h-full cursor-pointer hover:bg-purple-100/50 transition-colors"
+              onClick={() => navigate('/archived')}
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <Archive className="h-4 w-4 text-purple-600" />
