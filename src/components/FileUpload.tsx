@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -33,11 +34,15 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       
       // Use XLSX.SSF.parse_date_code which handles Excel dates correctly
       try {
-        const excelDate = XLSX.SSF.parse_date_code(dateValue);
-        console.log('XLSX.SSF.parse_date_code result:', excelDate);
-        if (excelDate && !isNaN(excelDate.getTime())) {
-          console.log('Using XLSX parsed date:', excelDate.toISOString().split('T')[0]);
-          return excelDate;
+        const excelDateObj = XLSX.SSF.parse_date_code(dateValue);
+        console.log('XLSX.SSF.parse_date_code result:', excelDateObj);
+        
+        if (excelDateObj && excelDateObj.y && excelDateObj.m && excelDateObj.d) {
+          // Create date from the parsed components
+          // Note: JavaScript months are 0-based, but Excel months are 1-based
+          const date = new Date(excelDateObj.y, excelDateObj.m - 1, excelDateObj.d);
+          console.log('Using XLSX parsed date:', date.toISOString().split('T')[0]);
+          return date;
         }
       } catch (e) {
         console.warn('Failed to parse Excel date code:', dateValue, e);
