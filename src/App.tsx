@@ -16,6 +16,7 @@ import Reconciled from "./pages/Reconciled";
 import Classifier from "./pages/Classifier";
 import UserManagement from "./pages/UserManagement";
 import ArchivedExpenses from "./pages/ArchivedExpenses";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,11 @@ const App = () => (
             <Route path="/classifier" element={
               <ProtectedRoute>
                 <Classifier />
+              </ProtectedRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute requiredRoles={['admin', 'bookkeeper']}>
+                <AnalyticsPage />
               </ProtectedRoute>
             } />
             <Route path="/users" element={

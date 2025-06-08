@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Users, FileText, Cog, Archive } from "lucide-react";
+import { Settings, LogOut, Users, FileText, Cog, Archive, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,6 +48,15 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
             {onRoleChange && (
               <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
             )}
+
+            <Button
+              variant="outline"
+              onClick={() => navigate("/analytics")}
+              className="flex items-center gap-2 bg-purple-100 border-purple-200 text-purple-700 hover:bg-purple-200 hover:border-purple-300"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Analytics
+            </Button>
 
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <span>{user?.email}</span>
