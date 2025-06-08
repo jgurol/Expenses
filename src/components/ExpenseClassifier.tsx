@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Check, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAIAccountMatching } from "@/hooks/useAIAccountMatching";
+import { toast } from "@/hooks/use-toast";
 import type { Expense, AccountCode } from "@/pages/Index";
 import type { Source } from "@/hooks/useSources";
 
@@ -29,6 +31,9 @@ export const ExpenseClassifier = memo(({
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
+
+  const aiMatching = useAIAccountMatching();
 
   // Sort expenses based on current sort field and direction
   const sortedExpenses = useMemo(() => {
@@ -192,6 +197,60 @@ export const ExpenseClassifier = memo(({
     setSelectedExpenses([]);
   };
 
+  const handleAIReclassification = async () => {
+    if (expenses.length === 0) {
+      toast({
+        title: "No Expenses",
+        description: "No expenses available for AI reclassification",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAIProcessing(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      toast({
+        title: "AI Reclassification Started",
+        description: `Processing ${expenses.length} expenses...`,
+      });
+
+      for (const expense of expenses) {
+        try {
+          const result = await aiMatching.mutateAsync({
+            description: expense.description,
+            accountCodes: accountCodes
+          });
+
+          if (result.suggestedAccountCode && result.confidence === 'high') {
+            await onExpenseClassified(expense.id, result.suggestedAccountCode);
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          console.error(`Error processing expense ${expense.id}:`, error);
+          errorCount++;
+        }
+      }
+
+      toast({
+        title: "AI Reclassification Complete",
+        description: `Successfully reclassified ${successCount} expenses. ${errorCount > 0 ? `${errorCount} could not be classified.` : ''}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to complete AI reclassification",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAIProcessing(false);
+    }
+  };
+
   const isAllSelected = selectedExpenses.length === expenses.length && expenses.length > 0;
   const isSomeSelected = selectedExpenses.length > 0 && selectedExpenses.length < expenses.length;
 
@@ -232,22 +291,36 @@ export const ExpenseClassifier = memo(({
 
   return (
     <div className="space-y-4">
-      {selectedExpenses.length > 0 && (
-        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border">
-          <span className="text-sm font-medium text-blue-900">
-            {selectedExpenses.length} expense{selectedExpenses.length > 1 ? 's' : ''} selected
-          </span>
-          <Button
-            onClick={handleBulkAccept}
-            variant="default"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Check className="h-4 w-4" />
-            Accept Selected ({selectedExpenses.length})
-          </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {selectedExpenses.length > 0 && (
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedExpenses.length} expense{selectedExpenses.length > 1 ? 's' : ''} selected
+              </span>
+              <Button
+                onClick={handleBulkAccept}
+                variant="default"
+                size="sm"
+                className="flex items-center gap-2 ml-4"
+              >
+                <Check className="h-4 w-4" />
+                Accept Selected ({selectedExpenses.length})
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+        
+        <Button
+          onClick={handleAIReclassification}
+          disabled={isAIProcessing}
+          variant="outline"
+          className="flex items-center gap-2 bg-purple-100 border-purple-200 text-purple-700 hover:bg-purple-200 hover:border-purple-300"
+        >
+          <Sparkles className="h-4 w-4" />
+          {isAIProcessing ? 'AI Processing...' : 'AI Reclassify All'}
+        </Button>
+      </div>
 
       <div className="border rounded-lg">
         <Table>
