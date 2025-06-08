@@ -45,11 +45,11 @@ export const BookkeeperDashboard = ({
           {/* Unclassified */}
           <div className="flex-1 min-w-0">
             <Card 
-              className="p-4 border-orange-200 bg-orange-50/50 h-full cursor-pointer hover:bg-orange-100/50 transition-colors"
+              className="p-4 border-orange-200 bg-orange-50/50 h-full cursor-pointer hover:bg-orange-100/70 hover:border-orange-300 hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
               onClick={() => navigate('/classifier')}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
+                <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
                   <FileCheck className="h-4 w-4 text-orange-600" />
                 </div>
                 <div>
@@ -72,11 +72,11 @@ export const BookkeeperDashboard = ({
           {/* To Be Reconciled */}
           <div className="flex-1 min-w-0">
             <Card 
-              className="p-4 border-blue-200 bg-blue-50/50 h-full cursor-pointer hover:bg-blue-100/50 transition-colors"
+              className="p-4 border-blue-200 bg-blue-50/50 h-full cursor-pointer hover:bg-blue-100/70 hover:border-blue-300 hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
               onClick={() => navigate('/reconcile')}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
+                <div className="p-2 bg-blue-100 rounded-lg transition-colors">
                   <Clock className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
@@ -99,11 +99,11 @@ export const BookkeeperDashboard = ({
           {/* Reconciled */}
           <div className="flex-1 min-w-0">
             <Card 
-              className="p-4 border-green-200 bg-green-50/50 h-full cursor-pointer hover:bg-green-100/50 transition-colors"
+              className="p-4 border-green-200 bg-green-50/50 h-full cursor-pointer hover:bg-green-100/70 hover:border-green-300 hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
               onClick={() => navigate('/reconciled')}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 bg-green-100 rounded-lg transition-colors">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
@@ -126,11 +126,11 @@ export const BookkeeperDashboard = ({
           {/* Archived */}
           <div className="flex-1 min-w-0">
             <Card 
-              className="p-4 border-purple-200 bg-purple-50/50 h-full cursor-pointer hover:bg-purple-100/50 transition-colors"
+              className="p-4 border-purple-200 bg-purple-50/50 h-full cursor-pointer hover:bg-purple-100/70 hover:border-purple-300 hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
               onClick={() => navigate('/archived')}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
+                <div className="p-2 bg-purple-100 rounded-lg transition-colors">
                   <Archive className="h-4 w-4 text-purple-600" />
                 </div>
                 <div>
