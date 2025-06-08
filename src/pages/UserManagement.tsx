@@ -6,18 +6,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Users, Loader2, Mail, Home, Key } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Loader2, Mail, Home, Key, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserManagement, UserProfile } from '@/hooks/useUserManagement';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const UserManagement = () => {
   const navigate = useNavigate();
-  const { users, isLoading, createUser, updateUserRoles, deleteUser, sendTempPassword, setUserPassword, isCreating, isUpdating, isDeleting, isSendingTempPassword, isSettingPassword } = useUserManagement();
+  const { 
+    users, 
+    isLoading, 
+    createUser, 
+    updateUserRoles, 
+    updateUserProfile, 
+    deleteUser, 
+    sendTempPassword, 
+    setUserPassword, 
+    isCreating, 
+    isUpdating, 
+    isUpdatingProfile, 
+    isDeleting, 
+    isSendingTempPassword, 
+    isSettingPassword 
+  } = useUserManagement();
+  
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [timezoneDialogOpen, setTimezoneDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
   // Create user form state
@@ -26,6 +44,7 @@ const UserManagement = () => {
     password: '',
     firstName: '',
     lastName: '',
+    timezone: 'UTC',
     roles: [] as string[]
   });
 
@@ -35,12 +54,30 @@ const UserManagement = () => {
   // Set password state
   const [newPassword, setNewPassword] = useState('');
 
+  // Timezone state
+  const [selectedTimezone, setSelectedTimezone] = useState('UTC');
+
   const roleOptions = ['admin', 'bookkeeper', 'classifier'];
+  
+  // Common timezones
+  const timezoneOptions = [
+    'UTC',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Australia/Sydney'
+  ];
 
   const handleCreateUser = () => {
     createUser(newUser);
     setCreateDialogOpen(false);
-    setNewUser({ email: '', password: '', firstName: '', lastName: '', roles: [] });
+    setNewUser({ email: '', password: '', firstName: '', lastName: '', timezone: 'UTC', roles: [] });
   };
 
   const handleEditUser = (user: UserProfile) => {
@@ -55,6 +92,21 @@ const UserManagement = () => {
       setEditDialogOpen(false);
       setSelectedUser(null);
       setEditRoles([]);
+    }
+  };
+
+  const handleEditTimezone = (user: UserProfile) => {
+    setSelectedUser(user);
+    setSelectedTimezone(user.timezone || 'UTC');
+    setTimezoneDialogOpen(true);
+  };
+
+  const handleUpdateTimezone = () => {
+    if (selectedUser) {
+      updateUserProfile({ userId: selectedUser.id, timezone: selectedTimezone });
+      setTimezoneDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedTimezone('UTC');
     }
   };
 
@@ -188,6 +240,22 @@ const UserManagement = () => {
                       placeholder="Enter password"
                     />
                   </div>
+
+                  <div>
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Select value={newUser.timezone} onValueChange={(value) => setNewUser(prev => ({ ...prev, timezone: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timezoneOptions.map(timezone => (
+                          <SelectItem key={timezone} value={timezone}>
+                            {timezone}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   
                   <div>
                     <Label>Roles</Label>
@@ -241,6 +309,7 @@ const UserManagement = () => {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Timezone</TableHead>
                       <TableHead>Roles</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -253,6 +322,7 @@ const UserManagement = () => {
                           {user.first_name} {user.last_name}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.timezone || 'UTC'}</TableCell>
                         <TableCell>
                           <div className="flex gap-1 flex-wrap">
                             {user.roles.map(role => (
@@ -274,6 +344,14 @@ const UserManagement = () => {
                               title="Edit roles"
                             >
                               <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditTimezone(user)}
+                              title="Edit timezone"
+                            >
+                              <Clock className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="outline"
@@ -343,6 +421,45 @@ const UserManagement = () => {
                     Update Roles
                   </Button>
                   <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Timezone Dialog */}
+          <Dialog open={timezoneDialogOpen} onOpenChange={setTimezoneDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit User Timezone</DialogTitle>
+                <DialogDescription>
+                  Update timezone for {selectedUser?.first_name} {selectedUser?.last_name}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="editTimezone">Timezone</Label>
+                  <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timezoneOptions.map(timezone => (
+                        <SelectItem key={timezone} value={timezone}>
+                          {timezone}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button onClick={handleUpdateTimezone} disabled={isUpdatingProfile} className="flex-1">
+                    {isUpdatingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Update Timezone
+                  </Button>
+                  <Button variant="outline" onClick={() => setTimezoneDialogOpen(false)} className="flex-1">
                     Cancel
                   </Button>
                 </div>

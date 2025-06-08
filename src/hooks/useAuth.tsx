@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRoles: UserRole[];
+  userTimezone: string;
   loading: boolean;
   signInWithPassword: (email: string, password: string) => Promise<{ error: any }>;
   signUpWithPassword: (email: string, password: string) => Promise<{ error: any }>;
@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [userTimezone, setUserTimezone] = useState<string>('UTC');
   const [loading, setLoading] = useState(true);
 
   const fetchUserRoles = async (userId: string) => {
@@ -61,6 +62,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const fetchUserTimezone = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('timezone')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user timezone:', error);
+        return 'UTC';
+      }
+      
+      return data?.timezone || 'UTC';
+    } catch (error) {
+      console.error('Error fetching user timezone:', error);
+      return 'UTC';
+    }
+  };
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
@@ -75,8 +96,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRoles(session.user.id).then(roles => {
+        Promise.all([
+          fetchUserRoles(session.user.id),
+          fetchUserTimezone(session.user.id)
+        ]).then(([roles, timezone]) => {
           setUserRoles(roles);
+          setUserTimezone(timezone);
           setLoading(false);
         });
       } else {
@@ -93,14 +118,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(session?.user ?? null);
         
         if (session?.user && event === 'SIGNED_IN') {
-          // Defer role fetching to avoid potential issues
+          // Defer role and timezone fetching to avoid potential issues
           setTimeout(async () => {
-            const roles = await fetchUserRoles(session.user.id);
+            const [roles, timezone] = await Promise.all([
+              fetchUserRoles(session.user.id),
+              fetchUserTimezone(session.user.id)
+            ]);
             setUserRoles(roles);
+            setUserTimezone(timezone);
             setLoading(false);
           }, 100);
         } else if (event === 'SIGNED_OUT') {
           setUserRoles([]);
+          setUserTimezone('UTC');
           cleanupAuthState(); // Security: Clean up on sign out
           setLoading(false);
         } else {
@@ -242,6 +272,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(null);
       setSession(null);
       setUserRoles([]);
+      setUserTimezone('UTC');
       
       // Security: Force page reload for clean state
       window.location.href = '/auth';
@@ -265,6 +296,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     userRoles,
+    userTimezone,
     loading,
     signInWithPassword,
     signUpWithPassword,

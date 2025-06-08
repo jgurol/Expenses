@@ -8,6 +8,7 @@ export interface UserProfile {
   email: string;
   first_name: string | null;
   last_name: string | null;
+  timezone: string | null;
   created_at: string;
   roles: string[];
 }
@@ -57,6 +58,7 @@ export const useUserManagement = () => {
       password: string;
       firstName: string;
       lastName: string;
+      timezone: string;
       roles: string[];
     }) => {
       // Call edge function to create user
@@ -78,6 +80,32 @@ export const useUserManagement = () => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create user',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update user profile mutation
+  const updateUserProfileMutation = useMutation({
+    mutationFn: async ({ userId, timezone }: { userId: string; timezone: string }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ timezone })
+        .eq('id', userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: 'Success',
+        description: 'User timezone updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update user timezone',
         variant: 'destructive',
       });
     },
@@ -205,11 +233,13 @@ export const useUserManagement = () => {
     error,
     createUser: createUserMutation.mutate,
     updateUserRoles: updateUserRolesMutation.mutate,
+    updateUserProfile: updateUserProfileMutation.mutate,
     deleteUser: deleteUserMutation.mutate,
     sendTempPassword: sendTempPasswordMutation.mutate,
     setUserPassword: setUserPasswordMutation.mutate,
     isCreating: createUserMutation.isPending,
     isUpdating: updateUserRolesMutation.isPending,
+    isUpdatingProfile: updateUserProfileMutation.isPending,
     isDeleting: deleteUserMutation.isPending,
     isSendingTempPassword: sendTempPasswordMutation.isPending,
     isSettingPassword: setUserPasswordMutation.isPending,
