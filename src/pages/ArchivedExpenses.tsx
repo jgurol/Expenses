@@ -11,6 +11,7 @@ import { useUnarchiveExpenses } from "@/hooks/useUnarchiveExpenses";
 import { ExpensesTable } from "@/components/ExpensesTable";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/utils/formatUtils";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
@@ -163,13 +164,13 @@ const ArchivedExpenses = () => {
               
               <Card className="p-6">
                 <h3 className="text-sm font-medium text-slate-600 mb-2">Total Amount</h3>
-                <div className="text-3xl font-bold text-orange-600">${totalAmount.toFixed(2)}</div>
+                <div className="text-3xl font-bold text-orange-600">{formatCurrency(totalAmount)}</div>
                 <div className="text-sm text-slate-500">archived</div>
               </Card>
               
               <Card className="p-6">
                 <h3 className="text-sm font-medium text-slate-600 mb-2">Average Expense</h3>
-                <div className="text-3xl font-bold text-blue-600">${averageExpense.toFixed(2)}</div>
+                <div className="text-3xl font-bold text-blue-600">{formatCurrency(averageExpense)}</div>
                 <div className="text-sm text-slate-500">per transaction</div>
               </Card>
             </div>
@@ -217,7 +218,7 @@ const ArchivedExpenses = () => {
                               {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
                             </Badge>
                             <Badge variant="outline" className="font-mono">
-                              ${totalForDate.toFixed(2)}
+                              {formatCurrency(totalForDate)}
                             </Badge>
                           </div>
                         </div>

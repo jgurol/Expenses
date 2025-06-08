@@ -2,6 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, TrendingDown, AlertTriangle } from "lucide-react";
+import { formatCurrency } from "@/utils/formatUtils";
 
 interface Expense {
   id: string;
@@ -37,14 +38,14 @@ const generateSpendingCommentary = (expenses: Expense[]): string[] => {
   const commentary: string[] = [];
   
   // Opening statement
-  commentary.push(`You've managed to spend $${totalSpent.toFixed(2)} across ${expenses.length} transactions. Impressive financial dedication.`);
+  commentary.push(`You've managed to spend ${formatCurrency(totalSpent)} across ${expenses.length} transactions. Impressive financial dedication.`);
   
   // Category analysis
   if (topCategory) {
     const [categoryName, amount] = topCategory;
     const percentage = ((amount / totalSpent) * 100).toFixed(1);
     
-    let categoryComment = `Your biggest money pit is "${categoryName}" at $${amount.toFixed(2)} (${percentage}% of total spending). `;
+    let categoryComment = `Your biggest money pit is "${categoryName}" at ${formatCurrency(amount)} (${percentage}% of total spending). `;
     
     // Category-specific commentary
     const lowerCategory = categoryName.toLowerCase();
@@ -67,16 +68,16 @@ const generateSpendingCommentary = (expenses: Expense[]): string[] => {
   
   // Average transaction commentary
   if (avgTransaction > 500) {
-    commentary.push(`Your average transaction of $${avgTransaction.toFixed(2)} suggests you're not familiar with the concept of "small purchases."`);
+    commentary.push(`Your average transaction of ${formatCurrency(avgTransaction)} suggests you're not familiar with the concept of "small purchases."`);
   } else if (avgTransaction < 10) {
-    commentary.push(`With an average transaction of $${avgTransaction.toFixed(2)}, you're either very budget-conscious or buying everything one penny at a time.`);
+    commentary.push(`With an average transaction of ${formatCurrency(avgTransaction)}, you're either very budget-conscious or buying everything one penny at a time.`);
   } else {
-    commentary.push(`Your average transaction of $${avgTransaction.toFixed(2)} is... surprisingly reasonable. Who are you and what did you do with the spendthrift?`);
+    commentary.push(`Your average transaction of ${formatCurrency(avgTransaction)} is... surprisingly reasonable. Who are you and what did you do with the spendthrift?`);
   }
   
   // Largest expense commentary
   if (largestExpense > 1000) {
-    commentary.push(`Your largest single expense of $${largestExpense.toFixed(2)} makes me wonder if you bought a small country or just really expensive coffee.`);
+    commentary.push(`Your largest single expense of ${formatCurrency(largestExpense)} makes me wonder if you bought a small country or just really expensive coffee.`);
   }
   
   // Category diversity commentary

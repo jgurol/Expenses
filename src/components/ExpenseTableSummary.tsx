@@ -1,4 +1,5 @@
 
+import { formatCurrency } from "@/utils/formatUtils";
 import type { Expense } from "@/pages/Index";
 
 interface ExpenseTableSummaryProps {
@@ -12,7 +13,7 @@ export const ExpenseTableSummary = ({ expenses }: ExpenseTableSummaryProps) => {
     <div className="mt-4 flex justify-between items-center text-sm text-slate-600 border-t pt-4">
       <span>Total: {expenses.length} expenses</span>
       <span className="font-semibold">
-        Total Amount: ${totalAmount.toFixed(2)}
+        Total Amount: {formatCurrency(totalAmount)}
       </span>
     </div>
   );

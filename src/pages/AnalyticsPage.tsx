@@ -11,6 +11,7 @@ import { useSources } from "@/hooks/useSources";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ExpenseCommentary } from "@/components/ExpenseCommentary";
+import { formatCurrency } from "@/utils/formatUtils";
 import {
   ChartContainer,
   ChartTooltip,
@@ -238,14 +239,14 @@ const AnalyticsPage = () => {
               
               <Card className="p-6">
                 <h3 className="text-sm font-medium text-slate-600 mb-2">Total Amount</h3>
-                <div className="text-3xl font-bold text-orange-600">${totalAmount.toFixed(2)}</div>
+                <div className="text-3xl font-bold text-orange-600">{formatCurrency(totalAmount)}</div>
                 <div className="text-sm text-slate-500">total spent</div>
               </Card>
               
               <Card className="p-6">
                 <h3 className="text-sm font-medium text-slate-600 mb-2">Average Transaction</h3>
                 <div className="text-3xl font-bold text-blue-600">
-                  ${filteredExpenses.length > 0 ? (totalAmount / filteredExpenses.length).toFixed(2) : '0.00'}
+                  {formatCurrency(filteredExpenses.length > 0 ? totalAmount / filteredExpenses.length : 0)}
                 </div>
                 <div className="text-sm text-slate-500">per expense</div>
               </Card>

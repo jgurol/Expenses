@@ -1,9 +1,9 @@
-
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
+import { formatCurrency } from "@/utils/formatUtils";
 import type { Expense, AccountCode } from "@/pages/Index";
 import type { Source } from "@/hooks/useSources";
 
@@ -133,7 +133,7 @@ export const ExpenseTableRow = ({
         </Badge>
       </TableCell>
       <TableCell className="text-right font-semibold">
-        ${expense.spent.toFixed(2)}
+        {formatCurrency(expense.spent)}
       </TableCell>
       {showClassificationStatus && (
         <TableCell className="text-center">

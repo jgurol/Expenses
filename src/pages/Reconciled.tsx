@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +13,7 @@ import { ExpensesTable } from "@/components/ExpensesTable";
 import { useToast } from "@/hooks/use-toast";
 import { exportReconciledExpensesToSpreadsheet } from "@/utils/exportUtils";
 import { ExpenseSummaryByCategory } from "@/components/ExpenseSummaryByCategory";
+import { formatCurrency } from "@/utils/formatUtils";
 
 type SortField = 'sourceAccount' | 'date' | 'code';
 type SortDirection = 'asc' | 'desc';
@@ -198,13 +198,13 @@ const Reconciled = () => {
             
             <Card className="p-6">
               <h3 className="text-sm font-medium text-slate-600 mb-2">Total Amount</h3>
-              <div className="text-3xl font-bold text-green-600">${totalAmount.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-green-600">{formatCurrency(totalAmount)}</div>
               <div className="text-sm text-slate-500">reconciled</div>
             </Card>
             
             <Card className="p-6">
               <h3 className="text-sm font-medium text-slate-600 mb-2">Average Expense</h3>
-              <div className="text-3xl font-bold text-blue-600">${averageExpense.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-blue-600">{formatCurrency(averageExpense)}</div>
               <div className="text-sm text-slate-500">per transaction</div>
             </Card>
           </div>
