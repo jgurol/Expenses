@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +15,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
 } from "@/components/ui/chart";
 import {
   LineChart,
@@ -29,6 +30,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Label,
 } from "recharts";
 
 interface AnalysisReport {
@@ -326,6 +328,8 @@ const AnalyticsPage = () => {
                       data={sourceData}
                       cx="50%"
                       cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                       outerRadius={80}
                       dataKey="amount"
                       nameKey="source"
@@ -335,6 +339,7 @@ const AnalyticsPage = () => {
                       ))}
                     </Pie>
                     <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartLegend content={<ChartLegendContent />} />
                   </PieChart>
                 </ChartContainer>
               </Card>
