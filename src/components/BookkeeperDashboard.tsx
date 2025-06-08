@@ -60,6 +60,7 @@ export const BookkeeperDashboard = ({
               <div className="space-y-1">
                 <div className="text-xl font-bold text-orange-600">{unclassifiedExpenses.length}</div>
                 <div className="text-xs text-slate-600">{formatCurrency(unclassifiedAmount)}</div>
+                <div className="text-xs text-orange-600 font-medium">Click here</div>
               </div>
             </Card>
           </div>
@@ -87,6 +88,7 @@ export const BookkeeperDashboard = ({
               <div className="space-y-1">
                 <div className="text-xl font-bold text-blue-600">{classifiedExpenses.length}</div>
                 <div className="text-xs text-slate-600">{formatCurrency(classifiedAmount)}</div>
+                <div className="text-xs text-blue-600 font-medium">Click here</div>
               </div>
             </Card>
           </div>
@@ -114,6 +116,7 @@ export const BookkeeperDashboard = ({
               <div className="space-y-1">
                 <div className="text-xl font-bold text-green-600">{reconciledExpenses.length}</div>
                 <div className="text-xs text-slate-600">{formatCurrency(reconciledAmount)}</div>
+                <div className="text-xs text-green-600 font-medium">Click here</div>
               </div>
             </Card>
           </div>
@@ -141,6 +144,7 @@ export const BookkeeperDashboard = ({
               <div className="space-y-1">
                 <div className="text-xl font-bold text-purple-600">{archivedExpenses.length}</div>
                 <div className="text-xs text-slate-600">{formatCurrency(archivedAmount)}</div>
+                <div className="text-xs text-purple-600 font-medium">Click here</div>
               </div>
             </Card>
           </div>
