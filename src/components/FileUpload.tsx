@@ -441,8 +441,6 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         <p><strong>Excel files:</strong> Each sheet/tab name becomes the source account</p>
         <p><strong>CSV files:</strong> Filename becomes the source account</p>
         <p><strong>Expected columns:</strong> Date, Description, Categories, Amount/Spent, Received/Credit</p>
-        <p><strong>Note:</strong> Values in the "Received" or "Credit" column will be treated as negative amounts</p>
-        <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
       </div>
     </div>
   );
