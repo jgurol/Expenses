@@ -10,6 +10,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useSources } from "@/hooks/useSources";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ExpenseCommentary } from "@/components/ExpenseCommentary";
 import {
   ChartContainer,
   ChartTooltip,
@@ -47,8 +48,14 @@ const AnalyticsPage = () => {
   const { data: accountCodes = [] } = useCategories();
   const { data: sources = [] } = useSources();
 
-  // Prepare data for charts
-  const monthlySpending = archivedExpenses.reduce((acc, expense) => {
+  // Filter out payments and transfers from the frontend as well for safety
+  const filteredExpenses = archivedExpenses.filter(expense => 
+    !expense.category.toLowerCase().includes('payment') && 
+    !expense.category.toLowerCase().includes('transfer')
+  );
+
+  // Prepare data for charts using filtered expenses
+  const monthlySpending = filteredExpenses.reduce((acc, expense) => {
     const month = new Date(expense.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
     acc[month] = (acc[month] || 0) + expense.spent;
     return acc;
@@ -59,7 +66,7 @@ const AnalyticsPage = () => {
     amount: Number(amount.toFixed(2))
   }));
 
-  const categorySpending = archivedExpenses.reduce((acc, expense) => {
+  const categorySpending = filteredExpenses.reduce((acc, expense) => {
     acc[expense.category] = (acc[expense.category] || 0) + expense.spent;
     return acc;
   }, {} as Record<string, number>);
@@ -72,7 +79,7 @@ const AnalyticsPage = () => {
       amount: Number(amount.toFixed(2))
     }));
 
-  const sourceSpending = archivedExpenses.reduce((acc, expense) => {
+  const sourceSpending = filteredExpenses.reduce((acc, expense) => {
     const source = expense.sourceAccount || 'Unknown';
     acc[source] = (acc[source] || 0) + expense.spent;
     return acc;
@@ -86,10 +93,10 @@ const AnalyticsPage = () => {
   const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff00', '#ff00ff'];
 
   const generateAnalysis = async () => {
-    if (archivedExpenses.length === 0) {
+    if (filteredExpenses.length === 0) {
       toast({
         title: "No Data",
-        description: "No archived expenses found to analyze",
+        description: "No archived expenses found to analyze (excluding payments and transfers)",
         variant: "destructive",
       });
       return;
@@ -100,18 +107,18 @@ const AnalyticsPage = () => {
     try {
       // Prepare expense data for AI analysis
       const expenseData = {
-        totalExpenses: archivedExpenses.length,
-        totalAmount: archivedExpenses.reduce((sum, exp) => sum + exp.spent, 0),
+        totalExpenses: filteredExpenses.length,
+        totalAmount: filteredExpenses.reduce((sum, exp) => sum + exp.spent, 0),
         dateRange: {
-          earliest: Math.min(...archivedExpenses.map(exp => new Date(exp.date).getTime())),
-          latest: Math.max(...archivedExpenses.map(exp => new Date(exp.date).getTime()))
+          earliest: Math.min(...filteredExpenses.map(exp => new Date(exp.date).getTime())),
+          latest: Math.max(...filteredExpenses.map(exp => new Date(exp.date).getTime()))
         },
         categories: categoryData,
         sources: sourceData,
         monthlyTrends: monthlyData,
-        averageTransaction: archivedExpenses.reduce((sum, exp) => sum + exp.spent, 0) / archivedExpenses.length,
-        largestExpense: Math.max(...archivedExpenses.map(exp => exp.spent)),
-        smallestExpense: Math.min(...archivedExpenses.map(exp => exp.spent))
+        averageTransaction: filteredExpenses.reduce((sum, exp) => sum + exp.spent, 0) / filteredExpenses.length,
+        largestExpense: Math.max(...filteredExpenses.map(exp => exp.spent)),
+        smallestExpense: Math.min(...filteredExpenses.map(exp => exp.spent))
       };
 
       const response = await fetch('/api/analyze-expenses', {
@@ -138,14 +145,14 @@ const AnalyticsPage = () => {
       
       // Fallback to basic analysis if AI fails
       const fallbackAnalysis: AnalysisReport = {
-        summary: `Analysis of ${archivedExpenses.length} archived expenses totaling $${archivedExpenses.reduce((sum, exp) => sum + exp.spent, 0).toFixed(2)}. The data spans from ${new Date(Math.min(...archivedExpenses.map(exp => new Date(exp.date).getTime()))).toLocaleDateString()} to ${new Date(Math.max(...archivedExpenses.map(exp => new Date(exp.date).getTime()))).toLocaleDateString()}.`,
+        summary: `Analysis of ${filteredExpenses.length} archived expenses (excluding payments and transfers) totaling $${filteredExpenses.reduce((sum, exp) => sum + exp.spent, 0).toFixed(2)}. The data spans from ${new Date(Math.min(...filteredExpenses.map(exp => new Date(exp.date).getTime()))).toLocaleDateString()} to ${new Date(Math.max(...filteredExpenses.map(exp => new Date(exp.date).getTime()))).toLocaleDateString()}.`,
         trends: [
           `Top spending category: ${categoryData[0]?.category} ($${categoryData[0]?.amount.toFixed(2)})`,
-          `Average transaction amount: $${(archivedExpenses.reduce((sum, exp) => sum + exp.spent, 0) / archivedExpenses.length).toFixed(2)}`,
+          `Average transaction amount: $${(filteredExpenses.reduce((sum, exp) => sum + exp.spent, 0) / filteredExpenses.length).toFixed(2)}`,
           `Most active source account: ${sourceData[0]?.source}`
         ],
         redFlags: [
-          archivedExpenses.filter(exp => exp.spent > 1000).length > 0 ? `${archivedExpenses.filter(exp => exp.spent > 1000).length} transactions over $1,000` : "No unusually large transactions detected",
+          filteredExpenses.filter(exp => exp.spent > 1000).length > 0 ? `${filteredExpenses.filter(exp => exp.spent > 1000).length} transactions over $1,000` : "No unusually large transactions detected",
           categoryData.length < 3 ? "Limited expense category diversity" : "Good expense category distribution"
         ],
         recommendations: [
@@ -155,7 +162,7 @@ const AnalyticsPage = () => {
         ],
         spendingHabits: [
           `Primary expense categories: ${categoryData.slice(0, 3).map(c => c.category).join(', ')}`,
-          `Transaction frequency: ${archivedExpenses.length} transactions analyzed`,
+          `Transaction frequency: ${filteredExpenses.length} transactions analyzed`,
           `Spending distribution across ${Object.keys(sourceSpending).length} source accounts`
         ]
       };
@@ -172,7 +179,14 @@ const AnalyticsPage = () => {
     }
   };
 
-  const totalAmount = archivedExpenses.reduce((sum, expense) => sum + expense.spent, 0);
+  // Auto-generate analysis when expenses data is loaded
+  useEffect(() => {
+    if (filteredExpenses.length > 0 && !analysisReport && !isAnalyzing) {
+      generateAnalysis();
+    }
+  }, [filteredExpenses.length]);
+
+  const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.spent, 0);
 
   return (
     <ProtectedRoute requiredRoles={['admin', 'bookkeeper']}>
@@ -191,27 +205,21 @@ const AnalyticsPage = () => {
                 </Button>
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900">Expense Analytics</h1>
-                  <p className="text-slate-600">AI-powered analysis of archived expenses</p>
+                  <p className="text-slate-600">AI-powered analysis of archived expenses (excluding payments & transfers)</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-4">
-                <Button
-                  onClick={generateAnalysis}
-                  disabled={isAnalyzing || archivedExpenses.length === 0}
-                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
-                >
-                  {isAnalyzing ? (
+                {isAnalyzing && (
+                  <div className="flex items-center gap-2 text-purple-600">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Brain className="h-4 w-4" />
-                  )}
-                  {isAnalyzing ? 'Analyzing...' : 'Generate AI Analysis'}
-                </Button>
+                    <span className="text-sm">Generating AI Analysis...</span>
+                  </div>
+                )}
                 
                 <Badge variant="outline" className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  {archivedExpenses.length} Archived Expenses
+                  {filteredExpenses.length} Analyzed Expenses
                 </Badge>
               </div>
             </div>
@@ -224,8 +232,8 @@ const AnalyticsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card className="p-6">
                 <h3 className="text-sm font-medium text-slate-600 mb-2">Total Expenses</h3>
-                <div className="text-3xl font-bold text-slate-900">{archivedExpenses.length}</div>
-                <div className="text-sm text-slate-500">archived transactions</div>
+                <div className="text-3xl font-bold text-slate-900">{filteredExpenses.length}</div>
+                <div className="text-sm text-slate-500">analyzed transactions</div>
               </Card>
               
               <Card className="p-6">
@@ -237,7 +245,7 @@ const AnalyticsPage = () => {
               <Card className="p-6">
                 <h3 className="text-sm font-medium text-slate-600 mb-2">Average Transaction</h3>
                 <div className="text-3xl font-bold text-blue-600">
-                  ${archivedExpenses.length > 0 ? (totalAmount / archivedExpenses.length).toFixed(2) : '0.00'}
+                  ${filteredExpenses.length > 0 ? (totalAmount / filteredExpenses.length).toFixed(2) : '0.00'}
                 </div>
                 <div className="text-sm text-slate-500">per expense</div>
               </Card>
@@ -248,6 +256,11 @@ const AnalyticsPage = () => {
                 <div className="text-sm text-slate-500">expense types</div>
               </Card>
             </div>
+
+            {/* Commentary Section */}
+            {filteredExpenses.length > 0 && (
+              <ExpenseCommentary expenses={filteredExpenses} />
+            )}
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -401,11 +414,11 @@ const AnalyticsPage = () => {
               </div>
             )}
 
-            {archivedExpenses.length === 0 && (
+            {filteredExpenses.length === 0 && (
               <Card className="p-12 text-center">
                 <BarChart3 className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-900 mb-2">No Archived Expenses</h3>
-                <p className="text-slate-600">Archive some expenses first to generate analytics.</p>
+                <p className="text-slate-600">Archive some expenses first to generate analytics (payments and transfers are excluded).</p>
               </Card>
             )}
           </div>

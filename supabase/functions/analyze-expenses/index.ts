@@ -24,6 +24,8 @@ serve(async (req) => {
     const analysisPrompt = `
 You are a financial analyst AI assistant. Analyze the following business expense data and provide an executive-level report. Focus on actionable insights for business owners.
 
+IMPORTANT: This data excludes payments and transfers - only operational business expenses are included.
+
 Expense Data:
 - Total Expenses: ${expenseData.totalExpenses}
 - Total Amount: $${expenseData.totalAmount.toFixed(2)}
@@ -35,23 +37,23 @@ Expense Data:
 
 Please provide a comprehensive analysis in the following JSON format:
 {
-  "summary": "A 2-3 sentence executive summary of the overall financial picture",
-  "trends": ["3-4 key spending trends you identify"],
-  "redFlags": ["2-3 potential red flags or areas of concern"],
-  "recommendations": ["3-4 actionable recommendations for the business"],
-  "spendingHabits": ["3-4 observations about spending patterns and habits"]
+  "summary": "A 2-3 sentence executive summary of the overall operational expense picture",
+  "trends": ["3-4 key operational spending trends you identify"],
+  "redFlags": ["2-3 potential red flags or areas of concern in operational expenses"],
+  "recommendations": ["3-4 actionable recommendations for optimizing business operations"],
+  "spendingHabits": ["3-4 observations about operational spending patterns and habits"]
 }
 
 Focus on:
-- Cash flow patterns
-- Category-wise spending efficiency
-- Potential cost savings
-- Risk factors
-- Seasonal trends
-- Operational insights
-- Compliance and control recommendations
+- Operational cash flow patterns (excluding payments/transfers)
+- Category-wise operational spending efficiency
+- Potential operational cost savings
+- Operational risk factors
+- Seasonal operational trends
+- Operational insights for business efficiency
+- Process improvement recommendations
 
-Provide specific, actionable insights based on the data provided.
+Provide specific, actionable insights based on the operational expense data provided. Remember this data excludes payments and transfers.
 `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -65,7 +67,7 @@ Provide specific, actionable insights based on the data provided.
         messages: [
           { 
             role: 'system', 
-            content: 'You are a senior financial analyst with expertise in business expense analysis and cost optimization. Provide clear, actionable insights for business executives.' 
+            content: 'You are a senior financial analyst with expertise in business operational expense analysis and cost optimization. Focus only on operational expenses, excluding payments and transfers. Provide clear, actionable insights for business executives.' 
           },
           { role: 'user', content: analysisPrompt }
         ],
@@ -88,11 +90,11 @@ Provide specific, actionable insights based on the data provided.
     } catch (parseError) {
       // Fallback if AI doesn't return valid JSON
       analysis = {
-        summary: "AI analysis generated successfully. The expense data shows various spending patterns that require executive attention.",
-        trends: ["Analysis completed", "Data processed successfully", "Insights generated"],
-        redFlags: ["Review recommended", "Further analysis suggested"],
-        recommendations: ["Implement regular expense reviews", "Consider cost optimization", "Monitor spending patterns"],
-        spendingHabits: ["Regular expense tracking needed", "Category analysis recommended", "Trending patterns identified"]
+        summary: "AI analysis of operational expenses completed successfully. The expense data shows various operational spending patterns that require executive attention (payments and transfers excluded).",
+        trends: ["Operational analysis completed", "Expense data processed successfully", "Operational insights generated"],
+        redFlags: ["Operational review recommended", "Further operational analysis suggested"],
+        recommendations: ["Implement regular operational expense reviews", "Consider operational cost optimization", "Monitor operational spending patterns"],
+        spendingHabits: ["Regular operational expense tracking needed", "Operational category analysis recommended", "Operational trending patterns identified"]
       };
     }
 
