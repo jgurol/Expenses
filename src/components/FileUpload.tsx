@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -28,10 +29,23 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     // Handle Excel serial date numbers
     if (typeof dateValue === 'number' && dateValue > 1) {
       // Excel serial date: days since January 1, 1900
-      // Excel incorrectly treats 1900 as a leap year, so we subtract 2 days total
+      // Excel incorrectly treats 1900 as a leap year, so we need to handle this
+      // Use XLSX.SSF.parse_date_code which handles Excel dates correctly
+      try {
+        const excelDate = XLSX.SSF.parse_date_code(dateValue);
+        if (excelDate && !isNaN(excelDate.getTime())) {
+          return excelDate;
+        }
+      } catch (e) {
+        console.warn('Failed to parse Excel date code:', dateValue, e);
+      }
+      
+      // Fallback manual calculation if XLSX parsing fails
       const excelEpoch = new Date(1900, 0, 1); // January 1, 1900
-      const days = dateValue - 2; // Subtract 2: 1 for Excel's 1-based indexing + 1 for the leap year bug
-      const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
+      const days = dateValue - 1; // Excel is 1-based, but we need 0-based for our calculation
+      // Adjust for Excel's leap year bug (it thinks 1900 was a leap year)
+      const adjustedDays = dateValue > 59 ? days - 1 : days;
+      const date = new Date(excelEpoch.getTime() + adjustedDays * 24 * 60 * 60 * 1000);
       
       if (!isNaN(date.getTime())) {
         return date;
