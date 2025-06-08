@@ -1,5 +1,3 @@
-
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -39,14 +37,10 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         console.log('XLSX.SSF.parse_date_code result:', excelDateObj);
         
         if (excelDateObj && excelDateObj.y && excelDateObj.m && excelDateObj.d) {
-          // Create date from the parsed components
-          // Note: JavaScript months are 0-based, but Excel months are 1-based
-          const date = new Date(excelDateObj.y, excelDateObj.m - 1, excelDateObj.d);
-          console.log('Using XLSX parsed date:', date.toISOString().split('T')[0]);
-          console.log('Date object created:', date);
-          console.log('Date getFullYear:', date.getFullYear());
-          console.log('Date getMonth (0-based):', date.getMonth());
-          console.log('Date getDate:', date.getDate());
+          // Create date in UTC to avoid timezone issues
+          const date = new Date(Date.UTC(excelDateObj.y, excelDateObj.m - 1, excelDateObj.d));
+          console.log('Using XLSX parsed date (UTC):', date.toISOString().split('T')[0]);
+          console.log('Date object created (UTC):', date);
           return date;
         }
       } catch (e) {
@@ -58,11 +52,11 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       
       // For Excel serial dates, we need to be more precise about the calculation
       // Excel epoch is December 30, 1899 (not January 1, 1900)
-      const excelEpoch = new Date(1899, 11, 30); // December 30, 1899
+      const excelEpoch = new Date(Date.UTC(1899, 11, 30)); // December 30, 1899 UTC
       const days = Math.floor(dateValue); // Get whole days only
       const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
       
-      console.log('Manual calculation result:', date.toISOString().split('T')[0]);
+      console.log('Manual calculation result (UTC):', date.toISOString().split('T')[0]);
       
       if (!isNaN(date.getTime())) {
         return date;
@@ -109,7 +103,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           year = shortYear <= 29 ? 2000 + shortYear : 1900 + shortYear;
         }
 
-        const constructedDate = new Date(year, month, day);
+        // Create date in UTC to avoid timezone issues
+        const constructedDate = new Date(Date.UTC(year, month, day));
         if (!isNaN(constructedDate.getTime()) && year >= 1900 && year <= 2100) {
           return constructedDate;
         }
@@ -414,4 +409,3 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     </div>
   );
 };
-
