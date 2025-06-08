@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { validateFileUpload, sanitizeInput } from '@/utils/authCleanup';
+import * as XLSX from 'xlsx';
 import type { Expense } from '@/pages/Index';
 
 interface FileUploadProps {
@@ -16,11 +17,102 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [error, setError] = React.useState<string>('');
   const [isProcessing, setIsProcessing] = React.useState(false);
 
-  const extractSourceAccountFromFilename = (filename: string): string => {
-    // Remove file extension and clean up the name
-    const nameWithoutExtension = filename.replace(/\.(csv|xlsx?|xls)$/i, '');
-    // Clean up common prefixes/suffixes and return as source account
-    return nameWithoutExtension.trim() || 'Unknown';
+  const processExcelFile = async (file: File): Promise<Expense[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          const allExpenses: Expense[] = [];
+          
+          // Process each sheet/tab
+          workbook.SheetNames.forEach((sheetName, sheetIndex) => {
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+            
+            if (jsonData.length < 2) {
+              console.warn(`Sheet "${sheetName}" has no data, skipping`);
+              return;
+            }
+            
+            // Use the sheet name as the source account
+            const sourceAccount = sheetName.trim();
+            
+            // Get headers from first row and normalize them
+            const headers = (jsonData[0] || []).map(h => 
+              sanitizeInput(String(h || '').toLowerCase().trim())
+            );
+            
+            // Process data rows
+            for (let i = 1; i < jsonData.length; i++) {
+              const values = jsonData[i] || [];
+              
+              // Create row object
+              const row: { [key: string]: string } = {};
+              headers.forEach((header, index) => {
+                row[header] = sanitizeInput(String(values[index] || '').trim());
+              });
+              
+              // Flexible column mapping - handle various header names
+              const dateStr = row.date || row.a || '';
+              const description = row.description || row.desc || row.transaction || row.b || 'Unknown';
+              const spentStr = row.spent || row.amount || row.value || row.d || '0';
+              
+              // Handle category column - look for "categorize", "match", "category", or column C
+              const category = row.categories || row.category || row.categorize || row.match || 
+                             row['categorize or match'] || row.c || 'Unclassified';
+
+              // Skip rows without essential data
+              if (!dateStr && !description) {
+                console.warn(`Skipping row ${i + 1} in sheet "${sheetName}": no meaningful data found`);
+                continue;
+              }
+
+              // Parse date with fallback
+              let date = new Date();
+              if (dateStr) {
+                const parsedDate = new Date(dateStr);
+                if (!isNaN(parsedDate.getTime())) {
+                  date = parsedDate;
+                }
+              }
+
+              // Parse spent amount with fallback
+              const spent = parseFloat(String(spentStr).replace(/[^0-9.-]/g, '')) || 0;
+
+              allExpenses.push({
+                id: `temp-${Date.now()}-${sheetIndex}-${i}`,
+                date: date.toISOString().split('T')[0],
+                description: description.substring(0, 500),
+                category: category.substring(0, 100),
+                spent: Math.abs(spent),
+                sourceAccount: sourceAccount.substring(0, 100),
+                classified: false,
+                reconciled: false
+              });
+            }
+          });
+
+          if (allExpenses.length === 0) {
+            reject(new Error('No valid expense records found in any sheets'));
+            return;
+          }
+
+          resolve(allExpenses);
+        } catch (error) {
+          reject(new Error('Failed to parse Excel file: ' + (error as Error).message));
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
   };
 
   const processCSVFile = async (file: File): Promise<Expense[]> => {
@@ -40,8 +132,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           const headers = lines[0].split(',').map(h => sanitizeInput(h.toLowerCase().trim()));
           const expenses: Expense[] = [];
           
-          // Extract source account from filename
-          const sourceAccount = extractSourceAccountFromFilename(file.name);
+          // For CSV files, use filename as source account
+          const sourceAccount = file.name.replace(/\.(csv|xlsx?|xls)$/i, '').trim() || 'Unknown';
 
           for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(',').map(v => sanitizeInput(v.trim()));
@@ -86,10 +178,10 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             expenses.push({
               id: `temp-${Date.now()}-${i}`,
               date: date.toISOString().split('T')[0],
-              description: description.substring(0, 500), // Limit description length
-              category: category.substring(0, 100), // Limit category length
-              spent: Math.abs(spent), // Ensure positive amount
-              sourceAccount: sourceAccount.substring(0, 100), // Use filename as source account
+              description: description.substring(0, 500),
+              category: category.substring(0, 100),
+              spent: Math.abs(spent),
+              sourceAccount: sourceAccount.substring(0, 100),
               classified: false,
               reconciled: false
             });
@@ -129,7 +221,14 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         return;
       }
 
-      const expenses = await processCSVFile(file);
+      let expenses: Expense[] = [];
+      
+      // Process based on file type
+      if (file.type.includes('sheet') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        expenses = await processExcelFile(file);
+      } else {
+        expenses = await processCSVFile(file);
+      }
       
       // Security: Limit the number of expenses that can be uploaded at once
       if (expenses.length > 1000) {
@@ -137,8 +236,10 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
         return;
       }
 
+      console.log(`Processed ${expenses.length} expenses from file`);
       onExpensesUploaded(expenses);
     } catch (error) {
+      console.error('File processing error:', error);
       setError((error as Error).message);
     } finally {
       setIsProcessing(false);
@@ -181,10 +282,10 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               </div>
               <div className="text-center">
                 <p className="text-lg font-medium text-slate-900">
-                  {isDragActive ? 'Drop the file here' : 'Upload CSV File'}
+                  {isDragActive ? 'Drop the file here' : 'Upload CSV or Excel File'}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
-                  Drag and drop or click to select a CSV file (max 10MB)
+                  Drag and drop or click to select a file (max 10MB)
                 </p>
               </div>
               <Button variant="outline" disabled={isProcessing}>
@@ -203,9 +304,9 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       )}
 
       <div className="text-xs text-slate-500 space-y-1">
-        <p><strong>Flexible import:</strong> Automatically detects column structure and maps data</p>
-        <p><strong>Expected columns:</strong> Date, Description, Category/Categorize, Amount/Spent</p>
-        <p><strong>Source account:</strong> Automatically extracted from filename</p>
+        <p><strong>Excel files:</strong> Each sheet/tab name becomes the source account</p>
+        <p><strong>CSV files:</strong> Filename becomes the source account</p>
+        <p><strong>Expected columns:</strong> Date, Description, Categories, Amount/Spent</p>
         <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
       </div>
     </div>
