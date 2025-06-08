@@ -65,7 +65,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/archived" element={
-              <ProtectedRoute requiredRoles={['admin']}>
+              <ProtectedRoute requiredRoles={['admin', 'bookkeeper']}>
                 <ArchivedExpenses />
               </ProtectedRoute>
             } />
