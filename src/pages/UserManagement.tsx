@@ -44,7 +44,7 @@ const UserManagement = () => {
     password: '',
     firstName: '',
     lastName: '',
-    timezone: 'UTC',
+    timezone: 'America/Los_Angeles', // Default to PST
     roles: [] as string[]
   });
 
@@ -55,17 +55,17 @@ const UserManagement = () => {
   const [newPassword, setNewPassword] = useState('');
 
   // Timezone state
-  const [selectedTimezone, setSelectedTimezone] = useState('UTC');
+  const [selectedTimezone, setSelectedTimezone] = useState('America/Los_Angeles'); // Default to PST
 
   const roleOptions = ['admin', 'bookkeeper', 'classifier'];
   
   // Common timezones
   const timezoneOptions = [
+    'America/Los_Angeles', // PST/PDT
     'UTC',
     'America/New_York',
     'America/Chicago',
     'America/Denver',
-    'America/Los_Angeles',
     'Europe/London',
     'Europe/Paris',
     'Europe/Berlin',
@@ -77,7 +77,7 @@ const UserManagement = () => {
   const handleCreateUser = () => {
     createUser(newUser);
     setCreateDialogOpen(false);
-    setNewUser({ email: '', password: '', firstName: '', lastName: '', timezone: 'UTC', roles: [] });
+    setNewUser({ email: '', password: '', firstName: '', lastName: '', timezone: 'America/Los_Angeles', roles: [] });
   };
 
   const handleEditUser = (user: UserProfile) => {
@@ -97,7 +97,7 @@ const UserManagement = () => {
 
   const handleEditTimezone = (user: UserProfile) => {
     setSelectedUser(user);
-    setSelectedTimezone(user.timezone || 'UTC');
+    setSelectedTimezone(user.timezone || 'America/Los_Angeles');
     setTimezoneDialogOpen(true);
   };
 
@@ -106,7 +106,7 @@ const UserManagement = () => {
       updateUserProfile({ userId: selectedUser.id, timezone: selectedTimezone });
       setTimezoneDialogOpen(false);
       setSelectedUser(null);
-      setSelectedTimezone('UTC');
+      setSelectedTimezone('America/Los_Angeles');
     }
   };
 

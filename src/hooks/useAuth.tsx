@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
-  const [userTimezone, setUserTimezone] = useState<string>('UTC');
+  const [userTimezone, setUserTimezone] = useState<string>('America/Los_Angeles'); // Default to PST
   const [loading, setLoading] = useState(true);
 
   const fetchUserRoles = async (userId: string) => {
@@ -72,13 +72,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (error) {
         console.error('Error fetching user timezone:', error);
-        return 'UTC';
+        return 'America/Los_Angeles'; // Default to PST
       }
       
-      return data?.timezone || 'UTC';
+      return data?.timezone || 'America/Los_Angeles'; // Default to PST
     } catch (error) {
       console.error('Error fetching user timezone:', error);
-      return 'UTC';
+      return 'America/Los_Angeles'; // Default to PST
     }
   };
 
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }, 100);
         } else if (event === 'SIGNED_OUT') {
           setUserRoles([]);
-          setUserTimezone('UTC');
+          setUserTimezone('America/Los_Angeles'); // Reset to PST default
           cleanupAuthState(); // Security: Clean up on sign out
           setLoading(false);
         } else {
@@ -272,7 +272,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(null);
       setSession(null);
       setUserRoles([]);
-      setUserTimezone('UTC');
+      setUserTimezone('America/Los_Angeles'); // Reset to PST default
       
       // Security: Force page reload for clean state
       window.location.href = '/auth';
