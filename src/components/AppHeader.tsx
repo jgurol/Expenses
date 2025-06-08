@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { Settings, CheckCircle, UserCheck, LogOut, Users, FileText, Cog, FileCode, Archive } from "lucide-react";
+import { Settings, LogOut, Users, FileText, Cog, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,16 +21,12 @@ interface AppHeaderProps {
 
 export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
   const navigate = useNavigate();
-  const { signOut, user, isAdmin, isClassifier, isBookkeeper } = useAuth();
+  const { signOut, user, isAdmin } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
   };
-
-  // Only show classifier button if user has classifier role or is admin
-  // Don't show it for bookkeeper-only users
-  const showClassifierButton = isClassifier || isAdmin;
 
   return (
     <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
@@ -49,35 +45,6 @@ export const AppHeader = ({ currentRole, onRoleChange }: AppHeaderProps) => {
           </div>
           
           <div className="flex items-center gap-4">
-            {showClassifierButton && (
-              <Button
-                variant="outline"
-                onClick={() => navigate("/classifier")}
-                className="flex items-center gap-2 bg-blue-100 border-blue-200 text-blue-700 hover:bg-blue-200 hover:border-blue-300"
-              >
-                <FileCode className="h-4 w-4" />
-                Classifier
-              </Button>
-            )}
-
-            <Button
-              variant="outline"
-              onClick={() => navigate("/reconcile")}
-              className="flex items-center gap-2 bg-blue-100 border-blue-200 text-blue-700 hover:bg-blue-200 hover:border-blue-300"
-            >
-              <CheckCircle className="h-4 w-4" />
-              Reconcile
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => navigate("/reconciled")}
-              className="flex items-center gap-2 bg-blue-100 border-blue-200 text-blue-700 hover:bg-blue-200 hover:border-blue-300"
-            >
-              <UserCheck className="h-4 w-4" />
-              Reconciled
-            </Button>
-
             {onRoleChange && (
               <RoleSwitcher currentRole={currentRole} onRoleChange={onRoleChange} />
             )}
