@@ -174,6 +174,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               const dateValue = row.date || row.a || '';
               const description = sanitizeInput(String(row.description || row.desc || row.transaction || row.b || 'Unknown').trim());
               const spentStr = String(row.spent || row.amount || row.value || row.d || '0');
+              const receivedStr = String(row.received || row.credit || row.e || '');
               
               // Handle category column - look for "categorize", "match", "category", or column C
               const category = sanitizeInput(String(row.categories || row.category || row.categorize || row.match || 
@@ -192,14 +193,25 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               console.log(`Row ${i}: Final date string:`, dateString);
 
               // Parse spent amount with fallback
-              const spent = parseFloat(String(spentStr).replace(/[^0-9.-]/g, '')) || 0;
+              let spent = parseFloat(String(spentStr).replace(/[^0-9.-]/g, '')) || 0;
+              
+              // Check if there's a value in the received column
+              const receivedValue = parseFloat(String(receivedStr).replace(/[^0-9.-]/g, '')) || 0;
+              
+              // If there's a received value, make the amount negative
+              if (receivedValue > 0) {
+                spent = -Math.abs(receivedValue);
+                console.log(`Row ${i}: Found received amount ${receivedValue}, setting spent to ${spent}`);
+              } else {
+                spent = Math.abs(spent);
+              }
 
               const expense = {
                 id: `temp-${Date.now()}-${sheetIndex}-${i}`,
                 date: dateString,
                 description: description.substring(0, 500),
                 category: category.substring(0, 100),
-                spent: Math.abs(spent),
+                spent: spent,
                 sourceAccount: sourceAccount.substring(0, 100),
                 classified: false,
                 reconciled: false
@@ -267,6 +279,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             const dateValue = row.date || row.a || '';
             const description = row.description || row.desc || row.transaction || row.b || 'Unknown';
             const spentStr = row.spent || row.amount || row.value || row.d || '0';
+            const receivedStr = row.received || row.credit || row.e || '';
             
             // Handle category column - look for "categorize", "match", "category", or column C
             const category = row.categories || row.category || row.categorize || row.match || 
@@ -282,14 +295,25 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             const dateString = parseDate(dateValue);
 
             // Parse spent amount with fallback
-            const spent = parseFloat(spentStr.replace(/[^0-9.-]/g, '')) || 0;
+            let spent = parseFloat(spentStr.replace(/[^0-9.-]/g, '')) || 0;
+            
+            // Check if there's a value in the received column
+            const receivedValue = parseFloat(receivedStr.replace(/[^0-9.-]/g, '')) || 0;
+            
+            // If there's a received value, make the amount negative
+            if (receivedValue > 0) {
+              spent = -Math.abs(receivedValue);
+              console.log(`Row ${i}: Found received amount ${receivedValue}, setting spent to ${spent}`);
+            } else {
+              spent = Math.abs(spent);
+            }
 
             expenses.push({
               id: `temp-${Date.now()}-${i}`,
               date: dateString,
               description: description.substring(0, 500),
               category: category.substring(0, 100),
-              spent: Math.abs(spent),
+              spent: spent,
               sourceAccount: sourceAccount.substring(0, 100),
               classified: false,
               reconciled: false
@@ -416,7 +440,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       <div className="text-xs text-slate-500 space-y-1">
         <p><strong>Excel files:</strong> Each sheet/tab name becomes the source account</p>
         <p><strong>CSV files:</strong> Filename becomes the source account</p>
-        <p><strong>Expected columns:</strong> Date, Description, Categories, Amount/Spent</p>
+        <p><strong>Expected columns:</strong> Date, Description, Categories, Amount/Spent, Received/Credit</p>
+        <p><strong>Note:</strong> Values in the "Received" or "Credit" column will be treated as negative amounts</p>
         <p><strong>Security:</strong> Files are processed locally and validated for safety</p>
       </div>
     </div>
