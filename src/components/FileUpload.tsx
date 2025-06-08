@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -17,6 +16,77 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [error, setError] = React.useState<string>('');
   const [isProcessing, setIsProcessing] = React.useState(false);
 
+  const parseDate = (dateValue: any): Date => {
+    // Handle empty or null values
+    if (!dateValue) {
+      return new Date();
+    }
+
+    // Convert to string for processing
+    const dateStr = String(dateValue).trim();
+    
+    // Handle Excel serial date numbers
+    if (typeof dateValue === 'number' && dateValue > 1) {
+      // Excel serial date: days since January 1, 1900
+      const excelEpoch = new Date(1900, 0, 1);
+      const days = dateValue - 2; // Excel treats 1900 as a leap year (it's not)
+      const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+
+    // Try parsing as a regular date string
+    const parsedDate = new Date(dateStr);
+    if (!isNaN(parsedDate.getTime())) {
+      return parsedDate;
+    }
+
+    // Try common date formats
+    const formats = [
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // MM/DD/YYYY or M/D/YYYY
+      /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/, // MM/DD/YY or M/D/YY
+      /^(\d{4})-(\d{1,2})-(\d{1,2})$/, // YYYY-MM-DD
+      /^(\d{1,2})-(\d{1,2})-(\d{4})$/, // MM-DD-YYYY
+    ];
+
+    for (const format of formats) {
+      const match = dateStr.match(format);
+      if (match) {
+        let year, month, day;
+        
+        if (format.source.includes('YYYY')) {
+          if (format.source.startsWith('^(\\d{4})')) {
+            // YYYY-MM-DD format
+            year = parseInt(match[1]);
+            month = parseInt(match[2]) - 1; // Month is 0-indexed
+            day = parseInt(match[3]);
+          } else {
+            // MM/DD/YYYY format
+            month = parseInt(match[1]) - 1; // Month is 0-indexed
+            day = parseInt(match[2]);
+            year = parseInt(match[3]);
+          }
+        } else {
+          // MM/DD/YY format - assume 20xx for years 00-29, 19xx for 30-99
+          month = parseInt(match[1]) - 1; // Month is 0-indexed
+          day = parseInt(match[2]);
+          const shortYear = parseInt(match[3]);
+          year = shortYear <= 29 ? 2000 + shortYear : 1900 + shortYear;
+        }
+
+        const constructedDate = new Date(year, month, day);
+        if (!isNaN(constructedDate.getTime()) && year >= 1900 && year <= 2100) {
+          return constructedDate;
+        }
+      }
+    }
+
+    // Fallback to current date
+    console.warn(`Could not parse date: ${dateStr}, using current date`);
+    return new Date();
+  };
+
   const processExcelFile = async (file: File): Promise<Expense[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -31,7 +101,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           // Process each sheet/tab
           workbook.SheetNames.forEach((sheetName, sheetIndex) => {
             const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
             
             if (jsonData.length < 2) {
               console.warn(`Sheet "${sheetName}" has no data, skipping`);
@@ -51,34 +121,28 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               const values = jsonData[i] || [];
               
               // Create row object
-              const row: { [key: string]: string } = {};
+              const row: { [key: string]: any } = {};
               headers.forEach((header, index) => {
-                row[header] = sanitizeInput(String(values[index] || '').trim());
+                row[header] = values[index];
               });
               
               // Flexible column mapping - handle various header names
-              const dateStr = row.date || row.a || '';
-              const description = row.description || row.desc || row.transaction || row.b || 'Unknown';
-              const spentStr = row.spent || row.amount || row.value || row.d || '0';
+              const dateValue = row.date || row.a || '';
+              const description = sanitizeInput(String(row.description || row.desc || row.transaction || row.b || 'Unknown').trim());
+              const spentStr = String(row.spent || row.amount || row.value || row.d || '0');
               
               // Handle category column - look for "categorize", "match", "category", or column C
-              const category = row.categories || row.category || row.categorize || row.match || 
-                             row['categorize or match'] || row.c || 'Unclassified';
+              const category = sanitizeInput(String(row.categories || row.category || row.categorize || row.match || 
+                             row['categorize or match'] || row.c || 'Unclassified').trim());
 
               // Skip rows without essential data
-              if (!dateStr && !description) {
+              if (!dateValue && !description) {
                 console.warn(`Skipping row ${i + 1} in sheet "${sheetName}": no meaningful data found`);
                 continue;
               }
 
-              // Parse date with fallback
-              let date = new Date();
-              if (dateStr) {
-                const parsedDate = new Date(dateStr);
-                if (!isNaN(parsedDate.getTime())) {
-                  date = parsedDate;
-                }
-              }
+              // Parse date with improved handling
+              const date = parseDate(dateValue);
 
               // Parse spent amount with fallback
               const spent = parseFloat(String(spentStr).replace(/[^0-9.-]/g, '')) || 0;
@@ -149,7 +213,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
             });
 
             // Flexible column mapping - handle various header names
-            const dateStr = row.date || row.a || '';
+            const dateValue = row.date || row.a || '';
             const description = row.description || row.desc || row.transaction || row.b || 'Unknown';
             const spentStr = row.spent || row.amount || row.value || row.d || '0';
             
@@ -158,19 +222,13 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
                            row['categorize or match'] || row.c || 'Unclassified';
 
             // Skip rows without essential data
-            if (!dateStr && !description) {
+            if (!dateValue && !description) {
               console.warn(`Skipping row ${i + 1}: no meaningful data found`);
               continue;
             }
 
-            // Parse date with fallback
-            let date = new Date();
-            if (dateStr) {
-              const parsedDate = new Date(dateStr);
-              if (!isNaN(parsedDate.getTime())) {
-                date = parsedDate;
-              }
-            }
+            // Parse date with improved handling
+            const date = parseDate(dateValue);
 
             // Parse spent amount with fallback
             const spent = parseFloat(spentStr.replace(/[^0-9.-]/g, '')) || 0;
