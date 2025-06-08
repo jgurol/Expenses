@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
@@ -18,6 +17,8 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [isProcessing, setIsProcessing] = React.useState(false);
 
   const parseDate = (dateValue: any): Date => {
+    console.log('parseDate input:', dateValue, 'type:', typeof dateValue);
+    
     // Handle empty or null values
     if (!dateValue) {
       return new Date();
@@ -28,12 +29,14 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     
     // Handle Excel serial date numbers
     if (typeof dateValue === 'number' && dateValue > 1) {
-      // Excel serial date: days since January 1, 1900
-      // Excel incorrectly treats 1900 as a leap year, so we need to handle this
+      console.log('Processing Excel serial date:', dateValue);
+      
       // Use XLSX.SSF.parse_date_code which handles Excel dates correctly
       try {
         const excelDate = XLSX.SSF.parse_date_code(dateValue);
+        console.log('XLSX.SSF.parse_date_code result:', excelDate);
         if (excelDate && !isNaN(excelDate.getTime())) {
+          console.log('Using XLSX parsed date:', excelDate.toISOString().split('T')[0]);
           return excelDate;
         }
       } catch (e) {
@@ -41,11 +44,15 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       }
       
       // Fallback manual calculation if XLSX parsing fails
-      const excelEpoch = new Date(1900, 0, 1); // January 1, 1900
-      const days = dateValue - 1; // Excel is 1-based, but we need 0-based for our calculation
-      // Adjust for Excel's leap year bug (it thinks 1900 was a leap year)
-      const adjustedDays = dateValue > 59 ? days - 1 : days;
-      const date = new Date(excelEpoch.getTime() + adjustedDays * 24 * 60 * 60 * 1000);
+      console.log('Using fallback manual calculation for:', dateValue);
+      
+      // For Excel serial dates, we need to be more precise about the calculation
+      // Excel epoch is December 30, 1899 (not January 1, 1900)
+      const excelEpoch = new Date(1899, 11, 30); // December 30, 1899
+      const days = Math.floor(dateValue); // Get whole days only
+      const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
+      
+      console.log('Manual calculation result:', date.toISOString().split('T')[0]);
       
       if (!isNaN(date.getTime())) {
         return date;
@@ -55,6 +62,7 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     // Try parsing as a regular date string
     const parsedDate = new Date(dateStr);
     if (!isNaN(parsedDate.getTime())) {
+      console.log('Parsed as regular date string:', parsedDate.toISOString().split('T')[0]);
       return parsedDate;
     }
 
