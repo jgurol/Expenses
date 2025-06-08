@@ -19,12 +19,13 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const { userTimezone } = useAuth();
 
-  const parseDate = (dateValue: any): Date => {
+  const parseDate = (dateValue: any): string => {
     console.log('parseDate input:', dateValue, 'type:', typeof dateValue, 'userTimezone:', userTimezone);
     
     // Handle empty or null values
     if (!dateValue) {
-      return new Date();
+      const today = new Date();
+      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     }
 
     // Convert to string for processing
@@ -34,25 +35,21 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
     if (typeof dateValue === 'number' && dateValue > 1) {
       console.log('Processing Excel serial date:', dateValue);
       
-      // Use XLSX.SSF.parse_date_code which handles Excel dates correctly
       try {
         const excelDateObj = XLSX.SSF.parse_date_code(dateValue);
         console.log('XLSX.SSF.parse_date_code result:', excelDateObj);
         
         if (excelDateObj && excelDateObj.y && excelDateObj.m && excelDateObj.d) {
-          // Create date in the user's timezone to avoid timezone shifting
-          // We want the date to be interpreted as a local date in the user's timezone
-          const dateString = `${excelDateObj.y}-${String(excelDateObj.m).padStart(2, '0')}-${String(excelDateObj.d).padStart(2, '0')}`;
-          console.log('Formatted date string:', dateString);
+          // Format directly as YYYY-MM-DD without creating Date objects
+          const year = excelDateObj.y;
+          const month = String(excelDateObj.m).padStart(2, '0');
+          const day = String(excelDateObj.d).padStart(2, '0');
+          const dateString = `${year}-${month}-${day}`;
           
-          // Create a date that represents this date in the user's timezone
-          // We'll use a simple Date constructor that treats this as a local date
-          const date = new Date(excelDateObj.y, excelDateObj.m - 1, excelDateObj.d);
-          console.log('Date created in local timezone:', date);
-          console.log('Date ISO string:', date.toISOString());
-          console.log('Date local date string:', date.toDateString());
+          console.log('Direct formatted date string:', dateString);
+          console.log('Date components - Year:', year, 'Month:', month, 'Day:', day);
           
-          return date;
+          return dateString;
         }
       } catch (e) {
         console.warn('Failed to parse Excel date code:', dateValue, e);
@@ -61,26 +58,33 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
       // Fallback manual calculation if XLSX parsing fails
       console.log('Using fallback manual calculation for:', dateValue);
       
-      // For Excel serial dates, calculate the date and create it in local timezone
-      const excelEpoch = new Date(1899, 11, 30); // December 30, 1899 in local timezone
-      const days = Math.floor(dateValue); // Get whole days only
-      const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
+      // Excel epoch is January 1, 1900 (but Excel incorrectly treats 1900 as a leap year)
+      // So we use December 30, 1899 as the base
+      const excelEpoch = new Date(1899, 11, 30);
+      const days = Math.floor(dateValue);
+      const calculatedDate = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
       
-      console.log('Manual calculation result:', date.toDateString());
+      const year = calculatedDate.getFullYear();
+      const month = String(calculatedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(calculatedDate.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
       
-      if (!isNaN(date.getTime())) {
-        return date;
-      }
+      console.log('Manual calculation result:', dateString);
+      return dateString;
     }
 
     // Try parsing as a regular date string
     const parsedDate = new Date(dateStr);
     if (!isNaN(parsedDate.getTime())) {
-      console.log('Parsed as regular date string:', parsedDate.toDateString());
-      return parsedDate;
+      const year = parsedDate.getFullYear();
+      const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(parsedDate.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      console.log('Parsed as regular date string:', dateString);
+      return dateString;
     }
 
-    // Try common date formats - create in local timezone
+    // Try common date formats
     const formats = [
       /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // MM/DD/YYYY or M/D/YYYY
       /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/, // MM/DD/YY or M/D/YY
@@ -97,33 +101,34 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
           if (format.source.startsWith('^(\\d{4})')) {
             // YYYY-MM-DD format
             year = parseInt(match[1]);
-            month = parseInt(match[2]) - 1; // Month is 0-indexed
-            day = parseInt(match[3]);
+            month = String(parseInt(match[2])).padStart(2, '0');
+            day = String(parseInt(match[3])).padStart(2, '0');
           } else {
             // MM/DD/YYYY format
-            month = parseInt(match[1]) - 1; // Month is 0-indexed
-            day = parseInt(match[2]);
+            month = String(parseInt(match[1])).padStart(2, '0');
+            day = String(parseInt(match[2])).padStart(2, '0');
             year = parseInt(match[3]);
           }
         } else {
           // MM/DD/YY format - assume 20xx for years 00-29, 19xx for 30-99
-          month = parseInt(match[1]) - 1; // Month is 0-indexed
-          day = parseInt(match[2]);
+          month = String(parseInt(match[1])).padStart(2, '0');
+          day = String(parseInt(match[2])).padStart(2, '0');
           const shortYear = parseInt(match[3]);
           year = shortYear <= 29 ? 2000 + shortYear : 1900 + shortYear;
         }
 
-        // Create date in local timezone
-        const constructedDate = new Date(year, month, day);
-        if (!isNaN(constructedDate.getTime()) && year >= 1900 && year <= 2100) {
-          return constructedDate;
+        if (year >= 1900 && year <= 2100) {
+          const dateString = `${year}-${month}-${day}`;
+          console.log('Formatted from pattern:', dateString);
+          return dateString;
         }
       }
     }
 
     // Fallback to current date
     console.warn(`Could not parse date: ${dateStr}, using current date`);
-    return new Date();
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   };
 
   const processExcelFile = async (file: File): Promise<Expense[]> => {
@@ -180,19 +185,11 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
                 continue;
               }
 
-              // Parse date with improved handling
-              const date = parseDate(dateValue);
-              
-              // Format the date to YYYY-MM-DD in the user's local timezone
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const day = String(date.getDate()).padStart(2, '0');
-              const dateString = `${year}-${month}-${day}`;
+              // Parse date and get it as a string directly
+              const dateString = parseDate(dateValue);
               
               console.log(`Row ${i}: Original date value:`, dateValue);
-              console.log(`Row ${i}: Parsed date object:`, date);
               console.log(`Row ${i}: Final date string:`, dateString);
-              console.log(`Row ${i}: Date components - Year: ${year}, Month: ${month}, Day: ${day}`);
 
               // Parse spent amount with fallback
               const spent = parseFloat(String(spentStr).replace(/[^0-9.-]/g, '')) || 0;
@@ -281,17 +278,11 @@ export const FileUpload = ({ onExpensesUploaded }: FileUploadProps) => {
               continue;
             }
 
-            // Parse date with improved handling
-            const date = parseDate(dateValue);
+            // Parse date and get it as a string directly
+            const dateString = parseDate(dateValue);
 
             // Parse spent amount with fallback
             const spent = parseFloat(spentStr.replace(/[^0-9.-]/g, '')) || 0;
-
-            // Format the date to YYYY-MM-DD in the user's local timezone
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const dateString = `${year}-${month}-${day}`;
 
             expenses.push({
               id: `temp-${Date.now()}-${i}`,
