@@ -5,6 +5,7 @@ import { CheckCircle, Clock, FileCheck, Archive, ArrowRight } from "lucide-react
 import { ExpensesDashboard } from "@/components/ExpensesDashboard";
 import { useArchivedExpenses } from "@/hooks/useArchivedExpenses";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "@/utils/formatUtils";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface BookkeeperDashboardProps {
@@ -58,7 +59,7 @@ export const BookkeeperDashboard = ({
               </div>
               <div className="space-y-1">
                 <div className="text-xl font-bold text-orange-600">{unclassifiedExpenses.length}</div>
-                <div className="text-xs text-slate-600">${unclassifiedAmount.toFixed(2)}</div>
+                <div className="text-xs text-slate-600">{formatCurrency(unclassifiedAmount)}</div>
               </div>
             </Card>
           </div>
@@ -85,7 +86,7 @@ export const BookkeeperDashboard = ({
               </div>
               <div className="space-y-1">
                 <div className="text-xl font-bold text-blue-600">{classifiedExpenses.length}</div>
-                <div className="text-xs text-slate-600">${classifiedAmount.toFixed(2)}</div>
+                <div className="text-xs text-slate-600">{formatCurrency(classifiedAmount)}</div>
               </div>
             </Card>
           </div>
@@ -112,7 +113,7 @@ export const BookkeeperDashboard = ({
               </div>
               <div className="space-y-1">
                 <div className="text-xl font-bold text-green-600">{reconciledExpenses.length}</div>
-                <div className="text-xs text-slate-600">${reconciledAmount.toFixed(2)}</div>
+                <div className="text-xs text-slate-600">{formatCurrency(reconciledAmount)}</div>
               </div>
             </Card>
           </div>
@@ -139,7 +140,7 @@ export const BookkeeperDashboard = ({
               </div>
               <div className="space-y-1">
                 <div className="text-xl font-bold text-purple-600">{archivedExpenses.length}</div>
-                <div className="text-xs text-slate-600">${archivedAmount.toFixed(2)}</div>
+                <div className="text-xs text-slate-600">{formatCurrency(archivedAmount)}</div>
               </div>
             </Card>
           </div>
