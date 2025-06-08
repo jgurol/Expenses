@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { formatCurrency } from "@/utils/formatUtils";
 import type { Expense, AccountCode } from "@/pages/Index";
 
 interface ExpenseSummaryByCategoryProps {
@@ -135,10 +136,10 @@ const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: numb
   
   // Random opening phrases
   const openings = [
-    `You've blown $${totalSpent.toFixed(2)} across ${totalCategories} categories.`,
-    `Congratulations on spending $${totalSpent.toFixed(2)} across ${totalCategories} different ways.`,
-    `Your wallet took a $${totalSpent.toFixed(2)} hit across ${totalCategories} categories.`,
-    `You managed to distribute $${totalSpent.toFixed(2)} across ${totalCategories} spending categories.`
+    `You've blown ${formatCurrency(totalSpent)} across ${totalCategories} categories.`,
+    `Congratulations on spending ${formatCurrency(totalSpent)} across ${totalCategories} different ways.`,
+    `Your wallet took a ${formatCurrency(totalSpent)} hit across ${totalCategories} categories.`,
+    `You managed to distribute ${formatCurrency(totalSpent)} across ${totalCategories} spending categories.`
   ];
   
   let analysis = openings[Math.floor(Math.random() * openings.length)] + " ";
@@ -148,16 +149,16 @@ const getOverallSpendingAnalysis = (categoryTotals: Record<string, { total: numb
     const [categoryName, data] = topCategory;
     const percentage = ((data.total / totalSpent) * 100).toFixed(1);
     
-    analysis += `Your biggest drain is "${categoryName}" at $${data.total.toFixed(2)} (${percentage}%). `;
+    analysis += `Your biggest drain is "${categoryName}" at ${formatCurrency(data.total)} (${percentage}%). `;
     analysis += getCategoryCommentary(categoryName) + " ";
     
     // Random runner-up comments if exists
     if (sortedByAmount.length > 1) {
       const runnerUp = sortedByAmount[1];
       const runnerUpComments = [
-        `Runner-up "${runnerUp[0]}" at $${runnerUp[1].total.toFixed(2)} isn't helping your case either.`,
-        `And "${runnerUp[0]}" at $${runnerUp[1].total.toFixed(2)} is making things worse.`,
-        `Plus "${runnerUp[0]}" weighing in at $${runnerUp[1].total.toFixed(2)} for good measure.`
+        `Runner-up "${runnerUp[0]}" at ${formatCurrency(runnerUp[1].total)} isn't helping your case either.`,
+        `And "${runnerUp[0]}" at ${formatCurrency(runnerUp[1].total)} is making things worse.`,
+        `Plus "${runnerUp[0]}" weighing in at ${formatCurrency(runnerUp[1].total)} for good measure.`
       ];
       analysis += runnerUpComments[Math.floor(Math.random() * runnerUpComments.length)];
     }
@@ -232,7 +233,7 @@ export const ExpenseSummaryByCategory = ({ expenses, accountCodes }: ExpenseSumm
                       </Badge>
                     </div>
                     <div className="text-2xl font-bold text-slate-900">
-                      ${data.total.toFixed(2)}
+                      {formatCurrency(data.total)}
                     </div>
                   </div>
                 </div>
@@ -243,7 +244,7 @@ export const ExpenseSummaryByCategory = ({ expenses, accountCodes }: ExpenseSumm
                     <span>{percentage.toFixed(1)}% of total</span>
                   </div>
                   <div className="text-xs text-slate-500">
-                    ${(data.total / data.count).toFixed(2)} average
+                    {formatCurrency(data.total / data.count)} average
                   </div>
                   
                   {/* Progress bar */}
