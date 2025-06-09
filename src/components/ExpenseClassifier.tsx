@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { Check, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAIAccountMatching } from "@/hooks/useAIAccountMatching";
@@ -32,6 +33,7 @@ export const ExpenseClassifier = memo(({
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [aiProgress, setAiProgress] = useState(0);
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, string>>({});
 
   const aiMatching = useAIAccountMatching();
@@ -217,6 +219,7 @@ export const ExpenseClassifier = memo(({
     }
 
     setIsAIProcessing(true);
+    setAiProgress(0);
     let successCount = 0;
     let errorCount = 0;
     const newSuggestions: Record<string, string> = {};
@@ -227,7 +230,9 @@ export const ExpenseClassifier = memo(({
         description: `Analyzing ${expenses.length} expenses for account code suggestions...`,
       });
 
-      for (const expense of expenses) {
+      for (let i = 0; i < expenses.length; i++) {
+        const expense = expenses[i];
+        
         try {
           const result = await aiMatching.mutateAsync({
             description: expense.description,
@@ -244,6 +249,10 @@ export const ExpenseClassifier = memo(({
           console.error(`Error processing expense ${expense.id}:`, error);
           errorCount++;
         }
+
+        // Update progress
+        const progress = Math.round(((i + 1) / expenses.length) * 100);
+        setAiProgress(progress);
       }
 
       setAiSuggestions(newSuggestions);
@@ -260,6 +269,7 @@ export const ExpenseClassifier = memo(({
       });
     } finally {
       setIsAIProcessing(false);
+      setAiProgress(0);
     }
   };
 
@@ -346,6 +356,23 @@ export const ExpenseClassifier = memo(({
           {isAIProcessing ? 'AI Analyzing...' : 'AI Suggest All'}
         </Button>
       </div>
+
+      {isAIProcessing && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-purple-700">
+              AI Analysis Progress
+            </span>
+            <span className="text-sm text-purple-600">
+              {aiProgress}%
+            </span>
+          </div>
+          <Progress value={aiProgress} className="h-2" />
+          <p className="text-xs text-purple-600 mt-1">
+            Analyzing expenses for account code suggestions...
+          </p>
+        </div>
+      )}
 
       <div className="border rounded-lg">
         <Table>
