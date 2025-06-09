@@ -25,28 +25,17 @@ serve(async (req) => {
     // Create a simplified list of account codes for the AI
     const accountCodesList = accountCodes.map((ac: any) => `${ac.code}: ${ac.name} (${ac.type})`).join('\n');
 
-    const prompt = `Given the expense description "${description}", analyze if there is a CLEAR and OBVIOUS match to one of these account codes. 
+    const prompt = `Given the expense description "${description}", which of these account codes would be the best match? Return ONLY the account code (e.g., "MEALS", "OFFICE_SUPPLIES", etc.), not the full line.
 
 Available account codes:
 ${accountCodesList}
 
-IMPORTANT INSTRUCTIONS:
-- Only suggest an account code if you are VERY CONFIDENT (90%+ certain) about the match
-- If the expense description is vague, unclear, or could match multiple categories, respond with "NO_MATCH"
-- Only return the exact account code (e.g., "MEALS", "OFFICE_SUPPLIES") if you're certain
-- If uncertain, respond with "NO_MATCH"
+Consider:
+- The nature of the expense
+- Common business categorization
+- The account type (expense accounts for costs, asset accounts for purchases that retain value)
 
-Examples of when to suggest:
-- "McDonald's lunch" → MEALS (clear food expense)
-- "Office Depot paper supplies" → OFFICE_SUPPLIES (clear office supplies)
-- "Uber ride to client meeting" → TRANSPORTATION (clear transportation)
-
-Examples of when to return NO_MATCH:
-- "Amazon purchase" (could be anything)
-- "Monthly service" (too vague)
-- "Consulting fee" (could be multiple categories)
-
-Response (account code or NO_MATCH):`;
+Return only the account code, nothing else.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -59,7 +48,7 @@ Response (account code or NO_MATCH):`;
         messages: [
           { 
             role: 'system', 
-            content: 'You are a conservative expense categorization expert. Only suggest account codes when you are very confident about the match. When in doubt, respond with NO_MATCH.' 
+            content: 'You are an expert accountant that matches expense descriptions to chart of accounts. Return only the account code that best matches the expense description.' 
           },
           { role: 'user', content: prompt }
         ],
@@ -73,23 +62,13 @@ Response (account code or NO_MATCH):`;
     }
 
     const data = await response.json();
-    const aiResponse = data.choices[0].message.content.trim();
-
-    // Check if AI decided not to make a suggestion
-    if (aiResponse === 'NO_MATCH') {
-      return new Response(JSON.stringify({ 
-        suggestedAccountCode: null,
-        confidence: 'low'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const suggestedCode = data.choices[0].message.content.trim();
 
     // Verify the suggested code exists in our account codes
-    const matchedAccountCode = accountCodes.find((ac: any) => ac.code === aiResponse);
+    const matchedAccountCode = accountCodes.find((ac: any) => ac.code === suggestedCode);
 
     return new Response(JSON.stringify({ 
-      suggestedAccountCode: matchedAccountCode ? aiResponse : null,
+      suggestedAccountCode: matchedAccountCode ? suggestedCode : null,
       confidence: matchedAccountCode ? 'high' : 'low'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import { Check, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAIAccountMatching } from "@/hooks/useAIAccountMatching";
@@ -33,8 +32,6 @@ export const ExpenseClassifier = memo(({
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [isAIProcessing, setIsAIProcessing] = useState(false);
-  const [aiProgress, setAiProgress] = useState(0);
-  const [aiSuggestions, setAiSuggestions] = useState<Record<string, string>>({});
 
   const aiMatching = useAIAccountMatching();
 
@@ -169,14 +166,6 @@ export const ExpenseClassifier = memo(({
 
   const handleAccountCodeSelect = (expenseId: string, accountCode: string) => {
     console.log('Account code selected - automatically reclassifying:', { expenseId, accountCode });
-    // Clear any AI suggestion for this expense since user made manual selection
-    if (aiSuggestions[expenseId]) {
-      setAiSuggestions(prev => {
-        const updated = { ...prev };
-        delete updated[expenseId];
-        return updated;
-      });
-    }
     // Automatically reclassify when dropdown selection changes
     onExpenseClassified(expenseId, accountCode);
   };
@@ -219,20 +208,16 @@ export const ExpenseClassifier = memo(({
     }
 
     setIsAIProcessing(true);
-    setAiProgress(0);
     let successCount = 0;
     let errorCount = 0;
-    const newSuggestions: Record<string, string> = {};
 
     try {
       toast({
-        title: "AI Analysis Started",
-        description: `Analyzing ${expenses.length} expenses for account code suggestions...`,
+        title: "AI Reclassification Started",
+        description: `Processing ${expenses.length} expenses...`,
       });
 
-      for (let i = 0; i < expenses.length; i++) {
-        const expense = expenses[i];
-        
+      for (const expense of expenses) {
         try {
           const result = await aiMatching.mutateAsync({
             description: expense.description,
@@ -240,7 +225,7 @@ export const ExpenseClassifier = memo(({
           });
 
           if (result.suggestedAccountCode && result.confidence === 'high') {
-            newSuggestions[expense.id] = result.suggestedAccountCode;
+            await onExpenseClassified(expense.id, result.suggestedAccountCode);
             successCount++;
           } else {
             errorCount++;
@@ -249,40 +234,20 @@ export const ExpenseClassifier = memo(({
           console.error(`Error processing expense ${expense.id}:`, error);
           errorCount++;
         }
-
-        // Update progress
-        const progress = Math.round(((i + 1) / expenses.length) * 100);
-        setAiProgress(progress);
       }
 
-      setAiSuggestions(newSuggestions);
-
       toast({
-        title: "AI Analysis Complete",
-        description: `Generated ${successCount} account code suggestions. ${errorCount > 0 ? `${errorCount} could not be analyzed.` : ''} Review and accept suggestions as needed.`,
+        title: "AI Reclassification Complete",
+        description: `Successfully reclassified ${successCount} expenses. ${errorCount > 0 ? `${errorCount} could not be classified.` : ''}`,
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to complete AI analysis",
+        description: "Failed to complete AI reclassification",
         variant: "destructive",
       });
     } finally {
       setIsAIProcessing(false);
-      setAiProgress(0);
-    }
-  };
-
-  const handleAcceptAISuggestion = (expenseId: string) => {
-    const suggestedCode = aiSuggestions[expenseId];
-    if (suggestedCode) {
-      onExpenseClassified(expenseId, suggestedCode);
-      // Remove the suggestion after accepting
-      setAiSuggestions(prev => {
-        const updated = { ...prev };
-        delete updated[expenseId];
-        return updated;
-      });
     }
   };
 
@@ -353,26 +318,9 @@ export const ExpenseClassifier = memo(({
           className="flex items-center gap-2 bg-purple-100 border-purple-200 text-purple-700 hover:bg-purple-200 hover:border-purple-300"
         >
           <Sparkles className="h-4 w-4" />
-          {isAIProcessing ? 'AI Analyzing...' : 'AI Suggest All'}
+          {isAIProcessing ? 'AI Processing...' : 'AI Reclassify All'}
         </Button>
       </div>
-
-      {isAIProcessing && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-purple-700">
-              AI Analysis Progress
-            </span>
-            <span className="text-sm text-purple-600">
-              {aiProgress}%
-            </span>
-          </div>
-          <Progress value={aiProgress} className="h-2" />
-          <p className="text-xs text-purple-600 mt-1">
-            Analyzing expenses for account code suggestions...
-          </p>
-        </div>
-      )}
 
       <div className="border rounded-lg">
         <Table>
@@ -405,8 +353,6 @@ export const ExpenseClassifier = memo(({
             {sortedExpenses.map((expense) => {
               const isSelected = selectedExpenses.includes(expense.id);
               const sourceDescription = getSourceDescription(expense.sourceAccount);
-              const aiSuggestion = aiSuggestions[expense.id];
-              const suggestedAccountCode = aiSuggestion ? accountCodes.find(ac => ac.code === aiSuggestion) : null;
               
               return (
                 <TableRow key={expense.id} className={getAccountColor(expense.sourceAccount)}>
@@ -436,38 +382,21 @@ export const ExpenseClassifier = memo(({
                     {expense.description}
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-2">
-                      <Select
-                        value=""
-                        onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
-                      >
-                        <SelectTrigger className="w-full text-left">
-                          <SelectValue placeholder={getCategoryDisplayText(expense.category)} className="text-left" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {accountCodes.map((code) => (
-                            <SelectItem key={code.id} value={code.code}>
-                              {code.code} - {code.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      {aiSuggestion && suggestedAccountCode && (
-                        <div className="bg-purple-50 border border-purple-200 rounded p-2">
-                          <div className="text-xs text-purple-700 font-medium mb-1">AI Suggestion:</div>
-                          <div className="text-xs text-purple-600">{suggestedAccountCode.code} - {suggestedAccountCode.name}</div>
-                          <Button
-                            onClick={() => handleAcceptAISuggestion(expense.id)}
-                            size="sm"
-                            variant="outline"
-                            className="mt-2 h-6 text-xs bg-purple-100 border-purple-200 text-purple-700 hover:bg-purple-200"
-                          >
-                            Accept AI Suggestion
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                    <Select
+                      value=""
+                      onValueChange={(value) => handleAccountCodeSelect(expense.id, value)}
+                    >
+                      <SelectTrigger className="w-full text-left">
+                        <SelectValue placeholder={getCategoryDisplayText(expense.category)} className="text-left" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accountCodes.map((code) => (
+                          <SelectItem key={code.id} value={code.code}>
+                            {code.code} - {code.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="text-right font-semibold">
                     ${expense.spent.toFixed(2)}
