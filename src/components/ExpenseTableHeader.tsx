@@ -87,7 +87,7 @@ export const ExpenseTableHeader = ({
             <SortableHeader field="code">Code</SortableHeader>
           </TableHead>
         )}
-        <TableHead className="w-36">Category</TableHead>
+        <TableHead className="w-64">Category</TableHead>
         <TableHead className="text-right w-24">Amount</TableHead>
         {showClassificationStatus && <TableHead className="text-center w-20">Status</TableHead>}
         {showDeleteButton && <TableHead className="text-center w-16">Actions</TableHead>}

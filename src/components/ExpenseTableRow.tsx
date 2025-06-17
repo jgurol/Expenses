@@ -162,7 +162,7 @@ export const ExpenseTableRow = ({
       <TableCell>
         {allowCategoryChange && expense.classified && !expense.reconciled ? (
           <Select value={expense.category} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-64">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

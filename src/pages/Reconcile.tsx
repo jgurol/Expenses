@@ -255,7 +255,7 @@ const Reconcile = () => {
             accountCodes={accountCodes}
             sources={sources}
             title="Expenses Ready for Reconciliation"
-            showClassificationStatus={true}
+            showClassificationStatus={false}
             showDeleteButton={false}
             showMultiSelect={true}
             showCodeColumn={true}
