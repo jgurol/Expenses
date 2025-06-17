@@ -30,6 +30,7 @@ interface ExpensesTableProps {
   onSort?: (field: SortField) => void;
   bulkActionLabel?: string;
   bulkActionIcon?: React.ComponentType<{ className?: string }>;
+  allowCategoryChange?: boolean;
 }
 
 export const ExpensesTable = memo(({ 
@@ -47,7 +48,8 @@ export const ExpensesTable = memo(({
   sortDirection,
   onSort,
   bulkActionLabel,
-  bulkActionIcon: BulkActionIcon
+  bulkActionIcon: BulkActionIcon,
+  allowCategoryChange = false
 }: ExpensesTableProps) => {
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
 
@@ -71,7 +73,8 @@ export const ExpensesTable = memo(({
     sortField,
     sortDirection,
     bulkActionLabel,
-    sourcesCount: sources.length
+    sourcesCount: sources.length,
+    allowCategoryChange
   });
 
   if (expenses.length === 0) {
@@ -148,6 +151,7 @@ export const ExpensesTable = memo(({
                   isSelected={isSelected}
                   onSelectExpense={handleSelectExpense}
                   onDeleteExpense={onDeleteExpense}
+                  allowCategoryChange={allowCategoryChange}
                 />
               );
             })}

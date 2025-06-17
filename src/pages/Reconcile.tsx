@@ -253,6 +253,7 @@ const Reconcile = () => {
           <ExpensesTable 
             expenses={sortedExpenses}
             accountCodes={accountCodes}
+            sources={sources}
             title="Expenses Ready for Reconciliation"
             showClassificationStatus={true}
             showDeleteButton={false}
@@ -264,6 +265,7 @@ const Reconcile = () => {
             onBulkDeleteExpenses={handleUnclassifyExpenses}
             bulkActionLabel="Unclassify Selected"
             bulkActionIcon={Undo2}
+            allowCategoryChange={true}
           />
         </div>
       </main>

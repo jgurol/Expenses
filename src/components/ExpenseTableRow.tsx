@@ -1,9 +1,13 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatUtils";
+import { useUpdateExpenseCategory } from "@/hooks/useUpdateExpenseCategory";
+import { toast } from "@/hooks/use-toast";
 import type { Expense, AccountCode } from "@/pages/Index";
 import type { Source } from "@/hooks/useSources";
 
@@ -18,6 +22,7 @@ interface ExpenseTableRowProps {
   isSelected: boolean;
   onSelectExpense: (expenseId: string, checked: boolean) => void;
   onDeleteExpense?: (expenseId: string) => void;
+  allowCategoryChange?: boolean;
 }
 
 export const ExpenseTableRow = ({
@@ -30,10 +35,37 @@ export const ExpenseTableRow = ({
   showCodeColumn = false,
   isSelected,
   onSelectExpense,
-  onDeleteExpense
+  onDeleteExpense,
+  allowCategoryChange = false
 }: ExpenseTableRowProps) => {
+  const updateCategoryMutation = useUpdateExpenseCategory();
+
   const handleCheckboxChange = (checked: boolean | "indeterminate") => {
     onSelectExpense(expense.id, checked === true);
+  };
+
+  const handleCategoryChange = async (categoryName: string) => {
+    const category = accountCodes.find(code => code.name === categoryName);
+    if (!category) return;
+
+    try {
+      await updateCategoryMutation.mutateAsync({
+        expenseId: expense.id,
+        categoryName: category.name,
+        categoryId: category.id
+      });
+      
+      toast({
+        title: "Category Updated",
+        description: `Expense category changed to ${category.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update category. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Display the full source account name without any parsing
@@ -128,9 +160,27 @@ export const ExpenseTableRow = ({
         </TableCell>
       )}
       <TableCell>
-        <Badge variant="outline" className="text-xs">
-          {expense.category}
-        </Badge>
+        {allowCategoryChange && expense.classified && !expense.reconciled ? (
+          <Select value={expense.category} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {accountCodes.map((code) => (
+                <SelectItem key={code.id} value={code.name}>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs">{code.code}</span>
+                    <span>{code.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Badge variant="outline" className="text-xs">
+            {expense.category}
+          </Badge>
+        )}
       </TableCell>
       <TableCell className="text-right font-semibold">
         {formatCurrency(expense.spent)}
